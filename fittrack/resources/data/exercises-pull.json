@@ -1,0 +1,484 @@
+[
+  {
+    "id": "single-arm-cable-pulldown",
+    "nameZh": "单手钢线下拉",
+    "nameEn": "Single-Arm Cable Pulldown",
+    "aliases": ["单臂高位下拉", "单手绳索下拉"],
+    "bodyPart": "背部",
+    "movement": "VerticalPull",
+    "equipment": ["CableMachine", "SingleHandle"],
+    "loadMode": "Unilateral",
+    "primaryMuscles": ["背阔肌"],
+    "secondaryMuscles": ["大圆肌", "肱二头肌", "肱肌", "下斜方肌"],
+    "introduction": "单侧完成的垂直拉动作，便于专注背阔肌收缩并观察两侧力量差异。相比双手下拉，它允许身体和肩胛顺着单侧轨迹自然调整。",
+    "steps": [
+      "将滑轮调至高位，单手握住把手，另一只手扶住器械或大腿稳定身体。",
+      "坐稳或采用半跪姿，躯干保持稳定，让工作侧手臂在可控范围内向上伸展。",
+      "先将肩胛向下带动，再让肘部沿身体侧前方向下拉至肋骨附近。",
+      "短暂停顿后缓慢伸直手臂，保持钢线张力并完成目标次数。"
+    ],
+    "cautions": [
+      "避免借助躯干旋转或大幅后仰拉动重量。",
+      "不要耸肩；若肩前侧不适，应减轻重量并缩小无痛范围。",
+      "手腕保持中立，重点用肘部向下移动而不是用手猛拽。"
+    ],
+    "recommendedSets": 3,
+    "recommendedReps": "8-15/侧",
+    "restSeconds": 75,
+    "alternatives": ["neutral-grip-lat-pulldown", "lat-pulldown", "pull-up"],
+    "media": [],
+    "sources": [
+      {
+        "title": "ACE Exercise Library",
+        "url": "https://www.acefitness.org/resources/everyone/exercise-library/",
+        "type": "exerciseLibrary"
+      },
+      {
+        "title": "ExRx.net: Cable Front Pulldown",
+        "url": "https://exrx.net/WeightExercises/LatissimusDorsi/CBFrontPulldown",
+        "type": "exerciseGuide"
+      }
+    ]
+  },
+  {
+    "id": "single-arm-machine-row",
+    "nameZh": "单手器械划船",
+    "nameEn": "Single-Arm Machine Row",
+    "aliases": ["单臂器械划船", "单手坐姿划船机"],
+    "bodyPart": "背部",
+    "movement": "HorizontalPull",
+    "equipment": ["RowMachine"],
+    "loadMode": "Unilateral",
+    "primaryMuscles": ["背阔肌", "菱形肌", "中斜方肌"],
+    "secondaryMuscles": ["后三角肌", "肱二头肌", "肱肌"],
+    "introduction": "借助器械固定轨迹完成单侧水平拉，减少躯干稳定需求，适合学习肩胛后缩和比较左右侧控制能力。",
+    "steps": [
+      "调整座椅，使把手大致与下胸或上腹同高，胸部贴稳支撑垫。",
+      "单手握住把手，手臂自然伸展，肩胛可在不耸肩的前提下适度前伸。",
+      "保持胸口贴垫，将肘部向身后拉，直到把手接近躯干。",
+      "控制重量回到起点，肩胛自然前伸但不让配重片撞击。"
+    ],
+    "cautions": [
+      "不要用身体扭转代替肩关节和肩胛运动。",
+      "避免肘部拉得过远而使肩头向前顶出。",
+      "座椅和胸垫位置应允许全程稳定且肩部无夹挤感。"
+    ],
+    "recommendedSets": 3,
+    "recommendedReps": "8-15/侧",
+    "restSeconds": 75,
+    "alternatives": ["seated-cable-row", "seal-row", "wide-elbow-seated-row"],
+    "media": [],
+    "sources": [
+      {
+        "title": "ACE: Seated Row",
+        "url": "https://www.acefitness.org/resources/everyone/exercise-library/48/seated-row/",
+        "type": "exerciseGuide"
+      }
+    ]
+  },
+  {
+    "id": "neutral-grip-lat-pulldown",
+    "nameZh": "对握下拉",
+    "nameEn": "Neutral-Grip Lat Pulldown",
+    "aliases": ["中立握高位下拉", "窄距对握下拉"],
+    "bodyPart": "背部",
+    "movement": "VerticalPull",
+    "equipment": ["CableMachine", "NeutralGripHandle"],
+    "loadMode": "Standard",
+    "primaryMuscles": ["背阔肌"],
+    "secondaryMuscles": ["大圆肌", "肱二头肌", "肱肌", "菱形肌", "下斜方肌"],
+    "introduction": "使用掌心相对的握法完成高位下拉，通常让肩和手腕处于较自然的位置，并使肘部容易沿躯干两侧下行。",
+    "steps": [
+      "将对握把连接高位滑轮，调好腿垫并坐稳，双脚踏实地面。",
+      "挺胸但不夸张反弓腰背，双臂伸展并保持肩膀远离耳朵。",
+      "带动肘部向下、向后移动，将把手拉至上胸附近。",
+      "停顿后缓慢放回，直到手臂伸展且背阔肌得到可控拉长。"
+    ],
+    "cautions": [
+      "不要把把手拉到颈后。",
+      "避免大幅摆动躯干或用惯性启动。",
+      "若无法保持肩胛控制，应降低重量而不是缩短动作过多。"
+    ],
+    "recommendedSets": 3,
+    "recommendedReps": "8-12",
+    "restSeconds": 90,
+    "alternatives": ["lat-pulldown", "hammer-strength-lat-pulldown", "pull-up"],
+    "media": [],
+    "sources": [
+      {
+        "title": "ACE: Evidence-based Approach to Resistance Training for the Back",
+        "url": "https://www.acefitness.org/resources/pros/expert-articles/8944/a-back-to-school-program-an-evidence-based-approach-to-training-the-back/",
+        "type": "article"
+      },
+      {
+        "title": "ExRx.net: Close-Grip Pulldown",
+        "url": "https://exrx.net/WeightExercises/LatissimusDorsi/CBCloseGripPulldown",
+        "type": "exerciseGuide"
+      }
+    ]
+  },
+  {
+    "id": "wide-elbow-seated-row",
+    "nameZh": "坐姿开肘划船",
+    "nameEn": "Wide-Elbow Seated Row",
+    "aliases": ["坐姿宽肘划船", "上背划船"],
+    "bodyPart": "背部",
+    "movement": "HorizontalPull",
+    "equipment": ["CableMachine", "WideRowHandle"],
+    "loadMode": "Standard",
+    "primaryMuscles": ["中斜方肌", "菱形肌", "后三角肌"],
+    "secondaryMuscles": ["背阔肌", "冈下肌", "肱二头肌", "肱肌"],
+    "introduction": "坐姿划船的宽肘变化式，肘部向外展开并把手拉向较高位置，更强调上背部和后三角肌。",
+    "steps": [
+      "坐在低位滑轮前，双脚踩稳踏板，握住宽把并保持脊柱中立。",
+      "让手臂伸展，肩胛在可控范围内前伸，胸口保持抬起。",
+      "将肘部向外打开并向后拉，把手带向下胸或胸骨位置。",
+      "肩胛后缩后短暂停顿，再缓慢伸臂回到起点。"
+    ],
+    "cautions": [
+      "不要耸肩或用下背反复前后摆动。",
+      "肘部不必强行抬到肩线以上，以免引起肩部不适。",
+      "选择能保持前臂大致沿钢线方向的把手和握距。"
+    ],
+    "recommendedSets": 3,
+    "recommendedReps": "10-15",
+    "restSeconds": 75,
+    "alternatives": ["seated-cable-row", "seal-row", "single-arm-machine-row"],
+    "media": [],
+    "sources": [
+      {
+        "title": "ACE: Seated Row",
+        "url": "https://www.acefitness.org/resources/everyone/exercise-library/48/seated-row/",
+        "type": "exerciseGuide"
+      },
+      {
+        "title": "ExRx.net: Cable Rear Delt Row",
+        "url": "https://exrx.net/WeightExercises/DeltoidPosterior/CBRearDeltRow",
+        "type": "exerciseGuide"
+      }
+    ]
+  },
+  {
+    "id": "cable-rope-curl",
+    "nameZh": "钢线弯举",
+    "nameEn": "Cable Rope Curl",
+    "aliases": ["绳索弯举", "钢线/绳索弯举", "滑轮弯举"],
+    "bodyPart": "手臂",
+    "movement": "ElbowFlexion",
+    "equipment": ["CableMachine", "RopeAttachment"],
+    "loadMode": "Standard",
+    "primaryMuscles": ["肱二头肌", "肱肌"],
+    "secondaryMuscles": ["肱桡肌", "前臂屈肌群"],
+    "introduction": "低位滑轮提供持续张力，绳索握法允许前臂在弯举过程中自然调整。可保持中立握，也可在顶端适度旋后以加强肱二头肌收缩感。",
+    "steps": [
+      "把绳索接在低位滑轮，双手握住绳端并直立站稳。",
+      "收紧躯干，将上臂固定在身体两侧，手腕保持中立。",
+      "屈肘把绳索向肩部拉起；若舒适，可在顶部让掌心略向上转。",
+      "挤压肱二头肌后缓慢下放，直到肘部接近伸直。"
+    ],
+    "cautions": [
+      "避免髋部顶送、身体后仰或肩部前移帮助完成动作。",
+      "不要让手腕过度弯曲；若腕肘不适可保持全程中立握。",
+      "下放时不要让配重突然回落。"
+    ],
+    "recommendedSets": 3,
+    "recommendedReps": "10-15",
+    "restSeconds": 60,
+    "alternatives": ["neutral-grip-lat-pulldown", "pull-up", "seated-cable-row"],
+    "media": [],
+    "sources": [
+      {
+        "title": "ACE: Building Better Biceps",
+        "url": "https://www.acefitness.org/resources/pros/expert-articles/9033/building-better-biceps-evidence-based-exercises-for-strength-and-function/",
+        "type": "article"
+      },
+      {
+        "title": "ExRx.net: Cable Curl",
+        "url": "https://exrx.net/WeightExercises/Biceps/CBCurl",
+        "type": "exerciseGuide"
+      }
+    ]
+  },
+  {
+    "id": "seal-row",
+    "nameZh": "海豹划船",
+    "nameEn": "Seal Row",
+    "aliases": ["俯卧划船", "平凳俯卧杠铃划船"],
+    "bodyPart": "背部",
+    "movement": "HorizontalPull",
+    "equipment": ["Barbell", "FlatBench"],
+    "loadMode": "Standard",
+    "primaryMuscles": ["背阔肌", "菱形肌", "中斜方肌"],
+    "secondaryMuscles": ["后三角肌", "肱二头肌", "肱肌", "大圆肌"],
+    "introduction": "俯卧在抬高的平凳上完成划船，胸腹得到支撑，能减少髋部借力和下背部的等长负担，突出上背拉力。",
+    "steps": [
+      "将平凳可靠抬高，确保杠铃在凳下有足够运动空间。",
+      "俯卧于凳面，双脚和躯干稳定，双手略宽于肩握住杠铃。",
+      "从手臂伸展位置开始，将肘部向后拉，使杠铃靠近凳面下方。",
+      "短暂停顿后控制杠铃下降至手臂伸展。"
+    ],
+    "cautions": [
+      "凳体和垫高物必须稳固，禁止使用容易滑动或倾倒的临时支撑。",
+      "保持胸腹贴凳，不要通过抬头或抬胸缩短动作。",
+      "若肩前侧不适，调整握距、肘部角度或减少负重。"
+    ],
+    "recommendedSets": 3,
+    "recommendedReps": "6-12",
+    "restSeconds": 120,
+    "alternatives": ["bent-over-barbell-row", "seated-cable-row", "single-arm-machine-row"],
+    "media": [],
+    "sources": [
+      {
+        "title": "NSCA: Rehabilitation to Performance of the Shoulder for the Tactical Athlete",
+        "url": "https://www.nsca.com/education/articles/tsac-report/rehabilitation-to-performance-of-the-shoulder-for-the-tactical-athlete/",
+        "type": "article"
+      },
+      {
+        "title": "ACE: Evidence-based Approach to Resistance Training for the Back",
+        "url": "https://www.acefitness.org/resources/pros/expert-articles/8944/a-back-to-school-program-an-evidence-based-approach-to-training-the-back/",
+        "type": "article"
+      }
+    ]
+  },
+  {
+    "id": "bent-over-barbell-row",
+    "nameZh": "俯身杠铃划船",
+    "nameEn": "Bent-Over Barbell Row",
+    "aliases": ["杠铃俯身划船", "杠铃划船"],
+    "bodyPart": "背部",
+    "movement": "HorizontalPull",
+    "equipment": ["Barbell"],
+    "loadMode": "Standard",
+    "primaryMuscles": ["背阔肌", "菱形肌", "中斜方肌"],
+    "secondaryMuscles": ["后三角肌", "肱二头肌", "竖脊肌", "臀大肌", "腘绳肌"],
+    "introduction": "在髋铰链姿势中完成的自由重量水平拉，能同时训练背部拉力和躯干等长稳定能力，但对动作控制和后侧链耐力要求较高。",
+    "steps": [
+      "双脚约与髋同宽站立，握住杠铃，通过屈髋让躯干前倾并保持脊柱中立。",
+      "膝盖微屈，收紧腹部，使杠铃自然垂在肩部下方。",
+      "保持躯干角度基本不变，将肘部向后拉，杠铃靠近上腹部。",
+      "控制杠铃下降至手臂伸展，完成一组后再以稳定姿势放回地面。"
+    ],
+    "cautions": [
+      "避免腰背弯曲、反复起伏或用髋部猛弹重量。",
+      "负重不应超过维持固定躯干角度和完整控制的能力。",
+      "已有腰背伤病者应先获得专业评估，必要时改用胸托划船。"
+    ],
+    "recommendedSets": 3,
+    "recommendedReps": "6-10",
+    "restSeconds": 120,
+    "alternatives": ["seal-row", "seated-cable-row", "single-arm-machine-row"],
+    "media": [
+      {
+        "type": "image",
+        "localPath": "qrc:/images/exercises/pull/bent-over-barbell-row.jpg",
+        "url": "https://commons.wikimedia.org/wiki/File:Barbell_row.jpg",
+        "title": "Barbell rowing",
+        "source": "Wikimedia Commons · embhoo",
+        "license": "CC BY 2.0"
+      }
+    ],
+    "sources": [
+      {
+        "title": "ACE: Bent-over Row",
+        "url": "https://www.acefitness.org/resources/everyone/exercise-library/12/bent-over-row/",
+        "type": "exerciseGuide"
+      },
+      {
+        "title": "ACE: Evidence-based Approach to Resistance Training for the Back",
+        "url": "https://www.acefitness.org/resources/pros/expert-articles/8944/a-back-to-school-program-an-evidence-based-approach-to-training-the-back/",
+        "type": "article"
+      }
+    ]
+  },
+  {
+    "id": "pull-up",
+    "nameZh": "引体向上",
+    "nameEn": "Pull-Up",
+    "aliases": ["正手引体向上", "自重引体"],
+    "bodyPart": "背部",
+    "movement": "VerticalPull",
+    "equipment": ["PullUpBar"],
+    "loadMode": "Bodyweight",
+    "primaryMuscles": ["背阔肌"],
+    "secondaryMuscles": ["大圆肌", "肱二头肌", "肱肌", "肱桡肌", "菱形肌", "下斜方肌"],
+    "introduction": "经典自重垂直拉动作，需要把身体拉向固定横杠。它同时考验背部、屈肘肌群、握力和躯干控制。",
+    "steps": [
+      "以略宽于肩的正手握距抓住横杠，双臂伸展并稳定悬垂。",
+      "收紧腹部和臀部，先控制肩胛，再让肘部向下移动。",
+      "持续上拉至下巴越过横杠或上胸接近横杠。",
+      "有控制地下降，回到手臂伸展的起始位置。"
+    ],
+    "cautions": [
+      "避免蹬腿、摆荡或用颈部前伸勉强越过横杠。",
+      "不要从完全放松的肩部突然猛拉；保持可控的肩胛位置。",
+      "无法完成标准次数时可使用弹力带或辅助器械，而不是牺牲动作质量。"
+    ],
+    "recommendedSets": 3,
+    "recommendedReps": "5-10",
+    "restSeconds": 120,
+    "alternatives": ["lat-pulldown", "neutral-grip-lat-pulldown", "hammer-strength-lat-pulldown"],
+    "media": [
+      {
+        "type": "image",
+        "localPath": "qrc:/images/exercises/pull/pull-up.jpg",
+        "url": "https://commons.wikimedia.org/wiki/File:Pull-ups_exercise_from_back.jpg",
+        "title": "Pull-ups exercise from the back",
+        "source": "Wikimedia Commons · PTPioneer",
+        "license": "CC BY 2.0"
+      }
+    ],
+    "sources": [
+      {
+        "title": "ACE Exercise Library: Chin-ups",
+        "url": "https://www.acefitness.org/resources/everyone/exercise-library/190/chin-ups/",
+        "type": "exerciseGuide"
+      },
+      {
+        "title": "ExRx.net: Pull-up",
+        "url": "https://exrx.net/WeightExercises/LatissimusDorsi/BWPullup",
+        "type": "exerciseGuide"
+      }
+    ]
+  },
+  {
+    "id": "lat-pulldown",
+    "nameZh": "高位下拉",
+    "nameEn": "Lat Pulldown",
+    "aliases": ["宽握下拉", "钢线高位下拉"],
+    "bodyPart": "背部",
+    "movement": "VerticalPull",
+    "equipment": ["CableMachine", "LatBar"],
+    "loadMode": "Standard",
+    "primaryMuscles": ["背阔肌"],
+    "secondaryMuscles": ["大圆肌", "肱二头肌", "肱肌", "菱形肌", "下斜方肌"],
+    "introduction": "可调重量的垂直拉动作，是学习背部发力和建立引体向上基础力量的常用选择。标准版本将横杆拉向身体前侧。",
+    "steps": [
+      "调整腿垫固定大腿，双手以舒适的正手握距抓住横杆并坐稳。",
+      "躯干略微后倾，胸口抬起，双臂在头顶伸展。",
+      "先让肩胛下沉，再把肘部向下拉，将横杆带向上胸。",
+      "缓慢向上还原，保持配重受控并让背阔肌充分伸展。"
+    ],
+    "cautions": [
+      "横杆应拉向身体前侧，不做颈后下拉。",
+      "避免过度后仰把动作变成划船。",
+      "握距过宽会缩短行程，应选择肩部舒适且能控制的范围。"
+    ],
+    "recommendedSets": 3,
+    "recommendedReps": "8-12",
+    "restSeconds": 90,
+    "alternatives": ["neutral-grip-lat-pulldown", "pull-up", "hammer-strength-lat-pulldown"],
+    "media": [
+      {
+        "type": "image",
+        "localPath": "qrc:/images/exercises/pull/lat-pulldown.jpg",
+        "url": "https://commons.wikimedia.org/wiki/File:Girl_doing_lat_pulldown_exercise.jpg",
+        "title": "Girl doing lat pulldown exercise",
+        "source": "Wikimedia Commons · Tyler Read / PTPioneer",
+        "license": "CC BY 2.0"
+      }
+    ],
+    "sources": [
+      {
+        "title": "ACE: Evidence-based Approach to Resistance Training for the Back",
+        "url": "https://www.acefitness.org/resources/pros/expert-articles/8944/a-back-to-school-program-an-evidence-based-approach-to-training-the-back/",
+        "type": "article"
+      },
+      {
+        "title": "ExRx.net: Cable Front Pulldown",
+        "url": "https://exrx.net/WeightExercises/LatissimusDorsi/CBFrontPulldown",
+        "type": "exerciseGuide"
+      }
+    ]
+  },
+  {
+    "id": "hammer-strength-lat-pulldown",
+    "nameZh": "悍马高位下拉",
+    "nameEn": "Hammer Strength Lat Pulldown",
+    "aliases": ["片装式高位下拉", "悍马下拉", "独立臂高位下拉"],
+    "bodyPart": "背部",
+    "movement": "VerticalPull",
+    "equipment": ["PlateLoadedPulldownMachine", "WeightPlates"],
+    "loadMode": "Standard",
+    "primaryMuscles": ["背阔肌"],
+    "secondaryMuscles": ["大圆肌", "肱二头肌", "肱肌", "菱形肌", "下斜方肌"],
+    "introduction": "使用片装式独立摆臂器械完成下拉，固定座位和引导轨迹可降低稳定难度。不同品牌轨迹和握把差异较大，应先调节座位并用轻重量试做。",
+    "steps": [
+      "在两侧装入相同重量，调整座椅和腿垫，使双脚和大腿稳定。",
+      "握住器械把手，保持胸部抬起、肋骨不过度外翻。",
+      "让肩胛向下转动，带动肘部向身体两侧下拉。",
+      "在底部短暂停顿，再控制摆臂回到手臂伸展位置。"
+    ],
+    "cautions": [
+      "确认器械两侧装片一致并使用安全卡扣。",
+      "不要离开座位或用腰部后仰甩动重量。",
+      "器械轨迹若造成肩部夹挤，应调整座椅、握法或改用钢线下拉。"
+    ],
+    "recommendedSets": 3,
+    "recommendedReps": "8-12",
+    "restSeconds": 90,
+    "alternatives": ["lat-pulldown", "neutral-grip-lat-pulldown", "pull-up"],
+    "media": [],
+    "sources": [
+      {
+        "title": "Life Fitness: Plate-Loaded Iso-Lateral Front Lat Pulldown",
+        "url": "https://shop.lifefitness.com/products/hammer-strength-plate-loaded-iso-lateral-front-lat-pulldown",
+        "type": "manufacturerGuide"
+      },
+      {
+        "title": "ACE: Evidence-based Approach to Resistance Training for the Back",
+        "url": "https://www.acefitness.org/resources/pros/expert-articles/8944/a-back-to-school-program-an-evidence-based-approach-to-training-the-back/",
+        "type": "article"
+      }
+    ]
+  },
+  {
+    "id": "seated-cable-row",
+    "nameZh": "坐姿划船",
+    "nameEn": "Seated Cable Row",
+    "aliases": ["坐姿钢线划船", "坐姿绳索划船"],
+    "bodyPart": "背部",
+    "movement": "HorizontalPull",
+    "equipment": ["CableMachine", "RowHandle"],
+    "loadMode": "Standard",
+    "primaryMuscles": ["背阔肌", "菱形肌", "中斜方肌"],
+    "secondaryMuscles": ["后三角肌", "肱二头肌", "肱肌", "大圆肌"],
+    "introduction": "在低位滑轮前完成的水平拉动作，钢线提供连续阻力。使用窄把、肘部靠近身体时通常更偏向背阔肌，同时训练肩胛后缩。",
+    "steps": [
+      "坐在低位滑轮前，双脚踩稳踏板，膝盖微屈并握住把手。",
+      "保持脊柱中立和胸口抬起，手臂伸展，肩胛自然前伸。",
+      "将肘部贴近身体向后拉，把手带至上腹部。",
+      "短暂停顿后缓慢伸直手臂，让肩胛可控前伸并回到起点。"
+    ],
+    "cautions": [
+      "避免用腰背大幅前后摆动制造惯性。",
+      "不要耸肩或让手腕过度弯曲。",
+      "回程保持控制，避免配重片撞击。"
+    ],
+    "recommendedSets": 3,
+    "recommendedReps": "8-12",
+    "restSeconds": 90,
+    "alternatives": ["single-arm-machine-row", "seal-row", "bent-over-barbell-row"],
+    "media": [
+      {
+        "type": "image",
+        "localPath": "qrc:/images/exercises/pull/seated-cable-row.png",
+        "url": "https://commons.wikimedia.org/wiki/File:Cable-seated-rows-1.png",
+        "title": "Cable seated row",
+        "source": "Wikimedia Commons · Everkinetic",
+        "license": "CC BY-SA 3.0"
+      }
+    ],
+    "sources": [
+      {
+        "title": "ACE: Seated Row",
+        "url": "https://www.acefitness.org/resources/everyone/exercise-library/48/seated-row/",
+        "type": "exerciseGuide"
+      },
+      {
+        "title": "ACE: Evidence-based Approach to Resistance Training for the Back",
+        "url": "https://www.acefitness.org/resources/pros/expert-articles/8944/a-back-to-school-program-an-evidence-based-approach-to-training-the-back/",
+        "type": "article"
+      }
+    ]
+  }
+]

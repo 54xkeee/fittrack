@@ -1,0 +1,39 @@
+{
+  "id": "tan-chengyi-three-day-split",
+  "name": "凯圣王×谭成义三分化（公开原版）",
+  "days": [
+    {
+      "id": "tan-push",
+      "name": "Push｜胸部·三角肌中束·肱三头肌",
+      "exercises": [
+        {"exerciseId":"barbell-bench-press","sets":3,"reps":"12,10,8","restSeconds":180,"notes":"热身15次仅作文字提示，不生成热身组，也不计入容量。"},
+        {"exerciseId":"incline-dumbbell-bench-press","sets":4,"reps":"12","restSeconds":120,"notes":"重量按单只哑铃填写。"},
+        {"exerciseId":"parallel-bar-dip","sets":4,"reps":"12或力竭","restSeconds":120,"notes":"纯自重记录次数；可选填写附加或辅助重量。"},
+        {"exerciseId":"lying-barbell-triceps-extension","sets":4,"reps":"15","restSeconds":90,"notes":""},
+        {"exerciseId":"y-raise","sets":3,"reps":"10","restSeconds":60,"notes":"需要时可添加短休追加组。"}
+      ]
+    },
+    {
+      "id": "tan-pull",
+      "name": "Pull｜背部·三角肌后束·肱二头肌",
+      "exercises": [
+        {"exerciseId":"single-arm-cable-pulldown","sets":4,"reps":"12","restSeconds":120,"notes":"前三组保留余量的说明仅作计划提示；第四组可添加短休追加组。"},
+        {"exerciseId":"single-arm-machine-row","sets":4,"reps":"10","restSeconds":120,"notes":"第四组可添加短休追加组。"},
+        {"exerciseId":"neutral-grip-lat-pulldown","sets":4,"reps":"8-12","restSeconds":120,"notes":""},
+        {"exerciseId":"wide-elbow-seated-row","sets":4,"reps":"12-15","restSeconds":90,"notes":""},
+        {"exerciseId":"cable-rope-curl","sets":3,"reps":"12","restSeconds":75,"notes":""}
+      ]
+    },
+    {
+      "id": "tan-legs",
+      "name": "Legs｜臀部·股四头肌·腘绳肌",
+      "exercises": [
+        {"exerciseId":"single-leg-deadlift","sets":4,"reps":"12","restSeconds":120,"notes":"默认按单侧重量和单侧次数填写。"},
+        {"exerciseId":"bulgarian-split-squat","sets":4,"reps":"10","restSeconds":120,"notes":"保加利亚深蹲为常见别名。"},
+        {"exerciseId":"goblet-squat","sets":3,"reps":"15","restSeconds":120,"notes":"严格公开版使用高脚杯深蹲；颈前深蹲可作为个人替换动作。"},
+        {"exerciseId":"romanian-deadlift","sets":3,"reps":"12","restSeconds":150,"notes":""},
+        {"exerciseId":"back-extension","sets":3,"reps":"8","restSeconds":90,"notes":"纯自重记录次数，也可填写附加重量。"}
+      ]
+    }
+  ]
+}
