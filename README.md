@@ -2,6 +2,8 @@
 
 Qt 6 Widgets 大作业，使用 Qt Designer `.ui` 文件、qmake、MinGW 和 C++17 实现。界面根据 Stitch 生成的现代校园蓝方案使用 QSS 复刻。
 
+后续开发建议见 [`docs/大作业开发流程与注意事项.md`](docs/大作业开发流程与注意事项.md)。
+
 ## 账号
 
 - 管理员：`xmu123` / `123456`
