@@ -4,6 +4,8 @@ import QtQuick.Layouts
 
 Page {
     id: page
+    implicitWidth: 0
+    background: Rectangle { color: "#0F0F0F" }
 
     function dateText(value) {
         const date = new Date(value)
@@ -29,11 +31,14 @@ Page {
     }
 
     ScrollView {
+        id: historyScroll
         anchors.fill: parent
         clip: true
+        contentWidth: availableWidth
+        ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
 
         ColumnLayout {
-            width: parent.width
+            width: historyScroll.availableWidth
             spacing: 12
 
             Item { Layout.preferredHeight: 4 }

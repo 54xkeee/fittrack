@@ -42,6 +42,12 @@ target_link_libraries(fittrack_ui_models PUBLIC fittrack_storage Qt6::Core Qt6::
 add_library(fittrack_services STATIC
     src/analytics/analyticsdashboardcontroller.cpp
     src/analytics/analyticsdashboardcontroller.h
+    src/backup/backupservice.cpp
+    src/backup/backupservice.h
+    src/cardio/cardiocontroller.cpp
+    src/cardio/cardiocontroller.h
+    src/gyms/gymmanagementcontroller.cpp
+    src/gyms/gymmanagementcontroller.h
     src/history/workouthistorycontroller.cpp
     src/history/workouthistorycontroller.h
     src/plans/planmanagementcontroller.cpp
@@ -70,6 +76,9 @@ qt_add_qml_module(fittrack
     VERSION 1.0
     QML_FILES
         qml/Main.qml
+        qml/components/ActionPill.qml
+        qml/components/AppCard.qml
+        qml/components/SectionHeader.qml
         qml/components/StatCard.qml
         qml/components/TrendChart.qml
         qml/components/MuscleBars.qml
@@ -80,6 +89,8 @@ qt_add_qml_module(fittrack
         qml/pages/AnalysisPage.qml
         qml/pages/PlanPage.qml
         qml/pages/InsightsPage.qml
+        qml/pages/CardioPage.qml
+        qml/pages/ManagementPage.qml
 )
 
 qt_add_resources(fittrack "seed_data"

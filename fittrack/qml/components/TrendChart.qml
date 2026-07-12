@@ -2,7 +2,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 
-Frame {
+AppCard {
     id: root
     property var points: []
     property string metric: "highestWeight"

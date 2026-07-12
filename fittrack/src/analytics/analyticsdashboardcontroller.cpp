@@ -73,6 +73,13 @@ QVariantMap AnalyticsDashboardController::buildOverview(int days) const
     bindPeriod(setCount, since);
     setCount.exec();
     setCount.next();
+    QSqlQuery cardio(m_database);
+    cardio.prepare(QStringLiteral(
+        "SELECT COUNT(*),COALESCE(SUM(duration_seconds),0) FROM cardio_record")
+        + (since.isEmpty() ? QString{} : QStringLiteral(" WHERE performed_at>=?")));
+    bindPeriod(cardio, since);
+    cardio.exec();
+    cardio.next();
 
     double volume = 0.0;
     double highestWeight = 0.0;
@@ -129,6 +136,8 @@ QVariantMap AnalyticsDashboardController::buildOverview(int days) const
         {QStringLiteral("workoutCount"), sessions.value(0)},
         {QStringLiteral("setCount"), setCount.value(0)},
         {QStringLiteral("durationSeconds"), sessions.value(1)},
+        {QStringLiteral("cardioCount"), cardio.value(0)},
+        {QStringLiteral("cardioDurationSeconds"), cardio.value(1)},
         {QStringLiteral("totalVolume"), volume},
         {QStringLiteral("highestWeight"), highestWeight},
         {QStringLiteral("highestReps"), highestReps},

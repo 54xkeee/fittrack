@@ -114,7 +114,7 @@ void WorkoutSessionController::loadGyms()
 {
     QVariantList gyms;
     QSqlQuery query(m_database);
-    if (query.exec(QStringLiteral("SELECT id,name FROM gym ORDER BY name"))) {
+    if (query.exec(QStringLiteral("SELECT id,name FROM gym WHERE is_enabled=1 ORDER BY name"))) {
         while (query.next()) {
             gyms.append(QVariantMap{
                 {QStringLiteral("id"), query.value(0)},
@@ -132,7 +132,8 @@ void WorkoutSessionController::loadEquipment()
     if (!m_selectedGymId.isEmpty()) {
         QSqlQuery query(m_database);
         query.prepare(QStringLiteral(
-            "SELECT id,name,code,notes FROM equipment_instance WHERE gym_id=? ORDER BY name,code"));
+            "SELECT id,name,code,notes FROM equipment_instance "
+            "WHERE gym_id=? AND is_enabled=1 ORDER BY name,code"));
         query.addBindValue(m_selectedGymId);
         if (query.exec()) {
             while (query.next()) {
@@ -161,7 +162,9 @@ bool WorkoutSessionController::addGym(const QString &name)
         return fail(QStringLiteral("健身房名称不能为空"));
     }
     QSqlQuery query(m_database);
-    query.prepare(QStringLiteral("INSERT INTO gym(id,name) VALUES(?,?)"));
+    query.prepare(QStringLiteral(
+        "INSERT INTO gym(id,name,is_enabled) VALUES(?,?,1) "
+        "ON CONFLICT(name) DO UPDATE SET is_enabled=1"));
     const QString id = newId();
     query.addBindValue(id);
     query.addBindValue(trimmed);
@@ -169,7 +172,10 @@ bool WorkoutSessionController::addGym(const QString &name)
         return fail(query.lastError().text());
     }
     loadGyms();
-    return selectGym(id);
+    QSqlQuery selected(m_database);
+    selected.prepare(QStringLiteral("SELECT id FROM gym WHERE name=? AND is_enabled=1"));
+    selected.addBindValue(trimmed);
+    return selected.exec() && selected.next() && selectGym(selected.value(0).toString());
 }
 
 bool WorkoutSessionController::selectGym(const QString &gymId)
@@ -177,7 +183,7 @@ bool WorkoutSessionController::selectGym(const QString &gymId)
     clearError();
     if (!gymId.isEmpty()) {
         QSqlQuery check(m_database);
-        check.prepare(QStringLiteral("SELECT 1 FROM gym WHERE id=?"));
+        check.prepare(QStringLiteral("SELECT 1 FROM gym WHERE id=? AND is_enabled=1"));
         check.addBindValue(gymId);
         if (!check.exec() || !check.next()) {
             return fail(QStringLiteral("找不到健身房"));
@@ -246,7 +252,7 @@ bool WorkoutSessionController::setExerciseEquipment(int exerciseIndex, const QSt
     if (!equipmentId.isEmpty()) {
         QSqlQuery check(m_database);
         check.prepare(QStringLiteral(
-            "SELECT 1 FROM equipment_instance WHERE id=? AND gym_id=?"));
+            "SELECT 1 FROM equipment_instance WHERE id=? AND gym_id=? AND is_enabled=1"));
         check.addBindValue(equipmentId);
         check.addBindValue(m_selectedGymId);
         if (!check.exec() || !check.next()) {
@@ -880,6 +886,13 @@ bool WorkoutSessionController::discardWorkout()
     emit sessionChanged();
     refreshUnfinished();
     return true;
+}
+
+void WorkoutSessionController::reloadReferenceData()
+{
+    loadPlanDays();
+    loadSuggestedDay();
+    loadGyms();
 }
 
 bool WorkoutSessionController::loadSession(const QString &sessionId)

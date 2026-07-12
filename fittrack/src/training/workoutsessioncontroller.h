@@ -62,6 +62,7 @@ public:
     Q_INVOKABLE bool discardUnfinished();
     Q_INVOKABLE bool finishWorkout();
     Q_INVOKABLE bool discardWorkout();
+    Q_INVOKABLE void reloadReferenceData();
 
 signals:
     void exercisesChanged();

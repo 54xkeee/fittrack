@@ -50,9 +50,14 @@ void AnalyticsDashboardControllerTest::filtersPeriodsAndBuildsTrends()
     QVERIFY(q.exec(QStringLiteral(
         "INSERT INTO append_set_record(id,parent_set_id,weight_kg,reps,rest_seconds) "
         "VALUES('recent-append','recent-set',20,2,5)")));
+    QVERIFY(q.exec(QStringLiteral(
+        "INSERT INTO cardio_record(id,cardio_type,performed_at,duration_seconds,incline,speed_kmh,notes) "
+        "VALUES('recent-cardio','TreadmillIncline','%1',1800,9,5,'')").arg(recentEnd)));
 
     fittrack::AnalyticsDashboardController analytics(db);
     QCOMPARE(analytics.sevenDayOverview().value(QStringLiteral("workoutCount")).toInt(), 1);
+    QCOMPARE(analytics.sevenDayOverview().value(QStringLiteral("cardioCount")).toInt(), 1);
+    QCOMPARE(analytics.sevenDayOverview().value(QStringLiteral("cardioDurationSeconds")).toInt(), 1800);
     QCOMPARE(analytics.overview().value(QStringLiteral("totalVolume")).toDouble(), 480.0);
     QCOMPARE(analytics.trend().size(), 1);
     QCOMPARE(analytics.trend().first().toMap().value(QStringLiteral("volume")).toDouble(), 480.0);

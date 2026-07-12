@@ -1,9 +1,12 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import "../components"
 
 Page {
     id: page
+    implicitWidth: 0
+    background: Rectangle { color: "#0F0F0F" }
 
     function twoDigits(value) {
         return value < 10 ? "0" + value : value
@@ -46,7 +49,9 @@ Page {
         }
     }
 
-    header: ToolBar {
+    header: Rectangle {
+        implicitHeight: 56
+        color: "#0F0F0F"
         Label {
             anchors.centerIn: parent
             text: workoutController.active ? workoutController.sessionName : qsTr("训练")
@@ -194,16 +199,19 @@ Page {
     }
 
     ScrollView {
+        id: trainingScroll
         anchors.fill: parent
         clip: true
+        contentWidth: availableWidth
+        ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
 
         ColumnLayout {
-            width: parent.width
+            width: trainingScroll.availableWidth
             spacing: 14
 
             Item { Layout.preferredHeight: 2 }
 
-            Frame {
+            AppCard {
                 visible: !workoutController.active
                          && workoutHistory.selectedSession.id !== undefined
                 Layout.fillWidth: true
@@ -238,7 +246,7 @@ Page {
                 }
             }
 
-            Frame {
+            AppCard {
                 visible: !workoutController.active
                 Layout.fillWidth: true
                 Layout.leftMargin: 14
@@ -313,7 +321,7 @@ Page {
                 }
             }
 
-            Frame {
+            AppCard {
                 visible: workoutController.active
                 Layout.fillWidth: true
                 Layout.leftMargin: 14
@@ -348,11 +356,13 @@ Page {
                         Label { text: qsTr("分") }
                         SpinBox { id: seconds; from: 0; to: 59; value: 0; editable: true }
                         Label { text: qsTr("秒") }
-                        Button {
-                            Layout.fillWidth: true
-                            text: qsTr("开始")
-                            onClicked: restTimer.start(minutes.value * 60 + seconds.value)
-                        }
+                    }
+
+                    Button {
+                        Layout.fillWidth: true
+                        text: qsTr("开始自定义计时")
+                        highlighted: true
+                        onClicked: restTimer.start(minutes.value * 60 + seconds.value)
                     }
 
                     RowLayout {
@@ -382,7 +392,7 @@ Page {
             Repeater {
                 model: workoutController.exercises
 
-                delegate: Frame {
+                delegate: AppCard {
                     id: exerciseCard
                     required property var modelData
                     required property int index
@@ -406,6 +416,31 @@ Page {
                         }
                     }
 
+                    Menu {
+                        id: exerciseActions
+                        MenuItem {
+                            text: qsTr("上移")
+                            enabled: exerciseIndex > 0
+                            onTriggered: workoutController.moveExercise(exerciseIndex, exerciseIndex - 1)
+                        }
+                        MenuItem {
+                            text: qsTr("下移")
+                            enabled: exerciseIndex + 1 < workoutController.exercises.length
+                            onTriggered: workoutController.moveExercise(exerciseIndex, exerciseIndex + 1)
+                        }
+                        MenuItem {
+                            text: qsTr("替换动作")
+                            onTriggered: {
+                                exercisePicker.replaceIndex = exerciseIndex
+                                exercisePicker.open()
+                            }
+                        }
+                        MenuItem {
+                            text: qsTr("删除动作")
+                            onTriggered: workoutController.removeExercise(exerciseIndex)
+                        }
+                    }
+
                     ColumnLayout {
                         anchors.fill: parent
                         spacing: 9
@@ -420,33 +455,16 @@ Page {
                             }
                             ToolButton {
                                 text: "↕"
-                                ToolTip.visible: hovered
-                                ToolTip.text: qsTr("按住拖动排序")
+                                Accessible.name: qsTr("拖动排序")
                                 DragHandler {
                                     id: cardDrag
                                     target: exerciseCard
                                 }
                             }
                             ToolButton {
-                                text: "↑"
-                                enabled: exerciseIndex > 0
-                                onClicked: workoutController.moveExercise(exerciseIndex, exerciseIndex - 1)
-                            }
-                            ToolButton {
-                                text: "↓"
-                                enabled: exerciseIndex + 1 < workoutController.exercises.length
-                                onClicked: workoutController.moveExercise(exerciseIndex, exerciseIndex + 1)
-                            }
-                            ToolButton {
-                                text: qsTr("替换")
-                                onClicked: {
-                                    exercisePicker.replaceIndex = exerciseIndex
-                                    exercisePicker.open()
-                                }
-                            }
-                            ToolButton {
-                                text: qsTr("删除")
-                                onClicked: workoutController.removeExercise(exerciseIndex)
+                                text: "⋮"
+                                Accessible.name: qsTr("更多操作")
+                                onClicked: exerciseActions.open()
                             }
                         }
                         Label {
@@ -508,13 +526,20 @@ Page {
                             }
                         }
 
-                        RowLayout {
+                        Label {
+                            text: qsTr("快速生成 · 重量 × 次数 × 组数")
+                            color: "#A8AAA9"
+                            font.pixelSize: 12
+                        }
+                        GridLayout {
                             Layout.fillWidth: true
-                            Label { text: qsTr("快速生成") ; color: "#AEB7B1" }
+                            columns: 2
+                            columnSpacing: 8
+                            rowSpacing: 8
                             TextField {
                                 id: quickWeight
                                 Layout.fillWidth: true
-                                placeholderText: qsTr("kg")
+                                placeholderText: qsTr("重量 kg")
                                 inputMethodHints: Qt.ImhFormattedNumbersOnly
                                 validator: DoubleValidator { bottom: 0; decimals: 2 }
                             }
@@ -525,8 +550,16 @@ Page {
                                 inputMethodHints: Qt.ImhDigitsOnly
                                 validator: IntValidator { bottom: 0; top: 999 }
                             }
-                            SpinBox { id: quickSets; from: 1; to: 20; value: modelData.sets.length }
+                            SpinBox {
+                                id: quickSets
+                                Layout.fillWidth: true
+                                from: 1
+                                to: 20
+                                value: modelData.sets.length
+                                Accessible.name: qsTr("组数")
+                            }
                             Button {
+                                Layout.fillWidth: true
                                 text: qsTr("应用")
                                 enabled: quickReps.text.length > 0
                                 onClicked: workoutController.configureExercise(
@@ -549,11 +582,11 @@ Page {
 
                                 RowLayout {
                                     Layout.fillWidth: true
-                                    spacing: 7
+                                    spacing: 8
 
                                     Label {
                                         text: qsTr("第%1组").arg(modelData.number)
-                                        Layout.preferredWidth: 48
+                                        Layout.preferredWidth: 52
                                         color: modelData.completed ? "#8BD450" : "white"
                                     }
                                     TextField {
@@ -581,6 +614,12 @@ Page {
                                         validator: IntValidator { bottom: 0; top: 999 }
                                         enabled: !modelData.completed
                                     }
+                                }
+
+                                RowLayout {
+                                    Layout.fillWidth: true
+                                    spacing: 8
+
                                     CheckBox {
                                         id: failureInput
                                         text: qsTr("力竭")
@@ -600,6 +639,7 @@ Page {
                                                       : modelData.bodyweightLoadType === "Assisted" ? 2 : 0
                                         enabled: !modelData.completed
                                     }
+                                    Item { Layout.fillWidth: true }
                                     Button {
                                         text: modelData.completed ? qsTr("已完成") : qsTr("完成")
                                         enabled: !modelData.completed && repsInput.text.length > 0

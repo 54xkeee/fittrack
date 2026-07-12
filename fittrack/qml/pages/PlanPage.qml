@@ -33,8 +33,8 @@ Page {
         anchors.centerIn: parent
         title: qsTr("确认删除")
         standardButtons: Dialog.Yes | Dialog.No
-        Label { text: kind === "plan" ? qsTr("删除该计划及全部训练日？") : qsTr("删除该训练日？") }
-        onAccepted: kind === "plan"
+        Label { text: deleteDialog.kind === "plan" ? qsTr("删除该计划及全部训练日？") : qsTr("删除该训练日？") }
+        onAccepted: deleteDialog.kind === "plan"
                     ? planManagement.deletePlan(targetId) : planManagement.deleteDay(targetId)
     }
 

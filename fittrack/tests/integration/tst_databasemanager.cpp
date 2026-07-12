@@ -51,7 +51,7 @@ void DatabaseManagerTest::initializeCreatesCompleteSchema()
     QSqlQuery query(manager.database());
     QVERIFY(query.exec(QStringLiteral("SELECT value FROM app_meta WHERE key='schema_version'")));
     QVERIFY(query.next());
-    QCOMPARE(query.value(0).toString(), QStringLiteral("2"));
+    QCOMPARE(query.value(0).toString(), QStringLiteral("3"));
     QVERIFY(query.exec(QStringLiteral("PRAGMA table_info(set_record)")));
     bool hasBodyweightLoadType = false;
     while (query.next()) {
@@ -113,7 +113,7 @@ void DatabaseManagerTest::migratesVersionOneBodyweightRecords()
     QCOMPARE(migrated.value(0).toString(), QStringLiteral("Bodyweight"));
     QVERIFY(migrated.exec(QStringLiteral("SELECT value FROM app_meta WHERE key='schema_version'")));
     QVERIFY(migrated.next());
-    QCOMPARE(migrated.value(0).toString(), QStringLiteral("2"));
+    QCOMPARE(migrated.value(0).toString(), QStringLiteral("3"));
 }
 
 QTEST_GUILESS_MAIN(DatabaseManagerTest)

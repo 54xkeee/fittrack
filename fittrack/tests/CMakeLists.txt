@@ -133,6 +133,24 @@ target_link_libraries(tst_planmanagementcontroller PRIVATE
 
 add_test(NAME planmanagementcontroller COMMAND tst_planmanagementcontroller)
 
+qt_add_executable(tst_cardiocontroller
+    integration/tst_cardiocontroller.cpp
+)
+target_link_libraries(tst_cardiocontroller PRIVATE fittrack_storage fittrack_services Qt6::Sql Qt6::Test)
+add_test(NAME cardiocontroller COMMAND tst_cardiocontroller)
+
+qt_add_executable(tst_gymmanagementcontroller
+    integration/tst_gymmanagementcontroller.cpp
+)
+target_link_libraries(tst_gymmanagementcontroller PRIVATE fittrack_storage fittrack_services Qt6::Sql Qt6::Test)
+add_test(NAME gymmanagementcontroller COMMAND tst_gymmanagementcontroller)
+
+qt_add_executable(tst_backupservice
+    integration/tst_backupservice.cpp
+)
+target_link_libraries(tst_backupservice PRIVATE fittrack_storage fittrack_services Qt6::Sql Qt6::Test)
+add_test(NAME backupservice COMMAND tst_backupservice)
+
 qt_add_executable(tst_qmlnavigation
     integration/tst_qmlnavigation.cpp
 )

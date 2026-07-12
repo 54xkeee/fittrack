@@ -5,6 +5,8 @@ import "../components"
 
 Page {
     id: page
+    implicitWidth: 0
+    background: Rectangle { color: "#0F0F0F" }
 
     function withAll(items, label) {
         let result = [{"id":"", "name":label}]
@@ -22,10 +24,13 @@ Page {
     }
 
     ScrollView {
+        id: analysisScroll
         anchors.fill: parent
         clip: true
+        contentWidth: availableWidth
+        ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
         ColumnLayout {
-            width: parent.width
+            width: analysisScroll.availableWidth
             spacing: 12
             Item { Layout.preferredHeight: 4 }
 
@@ -47,6 +52,8 @@ Page {
                 StatCard { Layout.fillWidth: true; label: qsTr("正式组"); value: String(analyticsDashboard.overview.setCount || 0) }
                 StatCard { Layout.fillWidth: true; label: qsTr("总容量"); value: Number(analyticsDashboard.overview.totalVolume || 0).toFixed(0) + " kg" }
                 StatCard { Layout.fillWidth: true; label: qsTr("训练时长"); value: Math.round(Number(analyticsDashboard.overview.durationSeconds || 0) / 60) + qsTr("分") }
+                StatCard { Layout.fillWidth: true; label: qsTr("有氧次数"); value: String(analyticsDashboard.overview.cardioCount || 0) }
+                StatCard { Layout.fillWidth: true; label: qsTr("有氧时长"); value: Math.round(Number(analyticsDashboard.overview.cardioDurationSeconds || 0) / 60) + qsTr("分") }
             }
 
             MuscleBars { Layout.fillWidth: true; Layout.leftMargin: 14; Layout.rightMargin: 14; title: qsTr("主要刺激组数"); items: analyticsDashboard.primaryMuscles }

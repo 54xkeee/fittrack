@@ -4,6 +4,7 @@ import QtQuick.Layouts
 
 Page {
     id: page
+    implicitWidth: 0
 
     Dialog {
         id: detailDialog

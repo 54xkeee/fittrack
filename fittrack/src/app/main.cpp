@@ -1,5 +1,8 @@
 #include "analytics/analyticsdashboardcontroller.h"
+#include "backup/backupservice.h"
+#include "cardio/cardiocontroller.h"
 #include "exercises/exerciselistmodel.h"
+#include "gyms/gymmanagementcontroller.h"
 #include "history/workouthistorycontroller.h"
 #include "plans/planmanagementcontroller.h"
 #include "storage/databasemanager.h"
@@ -11,7 +14,6 @@
 
 #include <QDir>
 #include <QFile>
-#include <QFont>
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
@@ -69,7 +71,6 @@ int main(int argc, char *argv[])
     QGuiApplication::setApplicationName(QStringLiteral("FitTrack"));
     QGuiApplication::setOrganizationName(QStringLiteral("FitTrack"));
 #ifdef Q_OS_WIN
-    QGuiApplication::setFont(QFont(QStringLiteral("Microsoft YaHei UI")));
 #endif
     QQuickStyle::setStyle(QStringLiteral("Material"));
 
@@ -92,6 +93,9 @@ int main(int argc, char *argv[])
     fittrack::WorkoutHistoryController workoutHistory(databaseManager.database());
     fittrack::AnalyticsDashboardController analyticsDashboard(databaseManager.database());
     fittrack::PlanManagementController planManagement(databaseManager.database());
+    fittrack::CardioController cardioController(databaseManager.database());
+    fittrack::GymManagementController gymManagement(databaseManager.database());
+    fittrack::BackupService backupService(databaseManager.database());
     engine.rootContext()->setContextProperty(QStringLiteral("exerciseModel"), &exerciseModel);
     engine.rootContext()->setContextProperty(QStringLiteral("planExerciseModel"), &planExerciseModel);
     engine.rootContext()->setContextProperty(QStringLiteral("restTimer"), &restTimer);
@@ -99,12 +103,27 @@ int main(int argc, char *argv[])
     engine.rootContext()->setContextProperty(QStringLiteral("workoutHistory"), &workoutHistory);
     engine.rootContext()->setContextProperty(QStringLiteral("analyticsDashboard"), &analyticsDashboard);
     engine.rootContext()->setContextProperty(QStringLiteral("planManagement"), &planManagement);
+    engine.rootContext()->setContextProperty(QStringLiteral("cardioController"), &cardioController);
+    engine.rootContext()->setContextProperty(QStringLiteral("gymManagement"), &gymManagement);
+    engine.rootContext()->setContextProperty(QStringLiteral("backupService"), &backupService);
     QObject::connect(
         &exerciseModel, &QAbstractItemModel::modelReset,
         &planExerciseModel, &fittrack::ExerciseListModel::reload);
     QObject::connect(
         &workoutController, &fittrack::WorkoutSessionController::planDaysChanged,
         &planManagement, &fittrack::PlanManagementController::reload);
+    QObject::connect(
+        &gymManagement, &fittrack::GymManagementController::dataChanged,
+        &workoutController, &fittrack::WorkoutSessionController::reloadReferenceData);
+    QObject::connect(&backupService, &fittrack::BackupService::restored, [&] {
+        exerciseModel.reload();
+        planManagement.reload();
+        workoutController.reloadReferenceData();
+        workoutHistory.reload();
+        analyticsDashboard.reload();
+        cardioController.reload();
+        gymManagement.reload();
+    });
     QObject::connect(
         &workoutController,
         &fittrack::WorkoutSessionController::workoutFinished,

@@ -2,6 +2,8 @@
 
 Qt 6 Widgets 大作业，使用 Qt Designer `.ui` 文件、qmake、MinGW 和 C++17 实现。界面根据 Stitch 生成的现代校园蓝方案使用 QSS 复刻。
 
+仓库中的 Android 健身训练子项目位于 [`fittrack/`](fittrack/)，其构建、测试和当前交付状态见 [`fittrack/README.md`](fittrack/README.md)。两个项目独立构建，FitTrack 不复用成绩管理系统业务代码。
+
 后续开发建议见 [`docs/大作业开发流程与注意事项.md`](docs/大作业开发流程与注意事项.md)。
 
 ## 账号
