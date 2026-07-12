@@ -7,6 +7,9 @@ Page {
 
     Dialog {
         id: detailDialog
+        property string exerciseId: ""
+        property bool isSystem: true
+        property bool isFavorite: false
         property string exerciseName: ""
         property string introduction: ""
         property var steps: []
@@ -17,6 +20,11 @@ Page {
         property string mediaLicense: ""
         property string mediaSourceUrl: ""
         property string recommendation: ""
+        property string movement: ""
+        property string equipmentText: ""
+        property int recommendedSets: 3
+        property string recommendedReps: "8-12"
+        property int restSeconds: 90
 
         anchors.centerIn: parent
         width: Math.min(page.width - 20, 600)
@@ -90,8 +98,95 @@ Page {
                     text: qsTr("查看图片来源与许可 · ") + detailDialog.mediaLicense
                     onClicked: Qt.openUrlExternally(detailDialog.mediaSourceUrl)
                 }
+                RowLayout {
+                    Layout.fillWidth: true
+                    Button {
+                        Layout.fillWidth: true
+                        text: detailDialog.isFavorite ? qsTr("★ 已收藏") : qsTr("☆ 收藏")
+                        onClicked: {
+                            exerciseModel.toggleFavorite(detailDialog.exerciseId)
+                            detailDialog.isFavorite = !detailDialog.isFavorite
+                        }
+                    }
+                    Button {
+                        visible: !detailDialog.isSystem
+                        text: qsTr("编辑")
+                        onClicked: {
+                            customDialog.editingId = detailDialog.exerciseId
+                            customName.text = detailDialog.exerciseName
+                            customBodyPart.text = detailDialog.primaryMuscles.length > 0
+                                    ? detailDialog.primaryMuscles[0] : ""
+                            customMovement.text = detailDialog.movement
+                            customEquipment.text = detailDialog.equipmentText
+                            customIntro.text = detailDialog.introduction
+                            customSets.value = detailDialog.recommendedSets
+                            customReps.text = detailDialog.recommendedReps
+                            customRest.value = detailDialog.restSeconds
+                            customDialog.open()
+                            detailDialog.close()
+                        }
+                    }
+                    Button {
+                        visible: !detailDialog.isSystem
+                        text: qsTr("删除")
+                        onClicked: {
+                            exerciseModel.deleteCustomExercise(detailDialog.exerciseId)
+                            detailDialog.close()
+                        }
+                    }
+                }
             }
         }
+    }
+
+    Dialog {
+        id: customDialog
+        property string editingId: ""
+        anchors.centerIn: parent
+        width: Math.min(page.width - 20, 520)
+        height: Math.min(page.height - 40, 700)
+        title: editingId.length > 0 ? qsTr("编辑自定义动作") : qsTr("新建自定义动作")
+        standardButtons: Dialog.Save | Dialog.Cancel
+        onAccepted: {
+            if (editingId.length > 0) {
+                exerciseModel.updateCustomExercise(editingId, customName.text, customBodyPart.text,
+                    customMovement.text, customEquipment.text, customIntro.text,
+                    customSets.value, customReps.text, customRest.value)
+            } else {
+                exerciseModel.createCustomExercise(customName.text, customBodyPart.text,
+                    customMovement.text, customEquipment.text, customIntro.text,
+                    customSets.value, customReps.text, customRest.value)
+            }
+        }
+        ScrollView {
+            anchors.fill: parent
+            ColumnLayout {
+                width: parent.width
+                TextField { id: customName; Layout.fillWidth: true; placeholderText: qsTr("动作名称（必填）") }
+                TextField { id: customBodyPart; Layout.fillWidth: true; placeholderText: qsTr("主要肌群，例如上胸（必填）") }
+                TextField { id: customMovement; Layout.fillWidth: true; placeholderText: qsTr("动作模式，例如水平推（必填）") }
+                TextField { id: customEquipment; Layout.fillWidth: true; placeholderText: qsTr("器械，例如固定器械") }
+                TextArea { id: customIntro; Layout.fillWidth: true; placeholderText: qsTr("动作简介，可选"); wrapMode: TextEdit.Wrap }
+                RowLayout {
+                    Label { text: qsTr("组数") }
+                    SpinBox { id: customSets; from: 1; to: 20; value: 3 }
+                    TextField { id: customReps; Layout.fillWidth: true; placeholderText: qsTr("次数，如8-12") }
+                }
+                RowLayout {
+                    Label { text: qsTr("间歇秒数") }
+                    SpinBox { id: customRest; from: 0; to: 600; value: 90; editable: true }
+                }
+            }
+        }
+    }
+
+    Dialog {
+        id: restoreDialog
+        anchors.centerIn: parent
+        title: qsTr("恢复系统动作")
+        standardButtons: Dialog.Yes | Dialog.No
+        Label { text: qsTr("恢复32个系统动作的默认资料？不会删除自定义动作和历史。") ; wrapMode: Text.WordWrap }
+        onAccepted: exerciseModel.restoreSystemExercises()
     }
 
     header: ToolBar {
@@ -108,16 +203,56 @@ Page {
         anchors.margins: 14
         spacing: 10
 
-        TextField {
+        RowLayout {
             Layout.fillWidth: true
-            placeholderText: qsTr("搜索动作、英文名或别名")
-            onTextChanged: exerciseModel.searchText = text
+            TextField {
+                Layout.fillWidth: true
+                placeholderText: qsTr("搜索动作、英文名或别名")
+                onTextChanged: exerciseModel.searchText = text
+            }
+            Button {
+                text: qsTr("新建")
+                onClicked: {
+                    customDialog.editingId = ""
+                    customName.text = ""
+                    customBodyPart.text = ""
+                    customMovement.text = ""
+                    customEquipment.text = ""
+                    customIntro.text = ""
+                    customSets.value = 3
+                    customReps.text = "8-12"
+                    customRest.value = 90
+                    customDialog.open()
+                }
+            }
+            ToolButton { text: qsTr("恢复"); onClicked: restoreDialog.open() }
         }
 
-        ComboBox {
+        RowLayout {
             Layout.fillWidth: true
-            model: [qsTr("全部部位"), qsTr("胸部"), qsTr("背部"), qsTr("肩部"), qsTr("手臂"), qsTr("臀腿")]
-            onActivated: exerciseModel.bodyPart = currentIndex === 0 ? "" : currentText
+            ComboBox {
+                Layout.fillWidth: true
+                model: [qsTr("全部部位"), qsTr("胸部"), qsTr("背部"), qsTr("肩部"), qsTr("手臂"), qsTr("臀腿")]
+                onActivated: exerciseModel.bodyPart = currentIndex === 0 ? "" : currentText
+            }
+            ComboBox {
+                Layout.fillWidth: true
+                model: [qsTr("全部模式"), qsTr("水平推"), qsTr("水平拉"), qsTr("垂直拉"), qsTr("蹲"), qsTr("髋铰链")]
+                onActivated: exerciseModel.movementFilter = currentIndex === 0 ? "" : currentText
+            }
+        }
+        RowLayout {
+            Layout.fillWidth: true
+            ComboBox {
+                Layout.fillWidth: true
+                model: [qsTr("全部器械"), qsTr("杠铃"), qsTr("哑铃"), qsTr("钢线"), qsTr("固定器械"), qsTr("自重")]
+                onActivated: exerciseModel.equipmentFilter = currentIndex === 0 ? "" : currentText
+            }
+            CheckBox {
+                text: qsTr("只看收藏")
+                checked: exerciseModel.favoritesOnly
+                onToggled: exerciseModel.favoritesOnly = checked
+            }
         }
 
         Label {
@@ -148,12 +283,19 @@ Page {
                 required property string mediaUrl
                 required property string mediaLicense
                 required property string mediaSourceUrl
+                required property string exerciseId
+                required property bool isSystem
+                required property bool isFavorite
+                required property string equipmentText
 
                 width: exerciseList.width
                 padding: 14
                 TapHandler {
                     onTapped: {
                         detailDialog.exerciseName = name
+                        detailDialog.exerciseId = exerciseId
+                        detailDialog.isSystem = isSystem
+                        detailDialog.isFavorite = isFavorite
                         detailDialog.introduction = introduction
                         detailDialog.steps = steps
                         detailDialog.cautions = cautions
@@ -162,6 +304,11 @@ Page {
                         detailDialog.mediaUrl = mediaUrl
                         detailDialog.mediaLicense = mediaLicense
                         detailDialog.mediaSourceUrl = mediaSourceUrl
+                        detailDialog.movement = movement
+                        detailDialog.equipmentText = equipmentText
+                        detailDialog.recommendedSets = recommendedSets
+                        detailDialog.recommendedReps = recommendedReps
+                        detailDialog.restSeconds = restSeconds
                         detailDialog.recommendation = qsTr("建议 %1组 · %2 · 休息%3秒")
                             .arg(recommendedSets).arg(recommendedReps).arg(restSeconds)
                         detailDialog.open()

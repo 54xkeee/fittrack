@@ -119,3 +119,39 @@ target_link_libraries(tst_analyticsdashboardcontroller PRIVATE
 )
 
 add_test(NAME analyticsdashboardcontroller COMMAND tst_analyticsdashboardcontroller)
+
+qt_add_executable(tst_planmanagementcontroller
+    integration/tst_planmanagementcontroller.cpp
+)
+
+target_link_libraries(tst_planmanagementcontroller PRIVATE
+    fittrack_storage
+    fittrack_services
+    Qt6::Sql
+    Qt6::Test
+)
+
+add_test(NAME planmanagementcontroller COMMAND tst_planmanagementcontroller)
+
+qt_add_executable(tst_qmlnavigation
+    integration/tst_qmlnavigation.cpp
+)
+
+target_compile_definitions(tst_qmlnavigation PRIVATE
+    FITTRACK_SOURCE_DIR="${CMAKE_SOURCE_DIR}"
+    FITTRACK_SCREENSHOT_DIR="${CMAKE_BINARY_DIR}/visual"
+)
+
+target_link_libraries(tst_qmlnavigation PRIVATE
+    fittrack_storage
+    fittrack_services
+    fittrack_ui_models
+    Qt6::Gui
+    Qt6::Qml
+    Qt6::Quick
+    Qt6::QuickControls2
+    Qt6::Sql
+    Qt6::Test
+)
+
+add_test(NAME qmlnavigation COMMAND tst_qmlnavigation)

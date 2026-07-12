@@ -37,13 +37,15 @@ add_library(fittrack_ui_models STATIC
 )
 
 target_include_directories(fittrack_ui_models PUBLIC src)
-target_link_libraries(fittrack_ui_models PUBLIC Qt6::Core Qt6::Sql)
+target_link_libraries(fittrack_ui_models PUBLIC fittrack_storage Qt6::Core Qt6::Sql)
 
 add_library(fittrack_services STATIC
     src/analytics/analyticsdashboardcontroller.cpp
     src/analytics/analyticsdashboardcontroller.h
     src/history/workouthistorycontroller.cpp
     src/history/workouthistorycontroller.h
+    src/plans/planmanagementcontroller.cpp
+    src/plans/planmanagementcontroller.h
     src/timer/resttimercontroller.cpp
     src/timer/resttimercontroller.h
     src/timer/timeralertplayer.cpp
@@ -59,6 +61,10 @@ qt_add_executable(fittrack
     src/app/main.cpp
 )
 
+# MSYS2 Qt 6.9.1 qmlcachegen crashes on the root file after resolving the
+# navigation page graph. Keep all pages cached and parse only Main.qml at runtime.
+set_source_files_properties(qml/Main.qml PROPERTIES QT_QML_SKIP_CACHEGEN TRUE)
+
 qt_add_qml_module(fittrack
     URI FitTrack
     VERSION 1.0
@@ -72,6 +78,8 @@ qt_add_qml_module(fittrack
         qml/pages/TrainingPage.qml
         qml/pages/HistoryPage.qml
         qml/pages/AnalysisPage.qml
+        qml/pages/PlanPage.qml
+        qml/pages/InsightsPage.qml
 )
 
 qt_add_resources(fittrack "seed_data"

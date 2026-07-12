@@ -1,6 +1,7 @@
 #include "analytics/analyticsdashboardcontroller.h"
 #include "exercises/exerciselistmodel.h"
 #include "history/workouthistorycontroller.h"
+#include "plans/planmanagementcontroller.h"
 #include "storage/databasemanager.h"
 #include "storage/exerciseseedimporter.h"
 #include "storage/planseedimporter.h"
@@ -10,6 +11,7 @@
 
 #include <QDir>
 #include <QFile>
+#include <QFont>
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
@@ -66,6 +68,9 @@ int main(int argc, char *argv[])
     QGuiApplication app(argc, argv);
     QGuiApplication::setApplicationName(QStringLiteral("FitTrack"));
     QGuiApplication::setOrganizationName(QStringLiteral("FitTrack"));
+#ifdef Q_OS_WIN
+    QGuiApplication::setFont(QFont(QStringLiteral("Microsoft YaHei UI")));
+#endif
     QQuickStyle::setStyle(QStringLiteral("Material"));
 
     fittrack::DatabaseManager databaseManager;
@@ -74,17 +79,32 @@ int main(int argc, char *argv[])
     }
 
     QQmlApplicationEngine engine;
-    fittrack::ExerciseListModel exerciseModel(databaseManager.database());
+    const QList<QByteArray> exerciseDocuments{
+        readResource(QStringLiteral(":/data/exercises-push.json")),
+        readResource(QStringLiteral(":/data/exercises-pull.json")),
+        readResource(QStringLiteral(":/data/exercises-legs.json")),
+    };
+    fittrack::ExerciseListModel exerciseModel(databaseManager.database(), exerciseDocuments);
+    fittrack::ExerciseListModel planExerciseModel(databaseManager.database(), exerciseDocuments);
     fittrack::RestTimerController restTimer;
     fittrack::TimerAlertPlayer timerAlert;
     fittrack::WorkoutSessionController workoutController(databaseManager.database());
     fittrack::WorkoutHistoryController workoutHistory(databaseManager.database());
     fittrack::AnalyticsDashboardController analyticsDashboard(databaseManager.database());
+    fittrack::PlanManagementController planManagement(databaseManager.database());
     engine.rootContext()->setContextProperty(QStringLiteral("exerciseModel"), &exerciseModel);
+    engine.rootContext()->setContextProperty(QStringLiteral("planExerciseModel"), &planExerciseModel);
     engine.rootContext()->setContextProperty(QStringLiteral("restTimer"), &restTimer);
     engine.rootContext()->setContextProperty(QStringLiteral("workoutController"), &workoutController);
     engine.rootContext()->setContextProperty(QStringLiteral("workoutHistory"), &workoutHistory);
     engine.rootContext()->setContextProperty(QStringLiteral("analyticsDashboard"), &analyticsDashboard);
+    engine.rootContext()->setContextProperty(QStringLiteral("planManagement"), &planManagement);
+    QObject::connect(
+        &exerciseModel, &QAbstractItemModel::modelReset,
+        &planExerciseModel, &fittrack::ExerciseListModel::reload);
+    QObject::connect(
+        &workoutController, &fittrack::WorkoutSessionController::planDaysChanged,
+        &planManagement, &fittrack::PlanManagementController::reload);
     QObject::connect(
         &workoutController,
         &fittrack::WorkoutSessionController::workoutFinished,
