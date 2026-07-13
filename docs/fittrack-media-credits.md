@@ -2,7 +2,7 @@
 
 更新时间：2026-07-13
 
-FitTrack 当前内置 26 张动作图片。图片仅用于帮助识别动作；应用打包时可能进行格式转换、缩放或裁切，不改变原作者署名和许可证。CC BY-SA 素材的应用内副本及其适配版本继续按相同许可证提供。
+FitTrack 当前内置 28 张动作图片。图片仅用于帮助识别动作；应用打包时可能进行格式转换、缩放或裁切，不改变原作者署名和许可证。CC BY-SA 素材的应用内副本及其适配版本继续按相同许可证提供。
 
 许可证全文：
 
@@ -25,6 +25,7 @@ FitTrack 当前内置 26 张动作图片。图片仅用于帮助识别动作；�
 | 罗马尼亚硬拉 | Romanian deadlift illustration | Everkinetic / Wikimedia Commons | CC BY-SA 3.0 | [原始页面](https://commons.wikimedia.org/wiki/File:Romanian-deadlift-2.png) |
 | 平板内收 | 哑铃飞鸟动作示意图 | Wikimedia Commons / Everkinetic | CC BY-SA 3.0 | [原始页面](https://commons.wikimedia.org/wiki/File:Dumbbell_flys_2.svg) |
 | 前平举 | 哑铃前平举动作示意图 | Wikimedia Commons / Everkinetic | CC BY-SA 3.0 | [原始页面](https://commons.wikimedia.org/wiki/File:Dumbbell-front-raises-1.png) |
+| 牧师凳弯举 | Preacher curl illustration | Wikimedia Commons / Everkinetic | CC BY-SA 3.0 | [原始页面](https://commons.wikimedia.org/wiki/File:Preacher-curl-1.gif) |
 | 山羊挺身 | Roman chair back extension illustration | O'Dea / Wikimedia Commons | CC BY-SA 4.0 | [原始页面](https://commons.wikimedia.org/wiki/File:Roman_chair_(hyperextension)_animation.gif) |
 | 上斜杠铃卧推 | 上斜杠铃卧推起始位置示意图 | Wikimedia Commons / Everkinetic | CC BY-SA 3.0 | [原始页面](https://commons.wikimedia.org/wiki/File:Incline-bench-press-1.png) |
 | 上斜哑铃卧推 | 上斜哑铃卧推起始位置示意图 | Wikimedia Commons / Everkinetic | CC BY-SA 3.0 | [原始页面](https://commons.wikimedia.org/wiki/File:Dumbbell-incline-bench-press-1.png) |
@@ -38,5 +39,6 @@ FitTrack 当前内置 26 张动作图片。图片仅用于帮助识别动作；�
 | 引体向上 | Pull-ups exercise from the back | Wikimedia Commons · PTPioneer | CC BY 2.0 | [原始页面](https://commons.wikimedia.org/wiki/File:Pull-ups_exercise_from_back.jpg) |
 | 坐姿划船 | Cable seated row | Wikimedia Commons · Everkinetic | CC BY-SA 3.0 | [原始页面](https://commons.wikimedia.org/wiki/File:Cable-seated-rows-1.png) |
 | 坐姿推肩 | 哑铃推肩动作示意图 | Wikimedia Commons / Everkinetic | CC BY-SA 3.0 | [原始页面](https://commons.wikimedia.org/wiki/File:Dumbbell_shoulder_press_2.svg) |
+| 站姿提踵 | Standing calf raise illustration | Wikimedia Commons / Everkinetic | CC BY-SA 3.0 | [原始页面](https://commons.wikimedia.org/wiki/File:Standing-calf-raises-1.gif) |
 
 对应的机器可读来源、许可证和应用内资源路径仍以 `fittrack/resources/data/exercises-*.json` 中每个动作的 `media` 字段为准。新增或替换图片时，必须同步更新 JSON 与本清单；不得把许可不明的社交平台截图或视频帧加入 APK。

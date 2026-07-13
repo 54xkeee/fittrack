@@ -32,7 +32,7 @@ Qt Android 打包当前解析到 AndroidX Core 1.13.1 及其传递依赖，包�
 
 ## 动作图片
 
-应用当前内置 26 张来自 Wikimedia Commons 的开放许可或公共领域图片。逐项作者、来源 URL、许可证和修改说明见 [`fittrack-media-credits.md`](fittrack-media-credits.md)。
+应用当前内置 28 张来自 Wikimedia Commons 的开放许可或公共领域图片。逐项作者、来源 URL、许可证和修改说明见 [`fittrack-media-credits.md`](fittrack-media-credits.md)。
 
 ## 分发前检查
 

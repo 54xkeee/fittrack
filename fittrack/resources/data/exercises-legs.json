@@ -389,7 +389,16 @@
     "recommendedReps": "10-20次",
     "restSeconds": 60,
     "alternatives": ["seated-calf-raise", "leg-press"],
-    "media": [],
+    "media": [
+      {
+        "type": "localImage",
+        "localPath": "qrc:/images/exercises/legs/standing-calf-raise.png",
+        "url": "https://commons.wikimedia.org/wiki/File:Standing-calf-raises-1.gif",
+        "title": "Standing calf raise illustration",
+        "source": "Everkinetic / Wikimedia Commons",
+        "license": "CC BY-SA 3.0"
+      }
+    ],
     "sources": [
       {"title": "ACE Standing Calf Raises", "url": "https://www.acefitness.org/resources/everyone/exercise-library/73/standing-calf-raises/", "type": "exerciseGuide"},
       {"title": "Foundations of Fitness Programming", "url": "https://www.nsca.com/contentassets/8323553f698a466a98220b21d9eb9a65/foundationsoffitnessprogramming_201508.pdf", "type": "reference"}

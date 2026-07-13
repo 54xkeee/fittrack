@@ -122,7 +122,7 @@ void ExerciseSeedImporterTest::importsBundledExerciseData()
     QCOMPARE(query.value(0).toInt(), 52);
     QVERIFY(query.exec(QStringLiteral("SELECT COUNT(*) FROM exercise_media")));
     QVERIFY(query.next());
-    QCOMPARE(query.value(0).toInt(), 26);
+    QCOMPARE(query.value(0).toInt(), 28);
     QVERIFY(query.exec(QStringLiteral(
         "SELECT COUNT(*) FROM exercise_media WHERE local_path='' OR external_url='' OR license=''")));
     QVERIFY(query.next());

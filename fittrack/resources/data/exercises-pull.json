@@ -722,7 +722,16 @@
     "recommendedReps": "8-15",
     "restSeconds": 60,
     "alternatives": ["cable-rope-curl", "hammer-curl"],
-    "media": [],
+    "media": [
+      {
+        "type": "localImage",
+        "localPath": "qrc:/images/exercises/pull/preacher-curl.png",
+        "url": "https://commons.wikimedia.org/wiki/File:Preacher-curl-1.gif",
+        "title": "Preacher curl illustration",
+        "source": "Everkinetic / Wikimedia Commons",
+        "license": "CC BY-SA 3.0"
+      }
+    ],
     "sources": [
       {
         "title": "ExRx.net: Barbell Preacher Curl",

@@ -15,7 +15,7 @@ FitTrack 是一个面向 Android 的个人健身训练记录与分析应用，�
 - 有氧页支持跑步机爬坡与爬楼机记录；跑步机默认模板为坡度 9、速度 5 km/h、30 分钟。有氧可单独记录，也可附加到刚完成的力量训练。
 - 场馆管理支持健身房与具体器械的新增、重命名和删除；被历史记录引用的条目会归档而不是破坏历史数据。
 - 数据管理支持 JSON 完整备份/事务恢复和 SQLite 快照导出；Android 支持通过系统文档选择器的 `content://` URI 导入导出。JSON 恢复会限制 64MB 输入、进行外键完整性检查，并刷新所有内存状态。
-- 动作库提供 52 个动作的简介、主要/次要肌群、4 步动作说明、3 条核心注意点和训练参数；其中 26 个动作内置许可明确的离线图片，其他动作不使用许可不明或动作形式不准确的替代素材。内置动作可收藏和恢复默认，用户可创建、编辑及删除自定义动作，并按部位、动作模式、器械和收藏状态组合筛选。
+- 动作库提供 52 个动作的简介、主要/次要肌群、4 步动作说明、3 条核心注意点和训练参数；其中 28 个动作内置许可明确的离线图片，其他动作不使用许可不明或动作形式不准确的替代素材。内置动作可收藏和恢复默认，用户可创建、编辑及删除自定义动作，并按部位、动作模式、器械和收藏状态组合筛选。
 - 底部导航固定为首页、计划、训练、动作和分析五个入口；历史、有氧和管理合并在分析入口内。
 - Graphite & Lime 设计系统已经提取为语义主题与通用组件，底部导航、首页、训练、计划、动作库、趋势、历史、有氧和管理页面均已纳入移动单列体系；可操作控件保持至少 48 logical px 触控区并提供完整空状态。
 - 应用内置 SIL Open Font License 的 Inter 可变字体，统一英文、数字和单位显示；中文继续使用系统字体回退。
@@ -70,8 +70,8 @@ powershell -ExecutionPolicy Bypass -File C:\FitTrackDev\fittrack\scripts\build-a
 - 内置动作会在应用启动时事务化导入 SQLite。
 - 动作图片位于 `resources/images/exercises/`，每张图片的原始链接和许可记录在对应动作 JSON 的 `media` 字段中。
 - Inter 字体与 SIL OFL 许可位于 `resources/fonts/`。
-- 当前内置 26 张开放许可或公共领域图片；找不到动作准确且许可明确素材的条目保持无图。
-- 26 张图片的逐项署名、原始链接和许可证汇总见 [`../docs/fittrack-media-credits.md`](../docs/fittrack-media-credits.md)。
+- 当前内置 28 张开放许可或公共领域图片；找不到动作准确且许可明确素材的条目保持无图。
+- 28 张图片的逐项署名、原始链接和许可证汇总见 [`../docs/fittrack-media-credits.md`](../docs/fittrack-media-credits.md)。
 - Qt、AndroidX/Kotlin、Inter 和动作图片的分发说明见 [`../docs/fittrack-third-party-notices.md`](../docs/fittrack-third-party-notices.md)。
 - 本地数据、权限、导出与医疗边界见 [`../docs/fittrack-privacy.md`](../docs/fittrack-privacy.md)。
 - 未授权的抖音、B站、知乎视频或截图不得打包进 APK；只允许外链。自制、明确授权或开放许可素材才可内置。
