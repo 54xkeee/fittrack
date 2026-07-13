@@ -2,6 +2,7 @@
 
 #include <QObject>
 #include <QSqlDatabase>
+#include <QStringList>
 #include <QVariantMap>
 #include <QVariantList>
 
@@ -60,6 +61,7 @@ public:
     Q_INVOKABLE bool replacePreparedExercise(const QString &draftExerciseId,
                                              const QString &exerciseId);
     Q_INVOKABLE bool movePreparedExercise(const QString &draftExerciseId, int toIndex);
+    Q_INVOKABLE bool reorderPreparedExercises(const QStringList &orderedDraftExerciseIds);
     Q_INVOKABLE bool removePreparedExercise(const QString &draftExerciseId);
     Q_INVOKABLE bool savePreparationAsPlan(const QString &planName, const QString &dayName);
     Q_INVOKABLE bool commitPreparation();
@@ -86,6 +88,7 @@ public:
     Q_INVOKABLE bool addExercise(const QString &exerciseId, int setCount = 0, const QString &targetReps = {});
     Q_INVOKABLE bool replaceExercise(int exerciseIndex, const QString &exerciseId);
     Q_INVOKABLE bool moveExercise(int fromIndex, int toIndex);
+    Q_INVOKABLE bool reorderExercises(const QStringList &orderedWorkoutExerciseIds);
     Q_INVOKABLE bool removeExercise(int exerciseIndex);
     Q_INVOKABLE bool configureExercise(int exerciseIndex, double weightKg, int targetReps, int setCount);
     Q_INVOKABLE bool configureExerciseParameters(int exerciseIndex, double weightKg,

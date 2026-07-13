@@ -2,6 +2,7 @@
 
 #include <QDateTime>
 #include <QRegularExpression>
+#include <QSet>
 #include <QSqlError>
 #include <QSqlQuery>
 #include <QUuid>
@@ -832,6 +833,34 @@ bool WorkoutSessionController::movePreparedExercise(const QString &draftExercise
     return true;
 }
 
+bool WorkoutSessionController::reorderPreparedExercises(
+    const QStringList &orderedDraftExerciseIds)
+{
+    clearError();
+    const QVariantList exercises = m_preparation.value(QStringLiteral("exercises")).toList();
+    QHash<QString, QVariant> byId;
+    for (const QVariant &value : exercises) {
+        const QString id = value.toMap().value(QStringLiteral("draftId")).toString();
+        if (id.isEmpty() || byId.contains(id))
+            return fail(QStringLiteral("准备动作标识无效"));
+        byId.insert(id, value);
+    }
+    const QSet<QString> orderedSet(orderedDraftExerciseIds.cbegin(),
+                                   orderedDraftExerciseIds.cend());
+    if (orderedDraftExerciseIds.size() != exercises.size()
+        || orderedSet.size() != orderedDraftExerciseIds.size()
+        || orderedSet != QSet<QString>(byId.keyBegin(), byId.keyEnd())) {
+        return fail(QStringLiteral("动作顺序与训练准备不一致"));
+    }
+    QVariantList reordered;
+    reordered.reserve(orderedDraftExerciseIds.size());
+    for (const QString &id : orderedDraftExerciseIds)
+        reordered.append(byId.value(id));
+    m_preparation.insert(QStringLiteral("exercises"), reordered);
+    emit preparationChanged();
+    return true;
+}
+
 bool WorkoutSessionController::removePreparedExercise(const QString &draftExerciseId)
 {
     clearError();
@@ -1403,20 +1432,44 @@ bool WorkoutSessionController::moveExercise(int fromIndex, int toIndex)
     }
     QVariantList reordered = m_exercises;
     reordered.move(fromIndex, toIndex);
+    QStringList orderedIds;
+    orderedIds.reserve(reordered.size());
+    for (const QVariant &value : reordered)
+        orderedIds.append(value.toMap().value(QStringLiteral("id")).toString());
+    return reorderExercises(orderedIds);
+}
+
+bool WorkoutSessionController::reorderExercises(
+    const QStringList &orderedWorkoutExerciseIds)
+{
+    clearError();
+    QStringList existingIds;
+    existingIds.reserve(m_exercises.size());
+    for (const QVariant &value : m_exercises)
+        existingIds.append(value.toMap().value(QStringLiteral("id")).toString());
+    const QSet<QString> orderedSet(orderedWorkoutExerciseIds.cbegin(),
+                                   orderedWorkoutExerciseIds.cend());
+    const QSet<QString> existingSet(existingIds.cbegin(), existingIds.cend());
+    if (orderedWorkoutExerciseIds.size() != existingIds.size()
+        || orderedSet.size() != orderedWorkoutExerciseIds.size()
+        || orderedSet != existingSet) {
+        return fail(QStringLiteral("动作顺序与当前训练不一致"));
+    }
     if (!m_database.transaction()) {
         return fail(m_database.lastError().text());
     }
-    for (int index = 0; index < reordered.size(); ++index) {
+    for (int index = 0; index < orderedWorkoutExerciseIds.size(); ++index) {
         QSqlQuery update(m_database);
         update.prepare(QStringLiteral("UPDATE workout_exercise SET sort_order=? WHERE id=?"));
         update.addBindValue(index);
-        update.addBindValue(reordered.at(index).toMap().value(QStringLiteral("id")));
+        update.addBindValue(orderedWorkoutExerciseIds.at(index));
         if (!update.exec()) {
             m_database.rollback();
             return fail(update.lastError().text());
         }
     }
     if (!m_database.commit()) {
+        m_database.rollback();
         return fail(m_database.lastError().text());
     }
     return loadSession(m_sessionId);
@@ -1440,11 +1493,33 @@ bool WorkoutSessionController::removeExercise(int exerciseIndex)
     if (completed.value(0).toInt() > 0) {
         return fail(QStringLiteral("该动作已有完成组，不能删除"));
     }
+    if (!m_database.transaction()) {
+        return fail(m_database.lastError().text());
+    }
     QSqlQuery remove(m_database);
     remove.prepare(QStringLiteral("DELETE FROM workout_exercise WHERE id=?"));
     remove.addBindValue(workoutExerciseId);
     if (!remove.exec()) {
+        m_database.rollback();
         return fail(remove.lastError().text());
+    }
+    int sortOrder = 0;
+    for (const QVariant &value : std::as_const(m_exercises)) {
+        const QString id = value.toMap().value(QStringLiteral("id")).toString();
+        if (id == workoutExerciseId)
+            continue;
+        QSqlQuery update(m_database);
+        update.prepare(QStringLiteral("UPDATE workout_exercise SET sort_order=? WHERE id=?"));
+        update.addBindValue(sortOrder++);
+        update.addBindValue(id);
+        if (!update.exec()) {
+            m_database.rollback();
+            return fail(update.lastError().text());
+        }
+    }
+    if (!m_database.commit()) {
+        m_database.rollback();
+        return fail(m_database.lastError().text());
     }
     return loadSession(m_sessionId);
 }

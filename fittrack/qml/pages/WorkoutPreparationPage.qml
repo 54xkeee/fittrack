@@ -236,6 +236,16 @@ Rectangle {
                     }
                 }
 
+                AppButton {
+                    Layout.fillWidth: true
+                    text: qsTr("调整动作顺序")
+                    variant: "secondary"
+                    enabled: (workoutController.preparation.exercises || []).length > 1
+                    onClicked: preparationOrderSheet.openExercises(
+                                   workoutController.preparation.exercises,
+                                   "draftId", "")
+                }
+
                 Label {
                     Layout.fillWidth: true
                     visible: (workoutController.preparation.exercises || []).length === 0
@@ -271,6 +281,17 @@ Rectangle {
     ExerciseDetailSheet {
         id: exerciseDetail
         objectName: "preparationExerciseDetailSheet"
+    }
+
+    ExerciseOrderSheet {
+        id: preparationOrderSheet
+        objectName: "preparationExerciseOrderSheet"
+        onSaveRequested: orderedIds => {
+            if (workoutController.reorderPreparedExercises(orderedIds))
+                close()
+            else
+                showError(workoutController.errorMessage)
+        }
     }
 
     ExerciseParameterSheet {

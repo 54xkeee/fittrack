@@ -3,6 +3,7 @@
 #include <QSqlError>
 #include <QSqlQuery>
 #include <QHash>
+#include <QSet>
 #include <QUuid>
 
 namespace fittrack {
@@ -615,10 +616,42 @@ bool PlanManagementController::removeExercise(const QString &planExerciseId)
     clearError();
     const QString planId = editableExercisePlanId(planExerciseId);
     if (planId.isEmpty()) return fail(QStringLiteral("系统计划动作不能删除"));
+    QSqlQuery owner(m_database);
+    owner.prepare(QStringLiteral("SELECT day_id FROM plan_exercise WHERE id=?"));
+    owner.addBindValue(planExerciseId);
+    if (!owner.exec() || !owner.next()) return fail(owner.lastError().text());
+    const QString dayId = owner.value(0).toString();
+    if (!m_database.transaction()) return fail(m_database.lastError().text());
     QSqlQuery remove(m_database);
     remove.prepare(QStringLiteral("DELETE FROM plan_exercise WHERE id=?"));
     remove.addBindValue(planExerciseId);
-    if (!remove.exec()) return fail(remove.lastError().text());
+    if (!remove.exec()) {
+        m_database.rollback();
+        return fail(remove.lastError().text());
+    }
+    QSqlQuery remaining(m_database);
+    remaining.prepare(QStringLiteral(
+        "SELECT id FROM plan_exercise WHERE day_id=? ORDER BY sort_order,id"));
+    remaining.addBindValue(dayId);
+    if (!remaining.exec()) {
+        m_database.rollback();
+        return fail(remaining.lastError().text());
+    }
+    int index = 0;
+    while (remaining.next()) {
+        QSqlQuery update(m_database);
+        update.prepare(QStringLiteral("UPDATE plan_exercise SET sort_order=? WHERE id=?"));
+        update.addBindValue(index++);
+        update.addBindValue(remaining.value(0));
+        if (!update.exec()) {
+            m_database.rollback();
+            return fail(update.lastError().text());
+        }
+    }
+    if (!m_database.commit()) {
+        m_database.rollback();
+        return fail(m_database.lastError().text());
+    }
     reload();
     return selectPlan(planId);
 }
@@ -629,7 +662,8 @@ bool PlanManagementController::moveExercise(const QString &dayId, int fromIndex,
     const QString planId = editableDayPlanId(dayId);
     if (planId.isEmpty()) return fail(QStringLiteral("系统计划动作不能排序"));
     QSqlQuery list(m_database);
-    list.prepare(QStringLiteral("SELECT id FROM plan_exercise WHERE day_id=? ORDER BY sort_order"));
+    list.prepare(QStringLiteral(
+        "SELECT id FROM plan_exercise WHERE day_id=? ORDER BY sort_order,id"));
     list.addBindValue(dayId);
     if (!list.exec()) return fail(list.lastError().text());
     QStringList ids;
@@ -637,18 +671,44 @@ bool PlanManagementController::moveExercise(const QString &dayId, int fromIndex,
     if (fromIndex < 0 || fromIndex >= ids.size() || toIndex < 0 || toIndex >= ids.size())
         return fail(QStringLiteral("动作序号无效"));
     ids.move(fromIndex, toIndex);
+    return reorderExercises(dayId, ids);
+}
+
+bool PlanManagementController::reorderExercises(
+    const QString &dayId, const QStringList &orderedExerciseIds)
+{
+    clearError();
+    const QString planId = editableDayPlanId(dayId);
+    if (planId.isEmpty()) return fail(QStringLiteral("系统计划动作不能排序"));
+    QSqlQuery list(m_database);
+    list.prepare(QStringLiteral(
+        "SELECT id FROM plan_exercise WHERE day_id=? ORDER BY sort_order,id"));
+    list.addBindValue(dayId);
+    if (!list.exec()) return fail(list.lastError().text());
+    QStringList existingIds;
+    while (list.next()) existingIds.append(list.value(0).toString());
+    const QSet<QString> orderedSet(orderedExerciseIds.cbegin(), orderedExerciseIds.cend());
+    const QSet<QString> existingSet(existingIds.cbegin(), existingIds.cend());
+    if (orderedExerciseIds.size() != existingIds.size()
+        || orderedSet.size() != orderedExerciseIds.size()
+        || orderedSet != existingSet) {
+        return fail(QStringLiteral("动作顺序与当前训练日不一致"));
+    }
     if (!m_database.transaction()) return fail(m_database.lastError().text());
-    for (int index = 0; index < ids.size(); ++index) {
+    for (int index = 0; index < orderedExerciseIds.size(); ++index) {
         QSqlQuery update(m_database);
         update.prepare(QStringLiteral("UPDATE plan_exercise SET sort_order=? WHERE id=?"));
         update.addBindValue(index);
-        update.addBindValue(ids.at(index));
+        update.addBindValue(orderedExerciseIds.at(index));
         if (!update.exec()) {
             m_database.rollback();
             return fail(update.lastError().text());
         }
     }
-    if (!m_database.commit()) return fail(m_database.lastError().text());
+    if (!m_database.commit()) {
+        m_database.rollback();
+        return fail(m_database.lastError().text());
+    }
     reload();
     return selectPlan(planId);
 }

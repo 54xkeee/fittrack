@@ -108,6 +108,24 @@ bool touchTap(QQuickWindow *window, QPointingDevice *device,
     return touchTapAt(window, device, itemSceneRect(interface, window).center().toPoint());
 }
 
+bool touchDrag(QQuickWindow *window, QPointingDevice *device,
+               const QPoint &from, const QPoint &to)
+{
+    auto sequence = QTest::touchEvent(window, device, false);
+    sequence.press(0, from, window);
+    if (!sequence.commit()) return false;
+    QTest::qWait(60);
+    const QPoint activationPoint = from + (to - from) / 4;
+    sequence.move(0, activationPoint, window);
+    if (!sequence.commit()) return false;
+    QTest::qWait(60);
+    sequence.move(0, to, window);
+    if (!sequence.commit()) return false;
+    QTest::qWait(60);
+    sequence.release(0, to, window);
+    return sequence.commit();
+}
+
 bool touchTapEditor(QQuickWindow *window, QPointingDevice *device, QQuickItem *field)
 {
     const QPointF scenePoint = field->mapToScene(
@@ -344,6 +362,80 @@ void QmlNavigationTest::loadsAndSwitchesEveryPrimaryPage()
     QCOMPARE(editedExercise.value(QStringLiteral("restSeconds")).toInt(),
              preparedExercise.value(QStringLiteral("restSeconds")).toInt());
     QVERIFY(QMetaObject::invokeMethod(parameterSheet, "close"));
+
+    const QVariantList originalPreparationOrder = workoutController.preparation()
+                                                      .value(QStringLiteral("exercises"))
+                                                      .toList();
+    QVERIFY(originalPreparationOrder.size() > 1);
+    const QString firstDraftId = originalPreparationOrder.at(0).toMap()
+                                     .value(QStringLiteral("draftId")).toString();
+    const QString secondDraftId = originalPreparationOrder.at(1).toMap()
+                                      .value(QStringLiteral("draftId")).toString();
+    const QString firstDraftName = originalPreparationOrder.at(0).toMap()
+                                       .value(QStringLiteral("name")).toString();
+    QAccessibleInterface *openOrderSheet = findAccessibleByName(
+        accessibleRoot, QStringLiteral("调整动作顺序"), QAccessible::Button);
+    QVERIFY(openOrderSheet);
+    openOrderSheet->actionInterface()->doAction(QAccessibleActionInterface::pressAction());
+    QObject *preparationOrderSheet = root->findChild<QObject *>(
+        QStringLiteral("preparationExerciseOrderSheet"));
+    QVERIFY(preparationOrderSheet);
+    QTRY_VERIFY(preparationOrderSheet->property("visible").toBool());
+    QTest::qWait(250);
+    QVERIFY(root->setProperty("fontScale", 2.0));
+    window->update();
+    QTest::qWait(120);
+    QVERIFY(preparationOrderSheet->property("width").toReal() <= window->width() + 0.5);
+    QVERIFY(preparationOrderSheet->property("height").toReal() <= window->height() + 0.5);
+    QVERIFY(window->grabWindow().save(QDir(preparationScreenshotDirectory).filePath(
+        QStringLiteral("exercise-order-font-200-360x800.png"))));
+    QVERIFY(root->setProperty("fontScale", 1.0));
+    window->update();
+    QTest::qWait(120);
+    QAccessibleInterface *moveFirstDown = findAccessibleByName(
+        accessibleRoot, QStringLiteral("下移%1").arg(firstDraftName), QAccessible::Button);
+    QVERIFY(moveFirstDown);
+    const QRectF moveDownRect = itemSceneRect(moveFirstDown, window);
+    QVERIFY2(isTouchTargetAtLeast(moveFirstDown, window, 48),
+             qPrintable(QStringLiteral("排序按钮触控区不足：%1×%2")
+                            .arg(moveDownRect.width()).arg(moveDownRect.height())));
+    moveFirstDown->actionInterface()->doAction(QAccessibleActionInterface::pressAction());
+    QCOMPARE(preparationOrderSheet->property("draftItems").toList().first().toMap()
+                 .value(QStringLiteral("draftId")).toString(), secondDraftId);
+    QVERIFY(QMetaObject::invokeMethod(preparationOrderSheet, "reject"));
+    QTRY_VERIFY(!preparationOrderSheet->property("visible").toBool());
+    QCOMPARE(workoutController.preparation().value(QStringLiteral("exercises"))
+                 .toList().first().toMap().value(QStringLiteral("draftId")).toString(),
+             firstDraftId);
+
+    openOrderSheet = findAccessibleByName(
+        accessibleRoot, QStringLiteral("调整动作顺序"), QAccessible::Button);
+    QVERIFY(openOrderSheet);
+    openOrderSheet->actionInterface()->doAction(QAccessibleActionInterface::pressAction());
+    QTRY_VERIFY(preparationOrderSheet->property("visible").toBool());
+    QTest::qWait(250);
+    QAccessibleInterface *dragFirst = findAccessibleByName(
+        accessibleRoot, QStringLiteral("拖动%1调整顺序").arg(firstDraftName),
+        QAccessible::Button);
+    QVERIFY(dragFirst);
+    QVERIFY(isTouchTargetAtLeast(dragFirst, window, 48));
+    const QPoint dragStart = itemSceneRect(dragFirst, window).center().toPoint();
+    QVERIFY(touchDrag(window, touchDevice, dragStart, dragStart + QPoint(0, 132)));
+    QTRY_COMPARE(preparationOrderSheet->property("draftItems").toList().first().toMap()
+                     .value(QStringLiteral("draftId")).toString(), secondDraftId);
+    QCOMPARE(workoutController.preparation().value(QStringLiteral("exercises"))
+                 .toList().first().toMap().value(QStringLiteral("draftId")).toString(),
+             firstDraftId);
+    QVERIFY(window->grabWindow().save(QDir(preparationScreenshotDirectory).filePath(
+        QStringLiteral("exercise-order-touch-360x800.png"))));
+    QAccessibleInterface *saveOrder = findAccessibleByName(
+        accessibleRoot, QStringLiteral("保存顺序"), QAccessible::Button);
+    QVERIFY(saveOrder);
+    saveOrder->actionInterface()->doAction(QAccessibleActionInterface::pressAction());
+    QTRY_VERIFY(!preparationOrderSheet->property("visible").toBool());
+    QCOMPARE(workoutController.preparation().value(QStringLiteral("exercises"))
+                 .toList().first().toMap().value(QStringLiteral("draftId")).toString(),
+             secondDraftId);
 
     QAccessibleInterface *cancelPreparation = findAccessibleByName(
         accessibleRoot, QStringLiteral("取消训练准备"), QAccessible::Button);
@@ -656,6 +748,29 @@ void QmlNavigationTest::loadsAndSwitchesEveryPrimaryPage()
         QVERIFY(capture(QStringLiteral("plans-editable"), viewport));
     const QVariantMap personalDay = planManagement.selectedPlan()
                                         .value(QStringLiteral("days")).toList().first().toMap();
+    QObject *planOrderSheet = root->findChild<QObject *>(
+        QStringLiteral("planExerciseOrderSheet"));
+    QVERIFY(planOrderSheet);
+    QVariantList planOrder = personalDay.value(QStringLiteral("exercises")).toList();
+    QVERIFY(planOrder.size() > 1);
+    const QString planSecondExerciseId = planOrder.at(1).toMap()
+                                             .value(QStringLiteral("id")).toString();
+    QVERIFY(QMetaObject::invokeMethod(
+        planOrderSheet, "openExercises",
+        Q_ARG(QVariant, QVariant(planOrder)), Q_ARG(QVariant, QVariant("id")),
+        Q_ARG(QVariant, QVariant(personalDayId))));
+    QTRY_VERIFY(planOrderSheet->property("visible").toBool());
+    planOrder.move(1, 0);
+    QVERIFY(planOrderSheet->setProperty("draftItems", planOrder));
+    QAccessibleInterface *savePlanOrder = findAccessibleByName(
+        accessibleRoot, QStringLiteral("保存顺序"), QAccessible::Button);
+    QVERIFY(savePlanOrder);
+    savePlanOrder->actionInterface()->doAction(QAccessibleActionInterface::pressAction());
+    QTRY_VERIFY(!planOrderSheet->property("visible").toBool());
+    QCOMPARE(planManagement.selectedPlan().value(QStringLiteral("days")).toList()
+                 .first().toMap().value(QStringLiteral("exercises")).toList()
+                 .first().toMap().value(QStringLiteral("id")).toString(),
+             planSecondExerciseId);
     for (const QSize &viewport : viewports) {
         window->resize(viewport);
         QVERIFY(QMetaObject::invokeMethod(cardioEditor, "openForDay",
@@ -668,6 +783,31 @@ void QmlNavigationTest::loadsAndSwitchesEveryPrimaryPage()
     }
 
     QVERIFY(workoutController.startPlanDay(personalDayId));
+    QObject *workoutOrderSheet = root->findChild<QObject *>(
+        QStringLiteral("workoutExerciseOrderSheet"));
+    QVERIFY(workoutOrderSheet);
+    QVariantList workoutOrder = workoutController.exercises();
+    QVERIFY(workoutOrder.size() > 1);
+    QStringList originalWorkoutIds;
+    for (const QVariant &exercise : std::as_const(workoutOrder))
+        originalWorkoutIds.append(exercise.toMap().value(QStringLiteral("id")).toString());
+    const QString workoutSecondExerciseId = workoutOrder.at(1).toMap()
+                                                .value(QStringLiteral("id")).toString();
+    QVERIFY(QMetaObject::invokeMethod(
+        workoutOrderSheet, "openExercises",
+        Q_ARG(QVariant, QVariant(workoutOrder)), Q_ARG(QVariant, QVariant("id")),
+        Q_ARG(QVariant, QVariant(""))));
+    QTRY_VERIFY(workoutOrderSheet->property("visible").toBool());
+    workoutOrder.move(1, 0);
+    QVERIFY(workoutOrderSheet->setProperty("draftItems", workoutOrder));
+    QAccessibleInterface *saveWorkoutOrder = findAccessibleByName(
+        accessibleRoot, QStringLiteral("保存顺序"), QAccessible::Button);
+    QVERIFY(saveWorkoutOrder);
+    saveWorkoutOrder->actionInterface()->doAction(QAccessibleActionInterface::pressAction());
+    QTRY_VERIFY(!workoutOrderSheet->property("visible").toBool());
+    QCOMPARE(workoutController.exercises().first().toMap()
+                 .value(QStringLiteral("id")).toString(), workoutSecondExerciseId);
+    QVERIFY(workoutController.reorderExercises(originalWorkoutIds));
     restTimer.start(180);
     QVERIFY(navigation->setProperty("currentIndex", 2));
     window->resize(360, 800);

@@ -51,6 +51,8 @@ private slots:
     void preparesWithoutWritingAndCommitsSnapshot();
     void keepsPreparationWhenCommitFails();
     void configuresParametersWithoutRemovingCompletedSets();
+    void reordersPreparedExercisesByStableIds();
+    void reordersActiveExercisesByStableIdsAndRollsBack();
 };
 
 void WorkoutSessionControllerTest::createsPersistsAndResumesWorkout()
@@ -190,6 +192,13 @@ void WorkoutSessionControllerTest::createsPersistsAndResumesWorkout()
     QCOMPARE(freeController.exercises().first().toMap().value(QStringLiteral("name")).toString(), QStringLiteral("杠铃卧推"));
     QVERIFY(freeController.removeExercise(0));
     QCOMPARE(freeController.exercises().size(), 1);
+    QSqlQuery remainingOrder(database);
+    remainingOrder.prepare(QStringLiteral(
+        "SELECT sort_order FROM workout_exercise WHERE session_id=?"));
+    remainingOrder.addBindValue(freeController.sessionId());
+    QVERIFY(remainingOrder.exec());
+    QVERIFY(remainingOrder.next());
+    QCOMPARE(remainingOrder.value(0).toInt(), 0);
     QVERIFY(freeController.saveCurrentAsPlan(
         QStringLiteral("我的胸部计划"), QStringLiteral("Push A"), QStringLiteral("胸部动作")));
     QCOMPARE(freeController.planDays().size(), 2);
@@ -502,6 +511,83 @@ void WorkoutSessionControllerTest::configuresParametersWithoutRemovingCompletedS
         "SELECT rest_seconds FROM workout_exercise LIMIT 1")));
     QVERIFY(persisted.next());
     QCOMPARE(persisted.value(0).toInt(), 60);
+}
+
+void WorkoutSessionControllerTest::reordersPreparedExercisesByStableIds()
+{
+    fittrack::DatabaseManager manager;
+    QString error;
+    QVERIFY2(manager.initialize(QStringLiteral(":memory:"), &error), qPrintable(error));
+    QSqlQuery setup(manager.database());
+    QVERIFY(setup.exec(QStringLiteral(
+        "INSERT INTO exercise(id,name_zh,body_part,movement,load_mode) VALUES"
+        "('bench','杠铃卧推','胸部','水平推','Standard'),"
+        "('row','坐姿划船','背部','水平拉','Standard')")));
+
+    fittrack::WorkoutSessionController controller(manager.database());
+    QCOMPARE(controller.requestPrepareFreeWorkout(QStringLiteral("排序准备"))
+                 .value(QStringLiteral("status")).toString(), QStringLiteral("prepared"));
+    QVERIFY(controller.addPreparedExercise(QStringLiteral("bench")));
+    QVERIFY(controller.addPreparedExercise(QStringLiteral("row")));
+    const QVariantList original = controller.preparation()
+                                      .value(QStringLiteral("exercises")).toList();
+    const QString firstId = original.at(0).toMap()
+                                .value(QStringLiteral("draftId")).toString();
+    const QString secondId = original.at(1).toMap()
+                                 .value(QStringLiteral("draftId")).toString();
+
+    QVERIFY(controller.reorderPreparedExercises({secondId, firstId}));
+    QCOMPARE(controller.preparation().value(QStringLiteral("exercises")).toList()
+                 .first().toMap().value(QStringLiteral("draftId")).toString(), secondId);
+    QVERIFY(!controller.reorderPreparedExercises({firstId, firstId}));
+    QVERIFY(!controller.reorderPreparedExercises({firstId}));
+    QCOMPARE(controller.preparation().value(QStringLiteral("exercises")).toList()
+                 .first().toMap().value(QStringLiteral("draftId")).toString(), secondId);
+}
+
+void WorkoutSessionControllerTest::reordersActiveExercisesByStableIdsAndRollsBack()
+{
+    fittrack::DatabaseManager manager;
+    QString error;
+    QVERIFY2(manager.initialize(QStringLiteral(":memory:"), &error), qPrintable(error));
+    QSqlQuery setup(manager.database());
+    QVERIFY(setup.exec(QStringLiteral(
+        "INSERT INTO exercise(id,name_zh,body_part,movement,load_mode) VALUES"
+        "('bench','杠铃卧推','胸部','水平推','Standard'),"
+        "('row','坐姿划船','背部','水平拉','Standard')")));
+    fittrack::WorkoutSessionController controller(manager.database());
+    QVERIFY(controller.startFreeWorkout(QStringLiteral("排序训练")));
+    QVERIFY(controller.addExercise(QStringLiteral("bench"), 1, QStringLiteral("8")));
+    QVERIFY(controller.addExercise(QStringLiteral("row"), 1, QStringLiteral("10")));
+    const QString firstId = controller.exercises().at(0).toMap()
+                                .value(QStringLiteral("id")).toString();
+    const QString secondId = controller.exercises().at(1).toMap()
+                                 .value(QStringLiteral("id")).toString();
+
+    QVERIFY(controller.reorderExercises({secondId, firstId}));
+    QCOMPARE(controller.exercises().at(0).toMap()
+                 .value(QStringLiteral("id")).toString(), secondId);
+
+    QVERIFY(setup.exec(QStringLiteral(
+        "CREATE TRIGGER fail_workout_reorder BEFORE UPDATE OF sort_order ON workout_exercise "
+        "WHEN NEW.sort_order=0 BEGIN SELECT RAISE(ABORT,'forced reorder failure'); END")));
+    QVERIFY(!controller.reorderExercises({firstId, secondId}));
+    QSqlQuery persisted(manager.database());
+    persisted.prepare(QStringLiteral(
+        "SELECT id,sort_order FROM workout_exercise WHERE session_id=? ORDER BY sort_order,id"));
+    persisted.addBindValue(controller.sessionId());
+    QVERIFY(persisted.exec());
+    QVERIFY(persisted.next());
+    QCOMPARE(persisted.value(0).toString(), secondId);
+    QCOMPARE(persisted.value(1).toInt(), 0);
+    QVERIFY(persisted.next());
+    QCOMPARE(persisted.value(0).toString(), firstId);
+    QCOMPARE(persisted.value(1).toInt(), 1);
+
+    fittrack::WorkoutSessionController restarted(manager.database());
+    QVERIFY(restarted.resumeUnfinished());
+    QCOMPARE(restarted.exercises().at(0).toMap()
+                 .value(QStringLiteral("id")).toString(), secondId);
 }
 
 QTEST_GUILESS_MAIN(WorkoutSessionControllerTest)

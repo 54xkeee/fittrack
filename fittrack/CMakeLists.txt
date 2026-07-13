@@ -119,6 +119,7 @@ qt_add_qml_module(fittrack
         qml/components/ExerciseDetailSheet.qml
         qml/components/ExerciseParameterSheet.qml
         qml/components/ExercisePickerSheet.qml
+        qml/components/ExerciseOrderSheet.qml
         qml/components/MuscleBars.qml
         qml/pages/HomePage.qml
         qml/pages/ExerciseLibraryPage.qml

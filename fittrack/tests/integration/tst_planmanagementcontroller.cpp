@@ -68,6 +68,7 @@ private slots:
     void copiesCompletePlanIntoPersonalScope();
     void usesDefaultCopyNameAndRejectsMissingPlan();
     void rollsBackCopyWhenAChildInsertFails();
+    void reordersByStableIdsAndRollsBack();
 };
 
 void PlanManagementControllerTest::protectsSystemPlansAndManagesPersonalPlans()
@@ -335,6 +336,48 @@ void PlanManagementControllerTest::rollsBackCopyWhenAChildInsertFails()
     QCOMPARE(scalar(manager.database(), QStringLiteral(
         "SELECT COUNT(*) FROM training_plan WHERE name='会失败的副本'" )).toInt(), 0);
     QCOMPARE(plans.selectedPlan().value(QStringLiteral("id")).toString(), QStringLiteral("system"));
+}
+
+void PlanManagementControllerTest::reordersByStableIdsAndRollsBack()
+{
+    fittrack::DatabaseManager manager;
+    QString error;
+    QVERIFY2(manager.initialize(QStringLiteral(":memory:"), &error), qPrintable(error));
+    QVERIFY2(seedPlans(manager.database(), &error), qPrintable(error));
+    fittrack::PlanManagementController plans(manager.database());
+    QVERIFY(plans.copyPlan(QStringLiteral("system"), QStringLiteral("排序测试")));
+
+    const QVariantMap day = plans.selectedPlan().value(QStringLiteral("days"))
+                                .toList().first().toMap();
+    const QString dayId = day.value(QStringLiteral("id")).toString();
+    const QVariantList exercises = day.value(QStringLiteral("exercises")).toList();
+    QCOMPARE(exercises.size(), 2);
+    const QString firstId = exercises.at(0).toMap().value(QStringLiteral("id")).toString();
+    const QString secondId = exercises.at(1).toMap().value(QStringLiteral("id")).toString();
+
+    QVERIFY(plans.reorderExercises(dayId, {secondId, firstId}));
+    QVariantList reordered = plans.selectedPlan().value(QStringLiteral("days"))
+                                 .toList().first().toMap()
+                                 .value(QStringLiteral("exercises")).toList();
+    QCOMPARE(reordered.at(0).toMap().value(QStringLiteral("id")).toString(), secondId);
+    QCOMPARE(reordered.at(1).toMap().value(QStringLiteral("id")).toString(), firstId);
+
+    QSqlQuery trigger(manager.database());
+    QVERIFY(trigger.exec(QStringLiteral(
+        "CREATE TRIGGER fail_plan_reorder BEFORE UPDATE OF sort_order ON plan_exercise "
+        "WHEN NEW.sort_order=0 BEGIN SELECT RAISE(ABORT,'forced reorder failure'); END")));
+    QVERIFY(!plans.reorderExercises(dayId, {firstId, secondId}));
+    QSqlQuery persisted(manager.database());
+    persisted.prepare(QStringLiteral(
+        "SELECT id,sort_order FROM plan_exercise WHERE day_id=? ORDER BY sort_order,id"));
+    persisted.addBindValue(dayId);
+    QVERIFY(persisted.exec());
+    QVERIFY(persisted.next());
+    QCOMPARE(persisted.value(0).toString(), secondId);
+    QCOMPARE(persisted.value(1).toInt(), 0);
+    QVERIFY(persisted.next());
+    QCOMPARE(persisted.value(0).toString(), firstId);
+    QCOMPARE(persisted.value(1).toInt(), 1);
 }
 
 QTEST_GUILESS_MAIN(PlanManagementControllerTest)

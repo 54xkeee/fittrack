@@ -2,6 +2,7 @@
 
 #include <QObject>
 #include <QSqlDatabase>
+#include <QStringList>
 #include <QVariantList>
 #include <QVariantMap>
 
@@ -45,6 +46,8 @@ public:
     Q_INVOKABLE bool setExerciseSection(const QString &planExerciseId, const QString &sectionId);
     Q_INVOKABLE bool removeExercise(const QString &planExerciseId);
     Q_INVOKABLE bool moveExercise(const QString &dayId, int fromIndex, int toIndex);
+    Q_INVOKABLE bool reorderExercises(const QString &dayId,
+                                      const QStringList &orderedExerciseIds);
 
 signals:
     void plansChanged();

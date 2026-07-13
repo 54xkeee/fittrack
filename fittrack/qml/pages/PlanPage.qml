@@ -14,27 +14,17 @@ AppPage {
                                              && String(planManagement.selectedPlan.id).length > 0
     readonly property bool selectedPlanReadOnly: hasSelectedPlan
                                                    && Boolean(planManagement.selectedPlan.isReadOnly)
-    property string draggedDayId: ""
-    property int draggedFromIndex: -1
-    property int draggedToIndex: -1
-
     ExerciseDetailSheet { id: sharedExerciseDetail }
 
-    function beginExerciseDrag(dayId, index) {
-        draggedDayId = dayId
-        draggedFromIndex = index
-        draggedToIndex = index
-    }
-
-    function finishExerciseDrag() {
-        const dayId = draggedDayId
-        const fromIndex = draggedFromIndex
-        const toIndex = draggedToIndex
-        draggedDayId = ""
-        draggedFromIndex = -1
-        draggedToIndex = -1
-        if (dayId.length > 0 && fromIndex >= 0 && toIndex >= 0 && fromIndex !== toIndex)
-            planManagement.moveExercise(dayId, fromIndex, toIndex)
+    ExerciseOrderSheet {
+        id: planOrderSheet
+        objectName: "planExerciseOrderSheet"
+        onSaveRequested: orderedIds => {
+            if (planManagement.reorderExercises(contextId, orderedIds))
+                close()
+            else
+                showError(planManagement.errorMessage)
+        }
     }
 
     function openTextDialog(mode, targetId, currentValue) {
@@ -1018,6 +1008,13 @@ AppPage {
                                         }
                                     }
                                     MenuItem {
+                                        text: qsTr("调整动作顺序")
+                                        enabled: dayCard.modelData.exercises.length > 1
+                                        onTriggered: planOrderSheet.openExercises(
+                                                         dayCard.modelData.exercises,
+                                                         "id", dayCard.modelData.id)
+                                    }
+                                    MenuItem {
                                         text: qsTr("重命名训练日")
                                         onTriggered: page.openTextDialog("renameDay",
                                                                          dayCard.modelData.id,
@@ -1132,52 +1129,14 @@ AppPage {
 
                                     Layout.fillWidth: true
                                     implicitHeight: 68
-                                    color: page.draggedDayId === dayId
-                                           && page.draggedToIndex === exerciseIndex
-                                           && page.draggedFromIndex !== exerciseIndex
-                                           ? Design.Theme.primaryContainer : "transparent"
+                                    color: "transparent"
                                     radius: Design.Theme.radiusSmall
-                                    border.width: page.draggedDayId === dayId
-                                                  && page.draggedToIndex === exerciseIndex
-                                                  && page.draggedFromIndex !== exerciseIndex ? 1 : 0
+                                    border.width: 0
                                     border.color: Design.Theme.primary
-                                    Drag.active: planReorderDrag.active
-                                    Drag.source: exerciseRow
-                                    Drag.keys: ["fittrack-plan-exercise"]
-                                    Drag.hotSpot.x: width / 2
-                                    Drag.hotSpot.y: height / 2
-                                    z: Drag.active ? 10 : 0
-
-                                    DropArea {
-                                        anchors.fill: parent
-                                        keys: ["fittrack-plan-exercise"]
-                                        onEntered: function(drag) {
-                                            if (drag.source && drag.source.dayId === exerciseRow.dayId)
-                                                page.draggedToIndex = exerciseRow.exerciseIndex
-                                        }
-                                    }
 
                                     RowLayout {
                                         anchors.fill: parent
                                         spacing: Design.Theme.space8
-
-                                        IconButton {
-                                            visible: !page.selectedPlanReadOnly
-                                            glyph: "↕"
-                                            accessibleName: qsTr("拖动调整动作顺序")
-
-                                            DragHandler {
-                                                id: planReorderDrag
-                                                target: null
-                                                onActiveChanged: {
-                                                    if (active)
-                                                        page.beginExerciseDrag(exerciseRow.dayId,
-                                                                               exerciseRow.exerciseIndex)
-                                                    else
-                                                        page.finishExerciseDrag()
-                                                }
-                                            }
-                                        }
 
                                         Rectangle {
                                             Layout.preferredWidth: 32

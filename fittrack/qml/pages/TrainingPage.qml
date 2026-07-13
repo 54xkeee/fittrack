@@ -15,6 +15,17 @@ AppPage {
 
     ExerciseDetailSheet { id: sharedExerciseDetail }
 
+    ExerciseOrderSheet {
+        id: workoutOrderSheet
+        objectName: "workoutExerciseOrderSheet"
+        onSaveRequested: orderedIds => {
+            if (workoutController.reorderExercises(orderedIds))
+                close()
+            else
+                showError(workoutController.errorMessage)
+        }
+    }
+
     function exerciseIndexById(exerciseId) {
         for (let i = 0; i < workoutController.exercises.length; ++i) {
             if (workoutController.exercises[i].id === exerciseId)
@@ -209,6 +220,19 @@ AppPage {
                 onClicked: {
                     sessionMenu.close()
                     Qt.callLater(function() { exercisePicker.openForExercise("") })
+                }
+            }
+            AppButton {
+                Layout.fillWidth: true
+                text: qsTr("调整动作顺序")
+                variant: "secondary"
+                enabled: workoutController.exercises.length > 1
+                onClicked: {
+                    sessionMenu.close()
+                    Qt.callLater(function() {
+                        workoutOrderSheet.openExercises(
+                                    workoutController.exercises, "id", "")
+                    })
                 }
             }
             AppButton {
@@ -1664,33 +1688,12 @@ AppPage {
                                                 ? qsTr("当前动作") : qsTr("双击切换到该动作")
                         Accessible.selected: page.selectedExerciseId === modelData.id
                         Accessible.onPressAction: page.selectExercise(modelData.id)
-                        Drag.active: exerciseDrag.active
-                        Drag.source: exerciseRow
-                        Drag.hotSpot.x: width / 2
-                        Drag.hotSpot.y: height / 2
-                        z: Drag.active ? 10 : 0
-
-                        DropArea {
-                            anchors.fill: parent
-                            onDropped: function(drop) {
-                                if (drop.source && drop.source !== exerciseRow)
-                                    workoutController.moveExercise(
-                                                drop.source.exerciseIndex, exerciseRow.exerciseIndex)
-                            }
-                        }
-
                         RowLayout {
                             anchors.fill: parent
                             anchors.leftMargin: Design.Theme.space12
                             anchors.rightMargin: Design.Theme.space4
                             spacing: Design.Theme.space8
 
-                            IconButton {
-                                glyph: "↕"
-                                accessibleName: qsTr("拖动调整%1的顺序").arg(modelData.name)
-                                Accessible.ignored: true
-                                DragHandler { id: exerciseDrag; target: exerciseRow }
-                            }
                             ColumnLayout {
                                 Layout.fillWidth: true
                                 spacing: 0
