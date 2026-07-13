@@ -75,7 +75,7 @@ SQLite v3
 
 一级导航为首页、计划、训练、动作、分析。分析页内部包含趋势、历史、有氧和管理四个页签。训练完成后会保留会话编号并跳转到有氧入口，用户可以附加有氧或取消。
 
-Graphite & Lime 视觉令牌集中在 `qml/theme/Theme.qml`，页面通过 `AppPage`、`AppButton`、`NumberField`、`ConfirmDialog`、`RestTimerBar` 等组件复用安全区、触控尺寸、颜色、间距和状态反馈。首页、训练、计划和历史已经迁移；动作库、趋势、有氧与管理仍需统一。
+Graphite & Lime 视觉令牌集中在 `qml/theme/Theme.qml`，页面通过 `AppPage`、`AppButton`、`NumberField`、`ConfirmDialog`、`InlineFeedback`、`TrendChart`、`RestTimerBar` 等组件复用安全区、触控尺寸、颜色、间距和状态反馈。首页、训练、计划、动作库、趋势、历史、有氧和管理均已纳入移动单列体系。可操作控件使用至少 3:1 的边界对比度，纯信息卡片使用独立的弱轮廓令牌；趋势图同时提供触摸、键盘和辅助技术可读摘要。
 
 `resources/fonts/InterVariable.ttf` 以 SIL OFL 许可内置。启动时通过 `QFontDatabase` 注册，英文、数字和单位使用 Inter，中文由系统字体回退，避免 Windows 离屏渲染选择到符号字体。
 
@@ -86,4 +86,4 @@ cmake --build C:\FitTrackDev\fittrack\build -j 6
 ctest --test-dir C:\FitTrackDev\fittrack\build -j 4 --output-on-failure
 ```
 
-当前 14 项测试覆盖计算、数据库、种子导入、动作、计划、训练、历史、分析、有氧、场馆、备份、倒计时和 QML 导航。QML 测试在 360×800、420×920、480×1056 三档生成主页面、训练进行中和带真实数据的历史详情截图；Android APK、真机生命周期和后台通知不在当前验证范围内。
+当前 14 项测试覆盖计算、数据库、种子导入、动作、计划、训练、历史、分析、有氧、场馆、备份、倒计时和 QML 导航。QML 测试在 360×800、420×920、480×1056 三档生成主页面、训练进行中、带真实数据的历史详情与非空分析截图；Android APK、真机生命周期和后台通知不在当前验证范围内。

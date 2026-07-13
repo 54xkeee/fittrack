@@ -1,11 +1,12 @@
-import QtQuick
+import QtQuick 6.9
 import QtQuick.Controls
 import QtQuick.Layouts
+import "../theme" as Design
 
 Page {
     id: page
     implicitWidth: 0
-    background: Rectangle { color: "#0F0F0F" }
+    background: Rectangle { color: Design.Theme.background }
 
     function openCardio() { tabs.currentIndex = 2 }
 
@@ -15,8 +16,8 @@ Page {
 
         Rectangle {
             Layout.fillWidth: true
-            Layout.preferredHeight: 58
-            color: "#0F0F0F"
+            Layout.preferredHeight: 64 + SafeArea.margins.top
+            color: Design.Theme.background
 
             RowLayout {
                 id: tabs
@@ -24,40 +25,65 @@ Page {
                 property int currentIndex: 0
                 property var items: [qsTr("趋势"), qsTr("历史"), qsTr("有氧"), qsTr("管理")]
 
-                anchors.fill: parent
-                anchors.leftMargin: 12
-                anchors.rightMargin: 12
-                anchors.topMargin: 10
-                anchors.bottomMargin: 8
-                spacing: 6
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.top: parent.top
+                anchors.bottom: parent.bottom
+                anchors.leftMargin: Design.Theme.space16 + SafeArea.margins.left
+                anchors.rightMargin: Design.Theme.space16 + SafeArea.margins.right
+                anchors.topMargin: Design.Theme.space8 + SafeArea.margins.top
+                anchors.bottomMargin: Design.Theme.space8
+                spacing: Design.Theme.space4
 
                 Repeater {
                     model: tabs.items
-                    delegate: Rectangle {
+
+                    delegate: Button {
+                        id: tabButton
                         required property string modelData
                         required property int index
 
                         Layout.fillWidth: true
                         Layout.fillHeight: true
-                        radius: 8
-                        color: tabs.currentIndex === index ? "#C5FF4A" : "#1A1A1A"
-                        border.width: tabs.currentIndex === index ? 0 : 1
-                        border.color: "#2B2D2D"
+                        implicitHeight: Design.Theme.touchTarget
+                        padding: 0
+                        flat: true
+                        Accessible.name: modelData
+                        Accessible.description: tabs.currentIndex === index
+                                                ? qsTr("当前页面") : qsTr("切换页面")
+                        onClicked: tabs.currentIndex = index
 
-                        Label {
-                            anchors.centerIn: parent
-                            text: modelData
-                            color: tabs.currentIndex === index ? "#121212" : "#DADADA"
-                            font.pixelSize: 13
-                            font.bold: tabs.currentIndex === index
+                        contentItem: Label {
+                            text: tabButton.modelData
+                            color: tabs.currentIndex === tabButton.index
+                                   ? Design.Theme.primaryForeground
+                                   : Design.Theme.surfaceMuted
+                            font.pixelSize: Design.Theme.typeLabel
+                            font.weight: tabs.currentIndex === tabButton.index
+                                         ? Font.DemiBold : Font.Normal
+                            horizontalAlignment: Text.AlignHCenter
+                            verticalAlignment: Text.AlignVCenter
+                            elide: Text.ElideRight
                         }
 
-                        MouseArea {
-                            anchors.fill: parent
-                            onClicked: tabs.currentIndex = index
+                        background: Rectangle {
+                            radius: Design.Theme.radiusSmall
+                            color: tabs.currentIndex === tabButton.index
+                                   ? Design.Theme.primary
+                                   : (tabButton.down ? Design.Theme.surfacePressed : "transparent")
+                            border.width: tabs.currentIndex === tabButton.index ? 0 : 1
+                            border.color: Design.Theme.outline
                         }
                     }
                 }
+            }
+
+            Rectangle {
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.bottom: parent.bottom
+                height: 1
+                color: Design.Theme.outline
             }
         }
 
@@ -67,6 +93,7 @@ Page {
             Layout.minimumWidth: 0
             Layout.minimumHeight: 0
             currentIndex: tabs.currentIndex
+
             AnalysisPage { Layout.fillWidth: true; Layout.fillHeight: true }
             HistoryPage { Layout.fillWidth: true; Layout.fillHeight: true }
             CardioPage { Layout.fillWidth: true; Layout.fillHeight: true }

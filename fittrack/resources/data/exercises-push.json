@@ -76,7 +76,16 @@
     "recommendedReps": "8-12次",
     "restSeconds": 120,
     "alternatives": ["barbell-bench-press", "hammer-strength-chest-press"],
-    "media": [],
+    "media": [
+      {
+        "type": "image",
+        "localPath": "qrc:/images/exercises/push/incline-dumbbell-bench-press.png",
+        "url": "https://commons.wikimedia.org/wiki/File:Dumbbell-incline-bench-press-1.png",
+        "title": "上斜哑铃卧推起始位置示意图",
+        "source": "Wikimedia Commons / Everkinetic",
+        "license": "CC BY-SA 3.0"
+      }
+    ],
     "sources": [
       {
         "title": "ACE Exercise Library: Incline Chest Press",
@@ -501,6 +510,222 @@
         "url": "https://www.acefitness.org/continuing-education/prosource/september-2014/4972/dynamite-delts-ace-research-identifies-top-shoulder-exercises/",
         "type": "researchSummary"
       }
+    ]
+  },
+  {
+    "id": "incline-barbell-bench-press",
+    "nameZh": "上斜杠铃卧推",
+    "nameEn": "Incline Barbell Bench Press",
+    "aliases": ["上斜杠铃推胸", "上胸杠铃卧推"],
+    "bodyPart": "胸部",
+    "movement": "上斜推",
+    "equipment": ["杠铃", "上斜卧推架"],
+    "loadMode": "Standard",
+    "primaryMuscles": ["胸大肌锁骨部"],
+    "secondaryMuscles": ["三角肌前束", "肱三头肌", "胸大肌胸肋部"],
+    "introduction": "在上斜凳上完成的杠铃推举，主要训练上胸，并保留杠铃动作便于稳定递增负重的特点。",
+    "steps": [
+      "将凳面调整到约20至35度，双脚踩稳，眼睛位于杠铃下方附近。",
+      "肩胛向后下方稳定，以略宽于肩的闭合握法出杠。",
+      "吸气并受控下放杠铃至上胸附近，保持手腕位于肘部上方。",
+      "双脚持续压地，将杠铃向上略向后推回起始位置。"
+    ],
+    "cautions": [
+      "凳面过高会明显增加三角肌前束参与，不必机械使用45度。",
+      "不要让杠铃砸向锁骨，也不要在胸口反弹。",
+      "使用安全杆或保护者，肩部不适时缩小幅度或改用哑铃。"
+    ],
+    "recommendedSets": 3,
+    "recommendedReps": "6-10次",
+    "restSeconds": 150,
+    "alternatives": ["incline-dumbbell-bench-press", "hammer-strength-chest-press", "barbell-bench-press"],
+    "media": [
+      {
+        "type": "image",
+        "localPath": "qrc:/images/exercises/push/incline-barbell-bench-press.png",
+        "url": "https://commons.wikimedia.org/wiki/File:Incline-bench-press-1.png",
+        "title": "上斜杠铃卧推起始位置示意图",
+        "source": "Wikimedia Commons / Everkinetic",
+        "license": "CC BY-SA 3.0"
+      }
+    ],
+    "sources": [
+      {"title": "ExRx: Barbell Incline Bench Press", "url": "https://exrx.net/WeightExercises/PectoralClavicular/BBInclineBenchPress", "type": "exerciseGuide"},
+      {"title": "ACE Chest Exercise Library", "url": "https://www.acefitness.org/resources/everyone/exercise-library/body-part/chest/", "type": "exerciseLibrary"}
+    ]
+  },
+  {
+    "id": "cable-lateral-raise",
+    "nameZh": "绳索侧平举",
+    "nameEn": "Cable Lateral Raise",
+    "aliases": ["钢线侧平举", "单臂绳索侧平举"],
+    "bodyPart": "肩部",
+    "movement": "肩外展",
+    "equipment": ["CableMachine", "单手把"],
+    "loadMode": "Unilateral",
+    "primaryMuscles": ["三角肌中束"],
+    "secondaryMuscles": ["冈上肌", "斜方肌上束"],
+    "introduction": "利用低位滑轮完成的单臂肩外展动作，起始段也有张力，适合在推举后补充三角肌中束训练。",
+    "steps": [
+      "将滑轮调到最低位，身体侧对器械，用外侧手握把并站稳。",
+      "手肘保持轻微弯曲，肩胛自然稳定，手臂从身体前方或侧方起始。",
+      "沿肩胛平面将手臂抬到接近肩高，肘部带动动作。",
+      "在无痛终点短暂停顿，再控制把手回到起始位置。"
+    ],
+    "cautions": [
+      "不要耸肩或用躯干倾斜甩起重量。",
+      "手腕保持中立，避免用手掌翻转代替肩外展。",
+      "配重片落下前保持控制，左右侧使用相同器械设置。"
+    ],
+    "recommendedSets": 3,
+    "recommendedReps": "12-20次",
+    "restSeconds": 60,
+    "alternatives": ["dumbbell-lateral-raise", "y-raise", "seated-shoulder-press"],
+    "media": [],
+    "sources": [
+      {"title": "ExRx: Cable Lateral Raise", "url": "https://exrx.net/WeightExercises/DeltoidLateral/CBLateralRaise", "type": "exerciseGuide"},
+      {"title": "ACE Shoulder Exercise Library", "url": "https://www.acefitness.org/resources/everyone/exercise-library/body-part/shoulders/", "type": "exerciseLibrary"}
+    ]
+  },
+  {
+    "id": "reverse-pec-deck-fly",
+    "nameZh": "反向蝴蝶机飞鸟",
+    "nameEn": "Reverse Pec Deck Fly",
+    "aliases": ["反向夹胸", "器械后束飞鸟", "反向飞鸟"],
+    "bodyPart": "肩部与上背部",
+    "movement": "水平外展",
+    "equipment": ["反向蝴蝶机"],
+    "loadMode": "Standard",
+    "primaryMuscles": ["三角肌后束"],
+    "secondaryMuscles": ["菱形肌", "斜方肌中束", "冈下肌", "小圆肌"],
+    "introduction": "面向蝴蝶机靠垫完成的水平外展动作，以稳定轨迹训练三角肌后束并让上背部参与肩胛控制。",
+    "steps": [
+      "调整座椅高度，使把手与肩部大致同高，胸口贴住靠垫。",
+      "双手握把，肘部微屈，肩胛保持自然位置。",
+      "以肘部向两侧后方展开，直到上臂接近躯干平面。",
+      "短暂停顿后缓慢合拢手臂，保持配重全程受控。"
+    ],
+    "cautions": [
+      "不要通过挺腰、抬胸或耸肩扩大动作幅度。",
+      "重量过大会让动作变成肩胛猛力后缩而削弱后束控制。",
+      "肩前侧不适时调整握法和座椅高度，不强行向后拉过头。"
+    ],
+    "recommendedSets": 3,
+    "recommendedReps": "12-20次",
+    "restSeconds": 60,
+    "alternatives": ["wide-elbow-seated-row", "y-raise", "face-pull"],
+    "media": [],
+    "sources": [
+      {"title": "ACE Shoulder Exercise Library", "url": "https://www.acefitness.org/resources/everyone/exercise-library/body-part/shoulders/", "type": "exerciseLibrary"},
+      {"title": "ExRx: Lever Rear Delt Fly", "url": "https://exrx.net/WeightExercises/DeltoidPosterior/LVRearLateralRaise", "type": "exerciseGuide"}
+    ]
+  },
+  {
+    "id": "cable-triceps-pushdown",
+    "nameZh": "绳索三头下压",
+    "nameEn": "Cable Triceps Pushdown",
+    "aliases": ["钢线下压", "绳索下压", "三头下压"],
+    "bodyPart": "手臂",
+    "movement": "肘伸",
+    "equipment": ["CableMachine", "绳索或直杆"],
+    "loadMode": "Standard",
+    "primaryMuscles": ["肱三头肌"],
+    "secondaryMuscles": ["肘肌", "前臂肌群"],
+    "introduction": "在高位滑轮前完成的肘伸动作，器械稳定、学习成本低，适合作为推日后段的肱三头肌训练。",
+    "steps": [
+      "将滑轮调到高位，握住绳索或直杆，双脚稳定站立。",
+      "肘部靠近躯干并固定，肩部下沉，前臂位于起始屈肘位置。",
+      "仅通过伸肘向下压把手，直到手臂接近伸直。",
+      "短暂停顿后控制前臂回到起始角度，肘部位置保持不变。"
+    ],
+    "cautions": [
+      "不要用躯干下压、肩关节摆动或肘部前后移动借力。",
+      "顶端不需要猛烈锁死肘关节。",
+      "手腕保持中立，肘部不适时改用绳索和更轻重量。"
+    ],
+    "recommendedSets": 3,
+    "recommendedReps": "10-15次",
+    "restSeconds": 75,
+    "alternatives": ["lying-barbell-triceps-extension", "overhead-cable-triceps-extension", "parallel-bar-dip"],
+    "media": [],
+    "sources": [
+      {"title": "ExRx: Cable Pushdown", "url": "https://exrx.net/WeightExercises/Triceps/CBPushdown", "type": "exerciseGuide"},
+      {"title": "ACE Arm Exercise Library", "url": "https://www.acefitness.org/resources/everyone/exercise-library/body-part/arms/", "type": "exerciseLibrary"}
+    ]
+  },
+  {
+    "id": "overhead-cable-triceps-extension",
+    "nameZh": "绳索过顶臂屈伸",
+    "nameEn": "Overhead Cable Triceps Extension",
+    "aliases": ["过顶绳索臂屈伸", "绳索颈后臂屈伸"],
+    "bodyPart": "手臂",
+    "movement": "肘伸",
+    "equipment": ["CableMachine", "绳索"],
+    "loadMode": "Standard",
+    "primaryMuscles": ["肱三头肌长头"],
+    "secondaryMuscles": ["肱三头肌外侧头", "肘肌", "核心稳定肌群"],
+    "introduction": "在手臂过顶位置完成的绳索肘伸动作，使肱三头肌长头处于较长肌肉长度，可与下压形成互补。",
+    "steps": [
+      "把滑轮调至低位或中低位，背对器械握住绳索并向前站稳。",
+      "双臂举过头，肘部朝向前上方，躯干保持稳定。",
+      "固定上臂，通过伸肘把绳索向前上方拉直。",
+      "控制肘部屈曲，让绳索回到头后无痛位置后重复。"
+    ],
+    "cautions": [
+      "避免腰椎过伸和肋骨外翻，必要时采用分腿站姿。",
+      "肘部不要大幅向外张开或在动作中前后漂移。",
+      "肩部无法舒适过顶时改用仰卧臂屈伸或下压。"
+    ],
+    "recommendedSets": 3,
+    "recommendedReps": "10-15次",
+    "restSeconds": 75,
+    "alternatives": ["cable-triceps-pushdown", "lying-barbell-triceps-extension", "parallel-bar-dip"],
+    "media": [],
+    "sources": [
+      {"title": "ExRx: Cable Standing Triceps Extension", "url": "https://exrx.net/WeightExercises/Triceps/CBStandingTricepsExtension", "type": "exerciseGuide"},
+      {"title": "ACE Arm Exercise Library", "url": "https://www.acefitness.org/resources/everyone/exercise-library/body-part/arms/", "type": "exerciseLibrary"}
+    ]
+  },
+  {
+    "id": "push-up",
+    "nameZh": "俯卧撑",
+    "nameEn": "Push-up",
+    "aliases": ["标准俯卧撑", "伏地挺身"],
+    "bodyPart": "胸部",
+    "movement": "水平推",
+    "equipment": ["自重"],
+    "loadMode": "Bodyweight",
+    "primaryMuscles": ["胸大肌"],
+    "secondaryMuscles": ["肱三头肌", "三角肌前束", "前锯肌", "核心稳定肌群"],
+    "introduction": "以手脚支撑完成的闭链水平推动作，可直接记录自重次数，也可用负重背心或弹力带增加难度。",
+    "steps": [
+      "双手略宽于肩撑地，双脚并拢或自然分开，身体形成直线。",
+      "收紧腹部与臀部，肩胛保持可控，头颈与脊柱中立。",
+      "屈肘将胸部向地面下降，肘部与躯干保持舒适夹角。",
+      "手掌压地推起身体，回到双臂接近伸直的起始位置。"
+    ],
+    "cautions": [
+      "避免塌腰、抬臀或头部先触地。",
+      "手腕不适可使用俯卧撑把手或哑铃作为支撑。",
+      "标准动作困难时提高双手支点，不要用失控的半程次数代替。"
+    ],
+    "recommendedSets": 3,
+    "recommendedReps": "8-20次",
+    "restSeconds": 90,
+    "alternatives": ["barbell-bench-press", "parallel-bar-dip", "hammer-strength-chest-press"],
+    "media": [
+      {
+        "type": "image",
+        "localPath": "qrc:/images/exercises/push/push-up.png",
+        "url": "https://commons.wikimedia.org/wiki/File:Push-ups-2.png",
+        "title": "标准俯卧撑动作示意图",
+        "source": "Wikimedia Commons / Everkinetic",
+        "license": "CC BY-SA 3.0"
+      }
+    ],
+    "sources": [
+      {"title": "ACE: Push-up", "url": "https://www.acefitness.org/resources/everyone/exercise-library/41/push-up/", "type": "exerciseGuide"},
+      {"title": "NSCA Foundations of Fitness Programming", "url": "https://www.nsca.com/contentassets/8323553f698a466a98220b21d9eb9a65/foundationsoffitnessprogramming_201508.pdf", "type": "reference"}
     ]
   }
 ]

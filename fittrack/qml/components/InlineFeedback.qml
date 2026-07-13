@@ -26,7 +26,8 @@ Control {
                                                    tone === "warning" ? "!" :
                                                    tone === "error" ? "×" : "i"
 
-    implicitHeight: 52
+    implicitHeight: Math.max(Design.Theme.controlHeight,
+                             contentItem.implicitHeight + topPadding + bottomPadding)
     padding: Design.Theme.space12
     Accessible.name: message
 
@@ -37,30 +38,38 @@ Control {
         border.color: root.toneColor
     }
 
-    contentItem: RowLayout {
+    contentItem: ColumnLayout {
         spacing: Design.Theme.space12
 
-        Label {
-            text: root.statusGlyph
-            color: root.toneColor
-            font.pixelSize: Design.Theme.typeBody
-            font.weight: Font.Bold
-            horizontalAlignment: Text.AlignHCenter
-            Layout.preferredWidth: 20
-        }
-
-        Label {
-            text: root.message
-            color: root.contentColor
-            font.pixelSize: Design.Theme.typeLabel
-            wrapMode: Text.WordWrap
+        RowLayout {
+            spacing: Design.Theme.space12
             Layout.fillWidth: true
+
+            Label {
+                text: root.statusGlyph
+                color: root.toneColor
+                font.pixelSize: Design.Theme.typeBody
+                font.weight: Font.Bold
+                horizontalAlignment: Text.AlignHCenter
+                Layout.preferredWidth: 20
+                Layout.alignment: Qt.AlignTop
+            }
+
+            Label {
+                text: root.message
+                color: root.contentColor
+                font.pixelSize: Design.Theme.typeLabel
+                wrapMode: Text.WordWrap
+                Layout.fillWidth: true
+                Layout.minimumWidth: 0
+            }
         }
 
         AppButton {
             visible: root.actionText.length > 0
             text: root.actionText
             variant: "secondary"
+            Layout.fillWidth: true
             onClicked: root.actionTriggered()
         }
     }

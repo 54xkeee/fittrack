@@ -15,7 +15,6 @@ ApplicationWindow {
     visible: true
     title: qsTr("训迹 FitTrack")
     color: Design.Theme.background
-    font.family: Qt.application.font.family
     Material.theme: Material.Dark
     Material.accent: Design.Theme.primary
     Material.primary: Design.Theme.surface

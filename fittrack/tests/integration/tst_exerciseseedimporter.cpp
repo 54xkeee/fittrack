@@ -2,6 +2,7 @@
 #include "storage/exerciseseedimporter.h"
 
 #include <QFile>
+#include <QFileInfo>
 #include <QSqlQuery>
 #include <QTest>
 
@@ -104,7 +105,7 @@ void ExerciseSeedImporterTest::importsBundledExerciseData()
     QSqlQuery query(manager.database());
     QVERIFY(query.exec(QStringLiteral("SELECT COUNT(*) FROM exercise")));
     QVERIFY(query.next());
-    QCOMPARE(query.value(0).toInt(), 32);
+    QCOMPARE(query.value(0).toInt(), 52);
     QVERIFY(query.exec(QStringLiteral("SELECT COUNT(*) FROM exercise WHERE body_part IN ('Back','Biceps')")));
     QVERIFY(query.next());
     QCOMPARE(query.value(0).toInt(), 0);
@@ -112,14 +113,28 @@ void ExerciseSeedImporterTest::importsBundledExerciseData()
         "SELECT COUNT(*) FROM exercise WHERE json_array_length(steps_json)=4 "
         "AND json_array_length(cautions_json)=3")));
     QVERIFY(query.next());
-    QCOMPARE(query.value(0).toInt(), 32);
+    QCOMPARE(query.value(0).toInt(), 52);
+    QVERIFY(query.exec(QStringLiteral(
+        "SELECT COUNT(*) FROM exercise WHERE introduction<>'' AND recommended_sets>0 "
+        "AND recommended_reps<>'' AND rest_seconds>0 AND json_array_length(equipment_json)>0 "
+        "AND json_array_length(source_json)>0")));
+    QVERIFY(query.next());
+    QCOMPARE(query.value(0).toInt(), 52);
     QVERIFY(query.exec(QStringLiteral("SELECT COUNT(*) FROM exercise_media")));
     QVERIFY(query.next());
-    QCOMPARE(query.value(0).toInt(), 20);
+    QCOMPARE(query.value(0).toInt(), 26);
     QVERIFY(query.exec(QStringLiteral(
         "SELECT COUNT(*) FROM exercise_media WHERE local_path='' OR external_url='' OR license=''")));
     QVERIFY(query.next());
     QCOMPARE(query.value(0).toInt(), 0);
+    QVERIFY(query.exec(QStringLiteral("SELECT local_path FROM exercise_media")));
+    while (query.next()) {
+        const QString resourcePath = query.value(0).toString();
+        QVERIFY2(resourcePath.startsWith(QStringLiteral("qrc:/")), qPrintable(resourcePath));
+        const QString sourcePath = QStringLiteral(FITTRACK_SOURCE_DIR "/resources/")
+                                   + resourcePath.mid(5);
+        QVERIFY2(QFileInfo::exists(sourcePath), qPrintable(sourcePath));
+    }
 }
 
 QTEST_GUILESS_MAIN(ExerciseSeedImporterTest)

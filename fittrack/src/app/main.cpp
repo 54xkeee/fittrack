@@ -20,6 +20,7 @@
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
 #include <QQuickStyle>
+#include <QResource>
 #include <QStandardPaths>
 
 namespace {
@@ -69,6 +70,7 @@ bool initializeDatabase(fittrack::DatabaseManager &databaseManager)
 
 int main(int argc, char *argv[])
 {
+    Q_INIT_RESOURCE(action_images);
     QGuiApplication app(argc, argv);
     QGuiApplication::setApplicationName(QStringLiteral("FitTrack"));
     QGuiApplication::setOrganizationName(QStringLiteral("FitTrack"));

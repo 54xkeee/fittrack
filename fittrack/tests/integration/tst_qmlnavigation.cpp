@@ -20,6 +20,7 @@
 #include <QQmlContext>
 #include <QQuickStyle>
 #include <QQuickWindow>
+#include <QResource>
 #include <QSize>
 #include <QTest>
 
@@ -132,6 +133,12 @@ void QmlNavigationTest::loadsAndSwitchesEveryPrimaryPage()
         }
     }
 
+    exerciseModel.setSearchText(QStringLiteral("俯卧撑"));
+    QVERIFY(navigation->setProperty("currentIndex", 3));
+    for (const QSize &viewport : viewports)
+        QVERIFY(capture(QStringLiteral("exercise-media"), viewport));
+    exerciseModel.setSearchText({});
+
     QVERIFY(workoutController.startSuggestedDay());
     restTimer.start(180);
     QVERIFY(navigation->setProperty("currentIndex", 2));
@@ -143,6 +150,7 @@ void QmlNavigationTest::loadsAndSwitchesEveryPrimaryPage()
     restTimer.reset();
     QVERIFY(workoutController.finishWorkout());
     workoutHistory.reload();
+    analyticsDashboard.reload();
     QVERIFY(!workoutHistory.sessions().isEmpty());
     QVERIFY(workoutHistory.selectSession(
         workoutHistory.sessions().first().toMap().value(QStringLiteral("id")).toString()));
@@ -153,6 +161,9 @@ void QmlNavigationTest::loadsAndSwitchesEveryPrimaryPage()
     QObject *insightsTabs = root->findChild<QObject *>(QStringLiteral("insightsTabs"));
     QVERIFY(insightsTabs);
     QVERIFY(navigation->setProperty("currentIndex", 4));
+    QVERIFY(insightsTabs->setProperty("currentIndex", 0));
+    for (const QSize &viewport : viewports)
+        QVERIFY(capture(QStringLiteral("insights-data"), viewport));
     const QList<QPair<int, QString>> secondaryPages{
         {1, QStringLiteral("history")},
         {2, QStringLiteral("cardio")},
@@ -167,6 +178,7 @@ void QmlNavigationTest::loadsAndSwitchesEveryPrimaryPage()
 
 int main(int argc, char **argv)
 {
+    Q_INIT_RESOURCE(action_images);
     if (!qEnvironmentVariableIsSet("QT_QPA_PLATFORM")) qputenv("QT_QPA_PLATFORM", "offscreen");
     if (!qEnvironmentVariableIsSet("QSG_RHI_BACKEND")) qputenv("QSG_RHI_BACKEND", "software");
     QGuiApplication app(argc, argv);

@@ -256,5 +256,191 @@
       {"title": "ACE Applied Exercise Science Activities", "url": "https://www.acefitness.org/academy/AcademyElitePDFs/ESS-AES_Download_Final.pdf", "type": "anatomyReference"},
       {"title": "ACE Butt & Hip Exercise Library", "url": "https://www.acefitness.org/resources/everyone/exercise-library/body-part/butt-hips/", "type": "exerciseLibrary"}
     ]
+  },
+  {
+    "id": "leg-extension",
+    "nameZh": "腿屈伸",
+    "nameEn": "Leg Extension",
+    "aliases": ["坐姿腿屈伸", "器械腿屈伸", "Leg Extension Machine"],
+    "bodyPart": "臀腿",
+    "movement": "膝伸",
+    "equipment": ["腿屈伸机"],
+    "loadMode": "Standard",
+    "primaryMuscles": ["股四头肌"],
+    "secondaryMuscles": [],
+    "introduction": "在固定器械上主动伸膝的单关节动作，主要训练股四头肌。器械能够稳定躯干并减少平衡要求，适合在复合下肢动作之后补充局部训练；不同设备的转轴、力臂和配重标定不同，历史重量应优先在同一台器械上比较。",
+    "steps": ["调整靠背和座椅，使膝关节大致对齐器械转轴，小腿垫落在脚踝上方。", "背部和骨盆贴稳靠垫，双手握住把手，膝盖自然弯曲到无痛起始角度。", "收紧股四头肌并平稳伸膝，将小腿抬起至接近伸直但不猛烈锁死。", "在顶端短暂停顿，随后控制配重回落，保持张力并完成下一次。"],
+    "cautions": ["膝关节未对齐转轴会改变受力，开始前必须先调座椅。", "不要踢甩配重、抬起臀部或依靠惯性冲过顶端。", "膝前出现尖锐疼痛时应缩小活动范围、减轻重量或停止动作。"],
+    "recommendedSets": 3,
+    "recommendedReps": "10-15次",
+    "restSeconds": 60,
+    "alternatives": ["hack-squat", "leg-press", "smith-machine-squat"],
+    "media": [
+      {
+        "type": "image",
+        "localPath": "qrc:/images/exercises/legs/leg-extension.png",
+        "url": "https://commons.wikimedia.org/wiki/File:Leg-extensions-1-672x1024.png",
+        "title": "坐姿腿屈伸起始位置示意图",
+        "source": "Wikimedia Commons / Everkinetic",
+        "license": "CC BY-SA 3.0"
+      }
+    ],
+    "sources": [
+      {"title": "ACE Legs & Thighs Exercise Library", "url": "https://www.acefitness.org/resources/everyone/exercise-library/body-part/legs-thighs/", "type": "exerciseLibrary"},
+      {"title": "Foundations of Fitness Programming", "url": "https://www.nsca.com/contentassets/8323553f698a466a98220b21d9eb9a65/foundationsoffitnessprogramming_201508.pdf", "type": "reference"}
+    ]
+  },
+  {
+    "id": "lying-leg-curl",
+    "nameZh": "俯卧腿弯举",
+    "nameEn": "Lying Leg Curl",
+    "aliases": ["俯卧屈腿", "俯卧腘绳肌弯举", "Prone Leg Curl"],
+    "bodyPart": "臀腿",
+    "movement": "膝屈",
+    "equipment": ["俯卧腿弯举机"],
+    "loadMode": "Standard",
+    "primaryMuscles": ["腘绳肌"],
+    "secondaryMuscles": ["腓肠肌"],
+    "introduction": "俯卧在固定器械上对抗阻力完成屈膝，主要训练腘绳肌的膝屈功能。躯干由靠垫支撑，但仍需控制骨盆位置，避免以腰椎伸展和臀部抬起代偿。",
+    "steps": ["调整器械，使膝关节接近座垫边缘或器械转轴，小腿垫位于脚踝上方。", "俯卧并握住把手，髋部和腹部贴稳靠垫，双腿自然伸展。", "保持大腿稳定，收缩腘绳肌将脚跟朝臀部方向弯起。", "到达可控终点后短暂停顿，再缓慢伸膝让配重回落但不撞击配重片。"],
+    "cautions": ["不要抬高髋部或过度反弓腰椎来缩短动作行程。", "小腿垫不要直接压在跟腱或膝窝位置。", "回落阶段保持控制，避免膝关节被配重突然拉直。"],
+    "recommendedSets": 3,
+    "recommendedReps": "8-15次",
+    "restSeconds": 60,
+    "alternatives": ["seated-leg-curl", "romanian-deadlift"],
+    "media": [
+      {
+        "type": "image",
+        "localPath": "qrc:/images/exercises/legs/lying-leg-curl.png",
+        "url": "https://commons.wikimedia.org/wiki/File:Lying_leg_curl_machine_1.svg",
+        "title": "俯卧腿弯举器械起始位置示意图",
+        "source": "Wikimedia Commons / Everkinetic",
+        "license": "CC BY-SA 3.0"
+      }
+    ],
+    "sources": [
+      {"title": "ACE Legs & Thighs Exercise Library", "url": "https://www.acefitness.org/resources/everyone/exercise-library/body-part/legs-thighs/", "type": "exerciseLibrary"},
+      {"title": "Foundations of Fitness Programming", "url": "https://www.nsca.com/contentassets/8323553f698a466a98220b21d9eb9a65/foundationsoffitnessprogramming_201508.pdf", "type": "reference"}
+    ]
+  },
+  {
+    "id": "seated-leg-curl",
+    "nameZh": "坐姿腿弯举",
+    "nameEn": "Seated Leg Curl",
+    "aliases": ["坐姿屈腿", "坐姿腘绳肌弯举", "Seated Hamstring Curl"],
+    "bodyPart": "臀腿",
+    "movement": "膝屈",
+    "equipment": ["坐姿腿弯举机"],
+    "loadMode": "Standard",
+    "primaryMuscles": ["腘绳肌"],
+    "secondaryMuscles": ["腓肠肌"],
+    "introduction": "坐姿器械腿弯举在髋关节屈曲的姿势下完成膝屈，主要训练腘绳肌。大腿固定垫有助于稳定身体，动作适合作为罗马尼亚硬拉等髋铰链训练的补充。",
+    "steps": ["调整靠背、膝部固定垫和小腿垫，使膝关节对齐器械转轴，小腿垫位于脚踝上方。", "坐稳并让背部贴紧靠垫，固定垫压稳大腿但不造成明显不适。", "握住把手，收缩腘绳肌将小腿平稳向下、向后弯曲。", "在终点短暂停顿，随后控制配重返回到膝盖接近伸展的起始位置。"],
+    "cautions": ["不要让臀部离开座位或借助上身前后摆动。", "固定垫过松会使大腿抬起，过紧则可能压迫不适，应先调整。", "不要快速弹回或在膝关节完全伸直位置承受突然牵拉。"],
+    "recommendedSets": 3,
+    "recommendedReps": "8-15次",
+    "restSeconds": 60,
+    "alternatives": ["lying-leg-curl", "romanian-deadlift"],
+    "media": [],
+    "sources": [
+      {"title": "ACE Legs & Thighs Exercise Library", "url": "https://www.acefitness.org/resources/everyone/exercise-library/body-part/legs-thighs/", "type": "exerciseLibrary"},
+      {"title": "ACSM Progression Models in Resistance Training for Healthy Adults", "url": "https://pubmed.ncbi.nlm.nih.gov/19204579/", "type": "positionStand"}
+    ]
+  },
+  {
+    "id": "barbell-hip-thrust",
+    "nameZh": "杠铃臀推",
+    "nameEn": "Barbell Hip Thrust",
+    "aliases": ["臀推", "杠铃髋推", "Barbell Hip Thrust"],
+    "bodyPart": "臀腿",
+    "movement": "髋伸展",
+    "equipment": ["杠铃", "杠铃片", "训练凳", "护垫"],
+    "loadMode": "Standard",
+    "primaryMuscles": ["臀大肌"],
+    "secondaryMuscles": ["腘绳肌", "内收大肌", "腹部核心"],
+    "introduction": "以上背支撑在训练凳、杠铃横跨髋部完成的髋伸展动作，重点训练臀大肌。与站姿髋铰链不同，顶端附近仍具有明显负荷；稳定的凳面、护垫和对称装片是安全执行的前提。",
+    "steps": ["坐在稳定训练凳前，将上背靠在凳边，杠铃滚至髋部并放好护垫。", "双脚约与髋同宽踩稳地面，膝盖弯曲，双手扶稳杠铃防止滚动。", "收紧躯干并用脚掌压地，伸髋将杠铃抬起，保持膝盖跟随脚尖方向。", "抬至躯干与大腿接近一条直线，收紧臀部后控制髋部下降。"],
+    "cautions": ["顶端通过伸髋完成，不要为了抬得更高而过度反弓腰椎。", "训练凳必须防滑且高度合适，杠铃两侧装片和卡扣应对称。", "双脚离臀部过近或过远都会改变膝髋受力，应调整到顶端小腿接近垂直。"],
+    "recommendedSets": 3,
+    "recommendedReps": "6-12次",
+    "restSeconds": 90,
+    "alternatives": ["romanian-deadlift", "back-extension", "single-leg-deadlift"],
+    "media": [],
+    "sources": [
+      {"title": "ACE Butt & Hip Exercise Library", "url": "https://www.acefitness.org/resources/everyone/exercise-library/body-part/butt-hips/", "type": "exerciseLibrary"},
+      {"title": "Foundations of Fitness Programming", "url": "https://www.nsca.com/contentassets/8323553f698a466a98220b21d9eb9a65/foundationsoffitnessprogramming_201508.pdf", "type": "reference"}
+    ]
+  },
+  {
+    "id": "standing-calf-raise",
+    "nameZh": "站姿提踵",
+    "nameEn": "Standing Calf Raise",
+    "aliases": ["站姿小腿提踵", "器械站姿提踵", "Standing Heel Raise"],
+    "bodyPart": "臀腿",
+    "movement": "踝跖屈",
+    "equipment": ["站姿提踵机"],
+    "loadMode": "Standard",
+    "primaryMuscles": ["腓肠肌"],
+    "secondaryMuscles": ["比目鱼肌"],
+    "introduction": "在膝关节接近伸直的站姿下完成踝关节跖屈，主要训练跨越膝关节的腓肠肌，同时也会使用比目鱼肌。器械版本便于稳定负重，动作质量取决于足底稳定和可控活动范围。",
+    "steps": ["将前脚掌稳定放在踏板边缘，调整肩垫或支撑位置并解除安全装置。", "双腿伸直但不过度锁膝，脚跟自然下沉到小腿有拉伸且仍可控制的位置。", "以前脚掌压住踏板，抬高脚跟并完成充分跖屈。", "顶端短暂停顿，再缓慢降低脚跟回到起始位置。"],
+    "cautions": ["不要用膝盖反复屈伸或身体弹跳代替踝关节动作。", "足弓塌陷、脚踝明显向内或向外翻时应减轻重量。", "跟腱或足底出现尖锐疼痛时停止训练，不要强行追求更深拉伸。"],
+    "recommendedSets": 3,
+    "recommendedReps": "10-20次",
+    "restSeconds": 60,
+    "alternatives": ["seated-calf-raise", "leg-press"],
+    "media": [],
+    "sources": [
+      {"title": "ACE Standing Calf Raises", "url": "https://www.acefitness.org/resources/everyone/exercise-library/73/standing-calf-raises/", "type": "exerciseGuide"},
+      {"title": "Foundations of Fitness Programming", "url": "https://www.nsca.com/contentassets/8323553f698a466a98220b21d9eb9a65/foundationsoffitnessprogramming_201508.pdf", "type": "reference"}
+    ]
+  },
+  {
+    "id": "seated-calf-raise",
+    "nameZh": "坐姿提踵",
+    "nameEn": "Seated Calf Raise",
+    "aliases": ["坐姿小腿提踵", "器械坐姿提踵", "Seated Heel Raise"],
+    "bodyPart": "臀腿",
+    "movement": "踝跖屈",
+    "equipment": ["坐姿提踵机"],
+    "loadMode": "Standard",
+    "primaryMuscles": ["比目鱼肌"],
+    "secondaryMuscles": ["腓肠肌"],
+    "introduction": "在膝关节屈曲的坐姿下完成踝关节跖屈，主要训练比目鱼肌，也会使用腓肠肌。器械的膝垫将负荷传至大腿，适合与站姿提踵搭配记录，但不同机器的配重不宜直接横向比较。",
+    "steps": ["坐在器械上，将前脚掌放稳踏板，膝垫落在大腿下段并调整到舒适位置。", "扶稳把手并解除安全卡扣，让脚跟在可控范围内自然下沉。", "以前脚掌压住踏板，抬高脚跟直至小腿充分收缩。", "顶端短暂停顿，再缓慢下降脚跟并保持足底方向稳定。"],
+    "cautions": ["膝垫不要直接压在髌骨上，开始前确认卡扣能正常复位。", "不要用快速弹震或缩短行程来完成过重负荷。", "保持前脚掌均匀受力，避免脚踝在负重下明显内翻或外翻。"],
+    "recommendedSets": 3,
+    "recommendedReps": "12-20次",
+    "restSeconds": 60,
+    "alternatives": ["standing-calf-raise", "leg-press"],
+    "media": [],
+    "sources": [
+      {"title": "ACE Legs & Thighs Exercise Library", "url": "https://www.acefitness.org/resources/everyone/exercise-library/body-part/legs-thighs/", "type": "exerciseLibrary"},
+      {"title": "ACSM Progression Models in Resistance Training for Healthy Adults", "url": "https://pubmed.ncbi.nlm.nih.gov/19204579/", "type": "positionStand"}
+    ]
+  },
+  {
+    "id": "smith-machine-squat",
+    "nameZh": "史密斯深蹲",
+    "nameEn": "Smith Machine Squat",
+    "aliases": ["史密斯机深蹲", "史密斯后蹲", "Smith Squat"],
+    "bodyPart": "臀腿",
+    "movement": "器械蹲",
+    "equipment": ["史密斯机", "杠铃片"],
+    "loadMode": "Standard",
+    "primaryMuscles": ["股四头肌", "臀大肌"],
+    "secondaryMuscles": ["内收大肌", "腘绳肌", "腹部核心"],
+    "introduction": "在史密斯机固定轨迹下完成的深蹲变式，主要训练股四头肌和臀大肌。固定轨迹降低了杠铃水平移动的自由度，但不会自动保证动作安全；站位必须适应该设备的垂直或倾斜轨道。",
+    "steps": ["将杠铃调至上背高度并设置安全限位，进入杠下让杆落在上背肌肉形成的稳定位置。", "旋转挂钩解除锁定，双脚按轨道方向调整到稳定站位，收紧躯干。", "屈髋屈膝沿轨道下蹲，膝盖跟随脚尖方向，保持全脚掌受力。", "到达可控深度后压地站起，顶端稳定后旋转杠铃重新挂回卡位。"],
+    "cautions": ["不同史密斯机轨道角度不同，不要机械复制另一台设备的站位。", "训练前设置安全限位并确认旋转挂钩能够可靠锁定。", "不要让腰背离开中立位置、膝盖内扣或脚跟抬起以追求更深幅度。"],
+    "recommendedSets": 3,
+    "recommendedReps": "6-12次",
+    "restSeconds": 90,
+    "alternatives": ["barbell-back-squat", "hack-squat", "leg-press"],
+    "media": [],
+    "sources": [
+      {"title": "ACE Legs & Thighs Exercise Library", "url": "https://www.acefitness.org/resources/everyone/exercise-library/body-part/legs-thighs/", "type": "exerciseLibrary"},
+      {"title": "Foundations of Fitness Programming", "url": "https://www.nsca.com/contentassets/8323553f698a466a98220b21d9eb9a65/foundationsoffitnessprogramming_201508.pdf", "type": "reference"}
+    ]
   }
 ]

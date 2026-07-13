@@ -1,12 +1,13 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import "../theme" as Design
 
 AppCard {
     id: root
     property string title: ""
     property var items: []
-    padding: 14
+    padding: Design.Theme.space16
 
     function maximum() {
         let value = 1
@@ -16,8 +17,17 @@ AppCard {
 
     ColumnLayout {
         anchors.fill: parent
-        Label { text: root.title; font.bold: true; font.pixelSize: 16 }
-        Label { visible: root.items.length === 0; text: qsTr("暂无数据"); color: "#AEB7B1" }
+        Label {
+            text: root.title
+            color: Design.Theme.surfaceText
+            font.weight: Font.DemiBold
+            font.pixelSize: Design.Theme.typeBody
+        }
+        Label {
+            visible: root.items.length === 0
+            text: qsTr("暂无数据")
+            color: Design.Theme.surfaceMuted
+        }
         Repeater {
             model: root.items
             delegate: RowLayout {
@@ -28,12 +38,12 @@ AppCard {
                     Layout.fillWidth: true
                     Layout.preferredHeight: 12
                     radius: 6
-                    color: "#27302C"
+                    color: Design.Theme.surfaceElevated
                     Rectangle {
                         width: parent.width * Number(modelData.sets) / root.maximum()
                         height: parent.height
                         radius: 6
-                        color: "#8BD450"
+                        color: Design.Theme.primary
                     }
                 }
                 Label { text: modelData.sets + qsTr("组"); Layout.preferredWidth: 36 }

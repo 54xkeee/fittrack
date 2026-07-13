@@ -1,31 +1,32 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import "../theme" as Design
 
 AppCard {
     id: card
     property string label: ""
     property string value: "--"
     property string footnote: ""
-    property color accentColor: "#C5FF4A"
+    property color accentColor: Design.Theme.primary
 
-    padding: 16
+    padding: Design.Theme.space16
 
     ColumnLayout {
         anchors.fill: parent
-        spacing: 6
+        spacing: Design.Theme.space4
 
         Label {
             text: card.label
-            color: "#A8AAA9"
-            font.pixelSize: 13
+            color: Design.Theme.surfaceMuted
+            font.pixelSize: Design.Theme.typeCaption
         }
 
         Label {
             text: card.value
-            color: "#F3F0EF"
-            font.pixelSize: 23
-            font.bold: true
+            color: Design.Theme.surfaceText
+            font.pixelSize: Design.Theme.typeTitle
+            font.weight: Font.Bold
             elide: Text.ElideRight
             Layout.fillWidth: true
         }
@@ -34,7 +35,7 @@ AppCard {
             visible: text.length > 0
             text: card.footnote
             color: card.accentColor
-            font.pixelSize: 11
+            font.pixelSize: Design.Theme.typeCaption
             elide: Text.ElideRight
             Layout.fillWidth: true
         }

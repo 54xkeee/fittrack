@@ -26,6 +26,6 @@ Frame {
         color: Design.Theme.surface
         radius: Design.Theme.radiusMedium
         border.width: 1
-        border.color: Design.Theme.outline
+        border.color: Design.Theme.outlineSubtle
     }
 }

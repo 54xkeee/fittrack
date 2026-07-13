@@ -41,7 +41,7 @@ void ExerciseListModelTest::exposesAllBundledExercises()
     QVERIFY(ExerciseSeedImporter::importDocuments(manager.database(), documents(), &error));
 
     ExerciseListModel model(manager.database());
-    QCOMPARE(model.rowCount(), 32);
+    QCOMPARE(model.rowCount(), 52);
     int benchRow = -1;
     for (int row = 0; row < model.rowCount(); ++row) {
         if (model.data(model.index(row), ExerciseListModel::ExerciseIdRole).toString()
@@ -73,7 +73,7 @@ void ExerciseListModelTest::filtersByAliasAndBodyPart()
 
     model.setSearchText({});
     model.setBodyPart(QStringLiteral("背部"));
-    QCOMPARE(model.rowCount(), 10);
+    QCOMPARE(model.rowCount(), 13);
 }
 
 void ExerciseListModelTest::managesFavoritesFiltersAndCustomExercises()
@@ -135,7 +135,17 @@ void ExerciseListModelTest::managesFavoritesFiltersAndCustomExercises()
         "UPDATE exercise SET name_zh='被修改' WHERE id='barbell-bench-press'")));
     QVERIFY(model.restoreSystemExercises());
     model.setSearchText(QStringLiteral("杠铃卧推"));
-    QCOMPARE(model.rowCount(), 1);
+    bool benchRestored = false;
+    for (int row = 0; row < model.rowCount(); ++row) {
+        const QModelIndex index = model.index(row);
+        if (model.data(index, ExerciseListModel::ExerciseIdRole).toString()
+                == QStringLiteral("barbell-bench-press")
+            && model.data(index, ExerciseListModel::NameRole).toString() == QStringLiteral("杠铃卧推")) {
+            benchRestored = true;
+            break;
+        }
+    }
+    QVERIFY(benchRestored);
 }
 
 QTEST_GUILESS_MAIN(ExerciseListModelTest)

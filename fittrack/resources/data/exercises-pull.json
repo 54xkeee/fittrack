@@ -480,5 +480,301 @@
         "type": "article"
       }
     ]
+  },
+  {
+    "id": "chest-supported-machine-row",
+    "nameZh": "胸托器械划船",
+    "nameEn": "Chest-Supported Machine Row",
+    "aliases": ["胸托划船", "器械胸托划船"],
+    "bodyPart": "背部",
+    "movement": "水平拉",
+    "equipment": ["ChestSupportedRowMachine"],
+    "loadMode": "Standard",
+    "primaryMuscles": ["背阔肌", "菱形肌", "中斜方肌"],
+    "secondaryMuscles": ["后三角肌", "肱二头肌", "肱肌", "大圆肌"],
+    "introduction": "利用胸垫稳定躯干完成水平拉，减少下背部等长支撑和借力需求，适合集中训练背阔肌及肩胛后缩肌群。不同器械的握把和运动轨迹差异较大，应先调整座椅并用轻重量确认肩部活动舒适。",
+    "steps": [
+      "调整座椅和胸垫，使握把大致与下胸或上腹同高，双脚踩稳地面。",
+      "胸口贴住支撑垫，握住把手并伸展手臂，让肩胛在可控范围内自然前伸。",
+      "保持胸口不离垫，将肘部向身后拉，直到把手接近躯干。",
+      "短暂停顿后缓慢伸直手臂，让肩胛受控前伸并回到起点。"
+    ],
+    "cautions": [
+      "不要抬头、挺腰或让胸口离开支撑垫来缩短动作。",
+      "肘部不必过度拉到身体后方，以免肩头向前顶出。",
+      "若器械轨迹造成肩前侧夹挤，应调整座椅、握法或更换器械。"
+    ],
+    "recommendedSets": 3,
+    "recommendedReps": "8-15",
+    "restSeconds": 90,
+    "alternatives": ["single-arm-machine-row", "seated-cable-row", "seal-row"],
+    "media": [],
+    "sources": [
+      {
+        "title": "ACE: Seated Row",
+        "url": "https://www.acefitness.org/resources/everyone/exercise-library/48/seated-row/",
+        "type": "exerciseGuide"
+      },
+      {
+        "title": "ExRx.net: Lever Seated Row",
+        "url": "https://exrx.net/WeightExercises/BackGeneral/LVSeatedRow",
+        "type": "exerciseGuide"
+      }
+    ]
+  },
+  {
+    "id": "t-bar-row",
+    "nameZh": "T杠划船",
+    "nameEn": "T-Bar Row",
+    "aliases": ["T杆划船", "地雷架划船"],
+    "bodyPart": "背部",
+    "movement": "水平拉",
+    "equipment": ["TBarRowMachine", "WeightPlates"],
+    "loadMode": "Standard",
+    "primaryMuscles": ["背阔肌", "菱形肌", "中斜方肌"],
+    "secondaryMuscles": ["后三角肌", "肱二头肌", "肱肌", "竖脊肌", "臀大肌", "腘绳肌"],
+    "introduction": "使用T杠器械或固定一端的杠铃完成划船，负重路径相对稳定，适合背部较重的水平拉训练。无胸托版本仍需要髋铰链和躯干稳定能力，不能把它当作完全由器械支撑的动作。",
+    "steps": [
+      "站在T杠两侧或踏板上，屈髋俯身并握住把手，膝盖保持微屈。",
+      "收紧腹部，维持脊柱中立，让手臂在肩部下方自然伸展。",
+      "保持躯干角度基本不变，将肘部向身后拉，使把手接近上腹部。",
+      "短暂停顿后控制重量下降，直到手臂伸展且肩胛自然前伸。"
+    ],
+    "cautions": [
+      "不要通过反复起身、耸肩或腰背甩动来带起重量。",
+      "杠铃地雷架版本必须确认固定端和装片卡扣稳定。",
+      "下背部先于背部疲劳时，应减轻重量或改用胸托划船。"
+    ],
+    "recommendedSets": 3,
+    "recommendedReps": "6-12",
+    "restSeconds": 120,
+    "alternatives": ["bent-over-barbell-row", "chest-supported-machine-row", "seal-row"],
+    "media": [
+      {
+        "type": "image",
+        "localPath": "qrc:/images/exercises/pull/t-bar-row.png",
+        "url": "https://commons.wikimedia.org/wiki/File:T-bar-row-1.png",
+        "title": "T杠划船起始位置示意图",
+        "source": "Wikimedia Commons / Everkinetic",
+        "license": "CC BY-SA 3.0"
+      }
+    ],
+    "sources": [
+      {
+        "title": "ExRx.net: Lever T-Bar Row",
+        "url": "https://exrx.net/WeightExercises/BackGeneral/LVTBarRow",
+        "type": "exerciseGuide"
+      },
+      {
+        "title": "ACE: Evidence-based Approach to Resistance Training for the Back",
+        "url": "https://www.acefitness.org/resources/pros/expert-articles/8944/a-back-to-school-program-an-evidence-based-approach-to-training-the-back/",
+        "type": "article"
+      }
+    ]
+  },
+  {
+    "id": "straight-arm-cable-pulldown",
+    "nameZh": "直臂下压",
+    "nameEn": "Straight-Arm Cable Pulldown",
+    "aliases": ["直臂下拉", "钢线直臂下压"],
+    "bodyPart": "背部",
+    "movement": "肩伸",
+    "equipment": ["CableMachine", "LatBar"],
+    "loadMode": "Standard",
+    "primaryMuscles": ["背阔肌"],
+    "secondaryMuscles": ["大圆肌", "肱三头肌长头", "腹部与核心"],
+    "introduction": "在高位滑轮前保持肘部接近伸直，将把手沿弧线压向大腿。它减少了肘屈肌参与，可作为背阔肌的辅助动作，也有助于体会肩关节伸展时的背部发力。",
+    "steps": [
+      "将直杆接在高位滑轮，双手略宽于肩握住把手并后退半步。",
+      "膝盖微屈、躯干轻微前倾，收紧腹部，手臂向前上方伸展。",
+      "保持肘部仅有轻微固定弯曲，将把手沿弧线压向大腿前侧。",
+      "在底部短暂停顿，再控制把手上升至背阔肌得到充分拉长。"
+    ],
+    "cautions": [
+      "不要把动作变成三头下压；肘部角度应在全程基本不变。",
+      "避免用躯干上下起伏或腰部过度反弓来移动重量。",
+      "肩部不适时缩小无痛范围并降低重量，不要强求把手压得更低。"
+    ],
+    "recommendedSets": 3,
+    "recommendedReps": "10-15",
+    "restSeconds": 60,
+    "alternatives": ["single-arm-cable-pulldown", "lat-pulldown", "neutral-grip-lat-pulldown"],
+    "media": [],
+    "sources": [
+      {
+        "title": "ExRx.net: Cable Straight-Arm Pulldown",
+        "url": "https://exrx.net/WeightExercises/LatissimusDorsi/CBStraightArmPulldown",
+        "type": "exerciseGuide"
+      },
+      {
+        "title": "ACE: Evidence-based Approach to Resistance Training for the Back",
+        "url": "https://www.acefitness.org/resources/pros/expert-articles/8944/a-back-to-school-program-an-evidence-based-approach-to-training-the-back/",
+        "type": "article"
+      }
+    ]
+  },
+  {
+    "id": "face-pull",
+    "nameZh": "面拉",
+    "nameEn": "Cable Face Pull",
+    "aliases": ["绳索面拉", "钢线面拉"],
+    "bodyPart": "肩部",
+    "movement": "水平拉",
+    "equipment": ["CableMachine", "RopeAttachment"],
+    "loadMode": "Standard",
+    "primaryMuscles": ["后三角肌", "中斜方肌", "菱形肌"],
+    "secondaryMuscles": ["下斜方肌", "肩袖肌群", "肱二头肌", "肱肌"],
+    "introduction": "将绳索拉向面部并配合肩关节外旋的上背和后束动作。合理负重下，它能训练肩胛后缩、后束发力和外旋控制，但不应被当作治疗肩痛的替代方案。",
+    "steps": [
+      "将绳索接在大致与眼睛同高的滑轮，双手握住绳端并后退至钢线张紧。",
+      "双脚站稳、躯干直立，手臂向前伸展并保持肩膀远离耳朵。",
+      "将绳索拉向鼻梁或额头两侧，同时让肘部向外展开、手背移向耳侧。",
+      "在肩胛后缩位置短暂停顿，再缓慢伸臂回到起点。"
+    ],
+    "cautions": [
+      "不要用后仰、耸肩或颈部前伸来完成最后一段行程。",
+      "选择能维持肩部舒适外旋的重量，动作不需要追求很大负重。",
+      "若出现肩前侧疼痛或麻木，应停止并寻求专业评估。"
+    ],
+    "recommendedSets": 3,
+    "recommendedReps": "12-20",
+    "restSeconds": 60,
+    "alternatives": ["reverse-pec-deck-fly", "bent-over-dumbbell-rear-delt-fly", "wide-elbow-seated-row"],
+    "media": [],
+    "sources": [
+      {
+        "title": "ExRx.net: Cable Rear Delt Row with Rope",
+        "url": "https://exrx.net/WeightExercises/DeltoidPosterior/CBRearDeltRowRope",
+        "type": "exerciseGuide"
+      },
+      {
+        "title": "ACE: A Pro's Guide to Muscle Mechanics — The Shoulders",
+        "url": "https://www.acefitness.org/continuing-education/certified/september-2025/8951/a-pro-s-guide-to-muscle-mechanics-the-shoulders/",
+        "type": "article"
+      }
+    ]
+  },
+  {
+    "id": "bent-over-dumbbell-rear-delt-fly",
+    "nameZh": "俯身哑铃后束飞鸟",
+    "nameEn": "Bent-Over Dumbbell Rear Delt Fly",
+    "aliases": ["俯身哑铃反向飞鸟", "哑铃后束飞鸟"],
+    "bodyPart": "肩部",
+    "movement": "肩水平外展",
+    "equipment": ["Dumbbell"],
+    "loadMode": "DumbbellPair",
+    "primaryMuscles": ["后三角肌"],
+    "secondaryMuscles": ["中斜方肌", "菱形肌", "下斜方肌", "肩袖肌群"],
+    "introduction": "在髋铰链俯身姿势中将哑铃向身体两侧抬起，主要训练三角肌后束，并需要上背部维持肩胛控制。相比反向蝴蝶机，它对躯干稳定和动作路径控制要求更高。",
+    "steps": [
+      "双手各持一只哑铃，屈髋俯身、膝盖微屈，保持脊柱中立。",
+      "让哑铃垂在肩部下方，肘部保持轻微弯曲，颈部与躯干对齐。",
+      "以肩部带动双臂向两侧展开，直到上臂接近躯干平面。",
+      "短暂停顿后控制哑铃沿原路径下降，避免在底部碰撞。"
+    ],
+    "cautions": [
+      "不要通过抬起躯干、甩动哑铃或耸肩来获得高度。",
+      "肘部角度应基本固定，避免把动作变成划船。",
+      "使用能保持肩部无痛和完整控制的较轻重量。"
+    ],
+    "recommendedSets": 3,
+    "recommendedReps": "12-20",
+    "restSeconds": 60,
+    "alternatives": ["reverse-pec-deck-fly", "face-pull", "wide-elbow-seated-row"],
+    "media": [],
+    "sources": [
+      {
+        "title": "ACE: Bent-Over Dumbbell Reverse Fly",
+        "url": "https://www.acefitness.org/resources/everyone/exercise-library/46/bent-over-dumbbell-reverse-fly/",
+        "type": "exerciseGuide"
+      },
+      {
+        "title": "ExRx.net: Dumbbell Rear Lateral Raise",
+        "url": "https://exrx.net/WeightExercises/DeltoidPosterior/DBRearLateralRaise",
+        "type": "exerciseGuide"
+      }
+    ]
+  },
+  {
+    "id": "preacher-curl",
+    "nameZh": "牧师凳弯举",
+    "nameEn": "Preacher Curl",
+    "aliases": ["牧师椅弯举", "斜托弯举"],
+    "bodyPart": "手臂",
+    "movement": "肘屈",
+    "equipment": ["PreacherBench", "EZCurlBar"],
+    "loadMode": "Standard",
+    "primaryMuscles": ["肱二头肌"],
+    "secondaryMuscles": ["肱肌", "肱桡肌", "前臂屈肌群"],
+    "introduction": "将上臂支撑在牧师凳斜托上完成弯举，减少肩部摆动和躯干借力，便于稳定记录肘屈训练表现。底部位置对肘关节和肌腱负荷较高，应以受控范围完成。",
+    "steps": [
+      "调整座椅，使腋下靠近斜托上缘，上臂完整贴住支撑垫。",
+      "以舒适握距握住曲杆，手腕保持中立，从肘部接近伸展的位置开始。",
+      "保持上臂贴垫，屈肘将曲杆举起，直到前臂接近垂直。",
+      "短暂停顿后缓慢下放，在不锁死肘关节的可控位置结束回程。"
+    ],
+    "cautions": [
+      "不要在底部快速反弹或强行锁死肘关节。",
+      "肩膀和臀部保持稳定，不要离开座椅帮助举起重量。",
+      "若肘前侧不适，缩小无痛范围、减轻重量或改用钢线弯举。"
+    ],
+    "recommendedSets": 3,
+    "recommendedReps": "8-15",
+    "restSeconds": 60,
+    "alternatives": ["cable-rope-curl", "hammer-curl"],
+    "media": [],
+    "sources": [
+      {
+        "title": "ExRx.net: Barbell Preacher Curl",
+        "url": "https://exrx.net/WeightExercises/Biceps/BBCurlPreacher",
+        "type": "exerciseGuide"
+      },
+      {
+        "title": "ACE: Building Better Biceps",
+        "url": "https://www.acefitness.org/resources/pros/expert-articles/9033/building-better-biceps-evidence-based-exercises-for-strength-and-function/",
+        "type": "article"
+      }
+    ]
+  },
+  {
+    "id": "hammer-curl",
+    "nameZh": "哑铃锤式弯举",
+    "nameEn": "Dumbbell Hammer Curl",
+    "aliases": ["锤式弯举", "对握哑铃弯举"],
+    "bodyPart": "手臂",
+    "movement": "肘屈",
+    "equipment": ["Dumbbell"],
+    "loadMode": "DumbbellPair",
+    "primaryMuscles": ["肱肌", "肱桡肌"],
+    "secondaryMuscles": ["肱二头肌", "前臂屈肌群"],
+    "introduction": "使用掌心相对的中立握法完成哑铃弯举，强调肱肌和肱桡肌，同时训练肱二头肌。可双侧同时或交替完成；系统按单只哑铃重量填写。",
+    "steps": [
+      "双手各持一只哑铃站稳，掌心相对，上臂自然贴近躯干。",
+      "收紧腹部并保持手腕中立，肩膀放松且远离耳朵。",
+      "固定上臂位置，屈肘将哑铃举向肩部，全程保持中立握。",
+      "在顶部短暂停顿，再缓慢下放至手臂接近伸直。"
+    ],
+    "cautions": [
+      "不要通过身体后仰、髋部弹动或肩部前送帮助举起重量。",
+      "手腕应与前臂对齐，避免向内外折腕。",
+      "若双侧同时完成会导致借力，可改为交替动作并分别控制。"
+    ],
+    "recommendedSets": 3,
+    "recommendedReps": "8-15",
+    "restSeconds": 60,
+    "alternatives": ["cable-rope-curl", "preacher-curl"],
+    "media": [],
+    "sources": [
+      {
+        "title": "ExRx.net: Dumbbell Hammer Curl",
+        "url": "https://exrx.net/WeightExercises/Brachioradialis/DBCurlHammer",
+        "type": "exerciseGuide"
+      },
+      {
+        "title": "ACE: Building Better Biceps",
+        "url": "https://www.acefitness.org/resources/pros/expert-articles/9033/building-better-biceps-evidence-based-exercises-for-strength-and-function/",
+        "type": "article"
+      }
+    ]
   }
 ]

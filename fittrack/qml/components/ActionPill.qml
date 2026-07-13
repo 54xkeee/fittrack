@@ -1,19 +1,23 @@
 import QtQuick
 import QtQuick.Controls
+import "../theme" as Design
 
 Button {
     id: root
     property bool accent: false
+    property bool destructive: false
 
-    implicitHeight: 48
-    font.pixelSize: 14
-    font.bold: true
-    leftPadding: 16
-    rightPadding: 16
+    implicitHeight: Design.Theme.controlHeight
+    font.pixelSize: Design.Theme.typeLabel
+    font.weight: Font.DemiBold
+    leftPadding: Design.Theme.space16
+    rightPadding: Design.Theme.space16
+    Accessible.name: text
 
     contentItem: Label {
         text: root.text
-        color: root.accent ? "#121212" : "#F3F0EF"
+        color: root.destructive ? Design.Theme.errorForeground
+                                : (root.accent ? Design.Theme.primaryForeground : Design.Theme.surfaceText)
         horizontalAlignment: Text.AlignHCenter
         verticalAlignment: Text.AlignVCenter
         elide: Text.ElideRight
@@ -21,9 +25,11 @@ Button {
     }
 
     background: Rectangle {
-        radius: 8
-        color: root.accent ? "#C5FF4A" : (root.down ? "#303232" : "#222424")
-        border.width: root.accent ? 0 : 1
-        border.color: "#3A3C3C"
+        radius: Design.Theme.radiusSmall
+        color: root.destructive ? (root.down ? Design.Theme.errorPressed : Design.Theme.error)
+                                : (root.accent ? (root.down ? Design.Theme.primaryPressed : Design.Theme.primary)
+                                               : (root.down ? Design.Theme.surfacePressed : Design.Theme.surfaceElevated))
+        border.width: root.accent || root.destructive ? 0 : 1
+        border.color: root.activeFocus ? Design.Theme.primary : Design.Theme.outline
     }
 }

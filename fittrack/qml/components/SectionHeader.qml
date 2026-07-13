@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import "../theme" as Design
 
 ColumnLayout {
     id: root
@@ -8,21 +9,21 @@ ColumnLayout {
     property string title: ""
     property string subtitle: ""
 
-    spacing: 4
+    spacing: Design.Theme.space4
 
     Label {
         visible: root.eyebrow.length > 0
         text: root.eyebrow
-        color: "#C5FF4A"
-        font.pixelSize: 12
-        font.bold: true
+        color: Design.Theme.primary
+        font.pixelSize: Design.Theme.typeCaption
+        font.weight: Font.DemiBold
     }
 
     Label {
         text: root.title
-        color: "#F3F0EF"
-        font.pixelSize: 25
-        font.bold: true
+        color: Design.Theme.backgroundText
+        font.pixelSize: Design.Theme.typeDisplay
+        font.weight: Font.Bold
         Layout.fillWidth: true
         wrapMode: Text.WordWrap
     }
@@ -30,8 +31,8 @@ ColumnLayout {
     Label {
         visible: root.subtitle.length > 0
         text: root.subtitle
-        color: "#A8AAA9"
-        font.pixelSize: 13
+        color: Design.Theme.surfaceMuted
+        font.pixelSize: Design.Theme.typeLabel
         Layout.fillWidth: true
         wrapMode: Text.WordWrap
     }

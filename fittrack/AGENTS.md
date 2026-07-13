@@ -27,6 +27,6 @@ cmake --build C:\FitTrackDev\fittrack\build -j 6
 ctest --test-dir C:\FitTrackDev\fittrack\build -j 4 --output-on-failure
 ```
 
-当前测试基线为 14 项。视觉验收使用 `tst_qmlnavigation` 在 360×800、420×920、480×1056 生成 `build/visual/*.png`，并额外检查训练进行中与带真实数据的历史详情页面。
+当前测试基线为 14 项。视觉验收使用 `tst_qmlnavigation` 在 360×800、420×920、480×1056 生成 `build/visual/*.png`，并额外检查训练进行中、带真实数据的历史详情和非空分析页面。
 
 项目状态和下一阶段缺口以 [`README.md`](README.md) 与 [`../docs/fittrack-development-plan.md`](../docs/fittrack-development-plan.md) 为准。

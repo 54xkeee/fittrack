@@ -161,6 +161,7 @@ target_compile_definitions(tst_qmlnavigation PRIVATE
 )
 
 target_link_libraries(tst_qmlnavigation PRIVATE
+    fittrack_action_images
     fittrack_storage
     fittrack_services
     fittrack_ui_models
