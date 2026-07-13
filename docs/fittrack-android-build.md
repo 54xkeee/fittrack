@@ -1,6 +1,6 @@
 # FitTrack Android 构建与真机验收
 
-本文记录 2026-07-13 已验证的 Android 构建基线，以及尚需在一加 Ace 5 Pro 上完成的检查。正式发布前不得跳过真机与签名步骤。
+本文记录 2026-07-13 已验证的 Android 构建基线，以及尚需在一加 Ace 5 Pro 上完成的检查。当前交付目标是自用并可把 APK 直接分享给其他用户安装；正式分发前不得跳过真机与签名步骤。AAB 构建能力保留给以后可能的应用商店发布。
 
 ## 工具链
 
@@ -34,6 +34,56 @@ C:\FitTrackDev\fittrack\build-android-arm64\android-build\build\outputs\apk\debu
 - target/compile API：35
 - ABI：`arm64-v8a`
 
+## 构建 Release 包
+
+构建无签名 Release APK：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File C:\FitTrackDev\fittrack\scripts\build-android.ps1 `
+  -Configuration Release
+```
+
+输出到：
+
+```text
+C:\FitTrackDev\fittrack\build-android-arm64-release\android-build\build\outputs\apk\release\android-build-release-unsigned.apk
+```
+
+构建无签名 Release AAB：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File C:\FitTrackDev\fittrack\scripts\build-android.ps1 `
+  -Configuration Release -Bundle
+```
+
+输出到：
+
+```text
+C:\FitTrackDev\fittrack\build-android-arm64-release\android-build\build\outputs\bundle\release\android-build-release.aab
+```
+
+无签名产物只用于构建和结构检查，不能作为正式分发包。`dist\FitTrack` 中的 `FitTrack-0.1.0-release-unsigned-arm64-v8a.aab` 同样明确是未签名检查产物。
+
+## 使用发布密钥签名
+
+正式 keystore 必须保存在仓库外并至少备份两份。直接分享 APK 后，后续版本必须继续使用同一个包名和同一把密钥，否则用户无法覆盖升级。
+
+脚本从当前进程的四个环境变量读取签名参数，不把密码写入仓库：
+
+```powershell
+$env:QT_ANDROID_KEYSTORE_PATH = "D:\FitTrackSecrets\fittrack-release.p12"
+$env:QT_ANDROID_KEYSTORE_ALIAS = "fittrack-release"
+$env:QT_ANDROID_KEYSTORE_STORE_PASS = Read-Host "Keystore password"
+$env:QT_ANDROID_KEYSTORE_KEY_PASS = $env:QT_ANDROID_KEYSTORE_STORE_PASS
+
+powershell -ExecutionPolicy Bypass -File C:\FitTrackDev\fittrack\scripts\build-android.ps1 `
+  -Configuration Release -Sign
+```
+
+如以后需要发布 AAB，将最后一条命令增加 `-Bundle`。脚本会在清理构建目录前检查四个环境变量是否齐全，并显式关闭未选择的签名模式，避免 CMake 缓存沿用旧的签名状态。
+
+当前已用一次性测试密钥验证 Release APK 的 V3 签名链路；测试 keystore 已删除，测试签名 APK 未进入交付目录。正式可分享 APK 仍需用户创建并保管长期发布密钥。
+
 ## 离线质量门禁
 
 先设置环境：
@@ -61,6 +111,8 @@ Get-FileHash $apk -Algorithm SHA256
 ```
 
 调试包使用 Android Debug 证书，只用于开发安装，不得上传商店。
+
+当前最终打包权限只有通知、前台服务和 AndroidX 动态广播接收器权限；`WRITE_EXTERNAL_STORAGE` 仅声明到 API 27，而应用最低 API 为 28。应用不执行内置网络请求，最终 APK/AAB 不包含 `INTERNET` 或 `ACCESS_NETWORK_STATE` 权限。动作资料中的外部链接交给系统浏览器打开。
 
 ## 一加 Ace 5 Pro 真机回归
 
@@ -95,10 +147,12 @@ Get-FileHash $apk -Algorithm SHA256
 & "D:\FitTrackToolchains\AndroidSdk\platform-tools\adb.exe" logcat | Select-String -Pattern "fittrack|AndroidRuntime|Qt"
 ```
 
-## 发布前仍需完成
+## 直接分享前仍需完成
 
-- 确认最终唯一包名；包名发布后不可随意更换。
+- 冻结包名；一旦把 APK 发给其他用户，后续版本不可随意更换。
 - 在仓库外创建并备份发布 keystore，不提交密码、密钥或签名属性文件。
-- 生成并验证 release AAB，以及同签名的可侧载 APK。
-- 完成隐私政策、Health Apps 声明、医疗免责声明、第三方许可和媒体来源清单。
-- 使用真机生成商店截图与 Feature Graphic，并核对页面内容和版本说明。
+- 生成正式签名 Release APK，检查签名证书、包名、API、ABI、权限和 SHA-256。
+- 在一加 Ace 5 Pro 上完成首次安装、完整训练、后台计时、备份恢复和同签名覆盖升级。
+- 分发包同时提供简明安装说明、版本号、SHA-256、第三方许可和媒体来源清单。
+
+如以后决定进入应用商店，再补签名 AAB、公开隐私政策 URL、Health Apps 声明、商店截图、Feature Graphic 和商店版本说明；这些不阻塞当前自用与直接分享目标。

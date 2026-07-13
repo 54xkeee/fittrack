@@ -1,6 +1,6 @@
 # FitTrack 当前架构
 
-本文描述 2026-07-13 已在代码中存在的桌面与 Android 共用实现，不把尚未完成的真机和商店验收写成已完成事实。
+本文描述 2026-07-13 已在代码中存在的桌面与 Android 共用实现，不把尚未完成的真机和正式分发验收写成已完成事实。
 
 ## 运行结构
 
@@ -68,7 +68,8 @@ SQLite v3
 
 - `android/` 提供 Manifest、Java 服务、Adaptive Icon、主题图标、启动页和备份排除规则。
 - CMake 在 Android 上默认关闭测试和 Qt Multimedia，只部署 `arm64-v8a` 所需库；桌面端继续使用 Qt Multimedia 播放程序生成的提示音。
-- 当前调试配置为包名 `com.fittrack.app`、版本 `0.1.0`/1、min API 28、target/compile API 35。正式发布前必须冻结唯一包名并改用发布签名。
+- `scripts/build-android.ps1` 将 Debug 与 Release 构建目录分离，可生成 APK 或 AAB；签名时只从进程环境读取 keystore 路径、别名和密码，并显式重置未选择的签名模式，避免复用旧 CMake 缓存。
+- 当前配置为包名 `com.fittrack.app`、版本 `0.1.0`/1、min API 28、target/compile API 35。最终包不含 `INTERNET` 或 `ACCESS_NETWORK_STATE` 权限。直接分享前必须冻结包名并改用长期发布签名。
 
 ## SQLite v3
 
@@ -102,4 +103,4 @@ ctest --test-dir C:\FitTrackDev\fittrack\build -j 4 --output-on-failure
 
 当前 14 项测试覆盖计算、数据库、种子导入、动作、计划、训练、历史、分析、有氧、场馆、备份、倒计时和 QML 导航。QML 测试在 360×800、420×920、480×1056 三档生成主页面、训练进行中、带真实数据的历史详情与非空分析截图。
 
-Android `arm64-v8a` 调试 APK 已完成构建，并通过零问题 Android Lint、API/ABI/包名清单检查和 V2 调试签名校验。Android 自动化尚未覆盖设备生命周期、系统通知策略和 SAF 提供方差异，这些仍属于一加 Ace 5 Pro 真机验收范围。
+Android `arm64-v8a` Debug APK 与无签名 Release APK/AAB 已完成构建；Debug APK 通过零问题 Android Lint、API/ABI/包名/权限检查和 V2 调试签名校验，AAB 通过 bundletool 结构校验。一次性测试密钥验证了 Release APK 的 V3 签名链路，随后已恢复为无签名构建状态。Android 自动化尚未覆盖设备生命周期、系统通知策略、SAF 提供方差异和同签名覆盖升级，这些仍属于一加 Ace 5 Pro 真机验收范围。

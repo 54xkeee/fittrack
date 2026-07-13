@@ -1,6 +1,6 @@
 # 训迹 FitTrack
 
-FitTrack 是一个面向 Android 的个人健身训练记录与分析应用。当前源码已完成训练记录闭环、谭成义三分化与自由训练、个人计划管理、训练历史、容量与 e1RM 分析、有氧记录、健身房/器械区分、备份恢复，以及 52 个动作的离线资料库，并能构建 Windows 调试版和 Android `arm64-v8a` 调试 APK。
+FitTrack 是一个面向 Android 的个人健身训练记录与分析应用，当前交付目标是供用户长期自用并可直接分享 APK 给其他用户安装。源码已完成训练记录闭环、谭成义三分化与自由训练、个人计划管理、训练历史、容量与 e1RM 分析、有氧记录、健身房/器械区分、备份恢复，以及 52 个动作的离线资料库，并能构建 Windows 调试版和 Android `arm64-v8a` Debug/Release 包。
 
 ## 当前可用能力
 
@@ -54,9 +54,11 @@ ctest --test-dir C:\FitTrackDev\fittrack\build -R qmlnavigation --output-on-fail
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File C:\FitTrackDev\fittrack\scripts\build-android.ps1
+powershell -ExecutionPolicy Bypass -File C:\FitTrackDev\fittrack\scripts\build-android.ps1 -Configuration Release
+powershell -ExecutionPolicy Bypass -File C:\FitTrackDev\fittrack\scripts\build-android.ps1 -Configuration Release -Bundle
 ```
 
-调试 APK 输出到 `build-android-arm64/android-build/build/outputs/apk/debug/android-build-debug.apk`。当前包名为 `com.fittrack.app`，min API 28，target/compile API 35，仅包含 `arm64-v8a`；已经通过 Android Lint、清单/ABI检查和 V2 调试签名验证。正式发布前仍需冻结唯一包名、创建离线保管的发布密钥并生成签名 AAB。
+脚本分别输出 Debug APK、无签名 Release APK 或无签名 Release AAB。当前包名为 `com.fittrack.app`，min API 28，target/compile API 35，仅包含 `arm64-v8a`；已经通过 Android Lint、清单/ABI/最小权限检查、V2 调试签名验证和 AAB 结构校验。Release APK/AAB 的外部环境变量签名流程已用一次性测试密钥验证，但正式可分享 APK 仍需冻结包名并创建长期离线保管的发布密钥。
 
 完整工具链、Lint、APK 检查和真机命令见 [`../docs/fittrack-android-build.md`](../docs/fittrack-android-build.md)。
 
@@ -68,8 +70,11 @@ powershell -ExecutionPolicy Bypass -File C:\FitTrackDev\fittrack\scripts\build-a
 - 动作图片位于 `resources/images/exercises/`，每张图片的原始链接和许可记录在对应动作 JSON 的 `media` 字段中。
 - Inter 字体与 SIL OFL 许可位于 `resources/fonts/`。
 - 当前内置 26 张开放许可或公共领域图片；找不到动作准确且许可明确素材的条目保持无图。
+- 26 张图片的逐项署名、原始链接和许可证汇总见 [`../docs/fittrack-media-credits.md`](../docs/fittrack-media-credits.md)。
+- Qt、AndroidX/Kotlin、Inter 和动作图片的分发说明见 [`../docs/fittrack-third-party-notices.md`](../docs/fittrack-third-party-notices.md)。
+- 本地数据、权限、导出与医疗边界见 [`../docs/fittrack-privacy.md`](../docs/fittrack-privacy.md)。
 - 未授权的抖音、B站、知乎视频或截图不得打包进 APK；只允许外链。自制、明确授权或开放许可素材才可内置。
 
 ## 已知平台边界
 
-Android 前台服务、完成通知、系统返回层级、SAF 文档 URI、Adaptive Icon 和启动页已进入代码并通过离线构建检查，但尚未在一加 Ace 5 Pro 上完成安装和运行回归。发布前必须真机检查 ColorOS 后台限制、通知允许/拒绝、锁屏完成提醒、SAF 导入导出、返回键、异常恢复和升级安装；当前调试 APK 不能当作商店发布包。
+Android 前台服务、完成通知、系统返回层级、SAF 文档 URI、Adaptive Icon 和启动页已进入代码并通过离线构建检查，但尚未在一加 Ace 5 Pro 上完成安装和运行回归。直接分享前必须真机检查 ColorOS 后台限制、通知允许/拒绝、锁屏完成提醒、SAF 导入导出、返回键、异常恢复和同签名升级安装；Debug APK 和无签名 Release 产物都不能作为正式分享包。

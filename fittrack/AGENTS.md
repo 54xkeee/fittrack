@@ -2,8 +2,8 @@
 
 ## 产品目标
 
-- 目标是可上架、可长期使用的 Android 个人健身训练应用，不是只供答辩的界面原型。
-- 当前实现可构建 Windows 桌面调试版和 Android `arm64-v8a` 调试 APK；Android 真机验收、发布签名 AAB 和商店交付尚未完成。
+- 目标是可长期自用并可直接分享 APK 给其他用户安装的 Android 个人健身训练应用，不是只供答辩的界面原型。应用商店上架保留为后续能力，不是当前交付门槛。
+- 当前实现可构建 Windows 桌面调试版和 Android `arm64-v8a` Debug/Release APK、AAB；Android 真机验收和长期发布密钥仍未完成。
 - 核心边界保持不变：不做登录、云同步、饮食、社交、自动重量建议、RIR/RPE 或复杂周期算法。
 
 ## 开发方式
@@ -28,10 +28,12 @@ cmake --build C:\FitTrackDev\fittrack\build -j 6
 cmake --build C:\FitTrackDev\fittrack\build --target all_qmllint -j 6
 ctest --test-dir C:\FitTrackDev\fittrack\build -j 4 --output-on-failure
 powershell -ExecutionPolicy Bypass -File C:\FitTrackDev\fittrack\scripts\build-android.ps1
+powershell -ExecutionPolicy Bypass -File C:\FitTrackDev\fittrack\scripts\build-android.ps1 -Configuration Release
+powershell -ExecutionPolicy Bypass -File C:\FitTrackDev\fittrack\scripts\build-android.ps1 -Configuration Release -Bundle
 ```
 
 当前测试基线为 14 项。视觉验收使用 `tst_qmlnavigation` 在 360×800、420×920、480×1056 生成 `build/visual/*.png`，并额外检查训练进行中、带真实数据的历史详情和非空分析页面。
 
-Android 当前基线为包名 `com.fittrack.app`、min API 28、target/compile API 35、仅 `arm64-v8a`。调试 APK 必须通过 Android Lint、`aapt` 清单检查和 `apksigner` 校验；真机后台计时、通知拒绝、SAF、返回键与 ColorOS 电池策略仍需在一加 Ace 5 Pro 上验收。构建与排障见 [`../docs/fittrack-android-build.md`](../docs/fittrack-android-build.md)。
+Android 当前基线为包名 `com.fittrack.app`、min API 28、target/compile API 35、仅 `arm64-v8a`。Debug APK 必须通过 Android Lint、`aapt` 清单检查和 `apksigner` 校验；Release 签名只从四个 `QT_ANDROID_KEYSTORE_*` 环境变量读取，不提交密钥或密码。直接分享前必须冻结包名、使用长期密钥签名，并在一加 Ace 5 Pro 验收后台计时、通知拒绝、SAF、返回键、ColorOS 电池策略和同签名覆盖升级。构建与排障见 [`../docs/fittrack-android-build.md`](../docs/fittrack-android-build.md)。
 
 项目状态和下一阶段缺口以 [`README.md`](README.md) 与 [`../docs/fittrack-development-plan.md`](../docs/fittrack-development-plan.md) 为准。
