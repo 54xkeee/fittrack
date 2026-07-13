@@ -8,7 +8,7 @@ AppPage {
     id: page
 
     implicitWidth: 0
-    signal trainingRequested()
+    signal trainingRequested(string dayId)
 
     readonly property bool hasSelectedPlan: planManagement.selectedPlan.id !== undefined
                                              && String(planManagement.selectedPlan.id).length > 0
@@ -967,10 +967,7 @@ AppPage {
                                 AppButton {
                                     text: qsTr("开始")
                                     Layout.preferredWidth: 96
-                                    onClicked: {
-                                        if (workoutController.startPlanDay(dayCard.modelData.id))
-                                            page.trainingRequested()
-                                    }
+                                    onClicked: page.trainingRequested(dayCard.modelData.id)
                                 }
 
                                 IconButton {

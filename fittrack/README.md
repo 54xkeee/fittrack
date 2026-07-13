@@ -1,6 +1,6 @@
 # 训迹 FitTrack
 
-FitTrack 是一个面向 Android 的个人健身训练记录与分析应用，当前交付目标是供用户长期自用并可直接分享 APK 给其他用户安装。源码已完成训练记录闭环、谭成义三分化与自由训练、个人计划管理、训练历史、容量与 e1RM 分析、有氧记录、健身房/器械区分、备份恢复，以及 52 个动作的离线资料库，并能构建 Windows 调试版和 Android `arm64-v8a` Debug/Release 包。
+FitTrack 是一个面向 Android 的个人健身训练记录与分析应用，当前交付目标是供用户本人长期使用，并可把 APK 直接分享给其他用户侧载安装。源码已完成训练记录闭环、谭成义三分化与自由训练、个人计划管理、训练历史、容量与 e1RM 分析、有氧记录、健身房/器械区分、备份恢复，以及 58 个动作的离线资料库，并能构建 Windows 调试版和 Android `arm64-v8a` Debug/Release 包。
 
 ## 当前可用能力
 
@@ -15,14 +15,14 @@ FitTrack 是一个面向 Android 的个人健身训练记录与分析应用，�
 - 有氧页支持跑步机爬坡与爬楼机记录；跑步机默认模板为坡度 9、速度 5 km/h、30 分钟。有氧可单独记录，也可附加到刚完成的力量训练；个人训练日设置的单段有氧会在训练开始时保存快照，训练结束后仅预填实际记录表单。
 - 场馆管理支持健身房与具体器械的新增、重命名和删除；被历史记录引用的条目会归档而不是破坏历史数据。
 - 数据管理支持 JSON 完整备份/事务恢复和 SQLite 快照导出；Android 支持通过系统文档选择器的 `content://` URI 导入导出。JSON 包含计划有氧与训练快照，仍兼容缺少这两张表的旧版备份；恢复会限制 64MB 输入、进行外键完整性检查，并刷新所有内存状态。
-- 动作库提供 52 个动作的简介、主要/次要肌群、4 步动作说明、3 条核心注意点和训练参数；其中 28 个动作内置许可明确的离线图片，其他动作不使用许可不明或动作形式不准确的替代素材。内置动作可收藏和恢复默认，用户可创建、编辑及删除自定义动作，并按部位、动作模式、器械和收藏状态组合筛选。
+- 动作库提供 58 个目标动作的简介、主要/次要肌群、步骤、发力要点、注意事项、常见错误和训练参数。每项展示 1 张经过动作对应性审核的本地图片，并在详情中显示素材标题、来源和许可证；42 张来自开放许可或公共领域，16 张为 FitTrack 原创 CC0。内置动作可收藏和恢复默认，用户可创建、编辑及删除自定义动作；应用不提供教学视频或媒体外链入口。
 - 底部导航固定为首页、计划、训练、动作和分析五个入口；历史、有氧和管理合并在分析入口内。
 - Graphite & Lime 设计系统已经提取为语义主题与通用组件，底部导航、首页、训练、计划、动作库、趋势、历史、有氧和管理页面均已纳入移动单列体系；可操作控件保持至少 48 logical px 触控区并提供完整空状态。
-- 应用内置 SIL Open Font License 的 Inter 可变字体，统一英文、数字和单位显示；中文继续使用系统字体回退。
+- 应用不再内置字体，直接继承 Android、Windows 等平台的系统字体；Android 字体缩放会统一映射到设计令牌，训练主流程已自动化验证 1.0、1.3 和 1.5 倍字体。
 
-当前自动化测试共 14 项，覆盖统计规则、SQLite、种子导入、训练会话、历史、分析、计划管理、动作库管理、有氧、健身房/器械、备份恢复、倒计时状态和真实 QML 页面加载。
+当前自动化测试共 14 项，覆盖统计规则、SQLite、种子导入、训练会话、历史、分析、计划管理、动作库管理、有氧、健身房/器械、备份恢复、倒计时状态和真实 QML 页面加载。QML 回归额外覆盖 14 个训练弹层、4 个危险确认框、TalkBack 角色与名称、48dp 触控区、360×640/1.5 倍字体以及真实 `QTouchEvent` 输入。
 
-当前数据库结构版本为 SQLite v4。升级会幂等创建训练日有氧目标和活动训练有氧快照表，并保留既有用户数据。
+当前数据库结构版本为 SQLite v6。升级会幂等补充动作字段，并通过 INSERT/UPDATE 触发器保证数据库最多只有一条进行中的训练；既有用户数据会保留。
 
 当前代码结构见 [`ARCHITECTURE.md`](ARCHITECTURE.md)，完整里程碑见 [`../docs/fittrack-development-plan.md`](../docs/fittrack-development-plan.md)。
 
@@ -61,7 +61,7 @@ powershell -ExecutionPolicy Bypass -File C:\FitTrackDev\fittrack\scripts\build-a
 powershell -ExecutionPolicy Bypass -File C:\FitTrackDev\fittrack\scripts\build-android.ps1 -Configuration Release -Bundle
 ```
 
-脚本分别输出 Debug APK、无签名 Release APK 或无签名 Release AAB。当前包名为 `com.fittrack.app`，min API 28，target/compile API 35，仅包含 `arm64-v8a`；已经通过 Android Lint、清单/ABI/最小权限检查、V2 调试签名验证和 AAB 结构校验。Release APK/AAB 的外部环境变量签名流程已用一次性测试密钥验证，但正式可分享 APK 仍需冻结包名并创建长期离线保管的发布密钥。
+脚本分别输出 Debug APK、无签名 Release APK 或无签名 Release AAB。当前包名为 `com.fittrack.app`，min API 28，target/compile API 35，仅包含 `arm64-v8a`；Debug APK 已通过 Android Lint（0 issue）、清单/ABI/最小权限检查、V2 调试签名验证和包内媒体白名单检查，可用于直接侧载分享。Release APK/AAB 的外部环境变量签名流程已用一次性测试密钥验证；若要保证跨版本覆盖升级，仍需创建并长期保管发布密钥。
 
 完整工具链、Lint、APK 检查和真机命令见 [`../docs/fittrack-android-build.md`](../docs/fittrack-android-build.md)。
 
@@ -70,14 +70,14 @@ powershell -ExecutionPolicy Bypass -File C:\FitTrackDev\fittrack\scripts\build-a
 - 内置动作 JSON 位于 `resources/data/exercises-*.json`。
 - 谭成义三分化模板位于 `resources/data/tan-three-day-split.json`。
 - 内置动作会在应用启动时事务化导入 SQLite。
-- 动作图片位于 `resources/images/exercises/`，每张图片的原始链接和许可记录在对应动作 JSON 的 `media` 字段中。
-- Inter 字体与 SIL OFL 许可位于 `resources/fonts/`。
-- 当前内置 28 张开放许可或公共领域图片；找不到动作准确且许可明确素材的条目保持无图。
-- 28 张图片的逐项署名、原始链接和许可证汇总见 [`../docs/fittrack-media-credits.md`](../docs/fittrack-media-credits.md)。
-- Qt、AndroidX/Kotlin、Inter 和动作图片的分发说明见 [`../docs/fittrack-third-party-notices.md`](../docs/fittrack-third-party-notices.md)。
+- 可分发动作图片位于 `resources/images/exercises/shareable/`，58 个动作各 1 张，统一为 900×600 JPEG。
+- 机器可读的媒体标题、来源页面、作者/来源、许可证和应用内路径位于 `resources/data/exercise-media-shareable.json`，并同步进入对应动作 JSON 的 `media` 字段。
+- MuscleDB 只保留为动作文字映射参考；其图片目录和旧动作图片不会被 CMake 打包进 APK。应用也不再打包 Inter 字体。
+- 数据映射见 [`../docs/fittrack-exercise-mapping.md`](../docs/fittrack-exercise-mapping.md)，媒体用途限制见 [`../docs/fittrack-media-credits.md`](../docs/fittrack-media-credits.md)。
+- Qt、AndroidX/Kotlin 和动作图片的分发说明见 [`../docs/fittrack-third-party-notices.md`](../docs/fittrack-third-party-notices.md)。
 - 本地数据、权限、导出与医疗边界见 [`../docs/fittrack-privacy.md`](../docs/fittrack-privacy.md)。
-- 未授权的抖音、B站、知乎视频或截图不得打包进 APK；只允许外链。自制、明确授权或开放许可素材才可内置。
+- 未授权的抖音、B站、知乎视频或截图不得打包进 APK，也不提供媒体外链区域；只有自制、公共领域或明确允许再分发的开放许可素材可以内置。
 
 ## 已知平台边界
 
-Android 前台服务、完成通知、系统返回层级、SAF 文档 URI、Adaptive Icon 和启动页已进入代码并通过离线构建检查，但尚未在一加 Ace 5 Pro 上完成安装和运行回归。直接分享前必须真机检查 ColorOS 后台限制、通知允许/拒绝、锁屏完成提醒、SAF 导入导出、返回键、异常恢复和同签名升级安装；Debug APK 和无签名 Release 产物都不能作为正式分享包。
+Android 前台服务、完成通知、系统返回层级、SAF 文档 URI、Adaptive Icon 和启动页已进入代码并通过离线构建检查。当前 Debug APK 可作为侧载测试版分享，但尚未在一加 Ace 5 Pro 上完成安装和运行回归；ColorOS 后台限制、通知允许/拒绝、锁屏完成提醒、SAF 导入导出、返回键、真实 TalkBack 和系统大字体仍不能写成真机已验收。无签名 Release 产物不能安装；长期分发与覆盖升级需要固定发布密钥。

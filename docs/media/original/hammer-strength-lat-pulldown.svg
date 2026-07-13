@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 600" role="img" aria-label="杠杆式高位下拉起始与结束位置示意图">
+  <rect width="900" height="600" rx="36" fill="#f6f7f4"/><path d="M450 55v490" stroke="#d8ddd8" stroke-width="4"/>
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round"><g stroke="#59635d" stroke-width="15"><path d="M90 500h300M130 500V115h245M160 165h180l35 45M188 405h85v42h-85z"/><path d="M510 500h300M550 500V115h245M580 165h180l35 45M608 405h85v42h-85z"/></g>
+  <g stroke="#1f2521" stroke-width="18"><circle cx="365" cy="210" r="40"/><circle cx="785" cy="210" r="40"/></g><g fill="#d89e78"><circle cx="230" cy="255" r="34"/><circle cx="650" cy="255" r="34"/></g><g stroke="#a8ca35" stroke-width="44"><path d="M230 310v95M650 310v95"/></g>
+  <g stroke="#d89e78" stroke-width="24"><path d="M214 315l-42-112 92 0-18 112"/><path d="M634 315l-70-48m102 48 70-48"/></g><g stroke="#28312d" stroke-width="24"><path d="M230 405l-34 75m34-75 34 75M650 405l-34 75m34-75 34 75"/></g><g stroke="#1f2521" stroke-width="15"><path d="M160 196h30m62 0h30M550 260h30m142 0h30"/></g>
+  <path d="M315 240c40 25 54 58 47 92" stroke="#8aa326" stroke-width="9"/><path d="M355 322l7 15 10-12" fill="#8aa326" stroke="none"/></g>
+</svg>

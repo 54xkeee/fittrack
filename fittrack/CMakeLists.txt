@@ -103,6 +103,7 @@ qt_add_qml_module(fittrack
         qml/components/ActionPill.qml
         qml/components/AppButton.qml
         qml/components/AppCard.qml
+        qml/components/AppDialog.qml
         qml/components/AppPage.qml
         qml/components/ConfirmDialog.qml
         qml/components/IconButton.qml
@@ -113,6 +114,8 @@ qt_add_qml_module(fittrack
         qml/components/SetRow.qml
         qml/components/StatCard.qml
         qml/components/TrendChart.qml
+        qml/components/WorkoutStartConflictDialog.qml
+        qml/components/WorkoutRecoveryDialog.qml
         qml/components/MuscleBars.qml
         qml/pages/HomePage.qml
         qml/pages/ExerciseLibraryPage.qml
@@ -137,22 +140,14 @@ qt_add_resources(fittrack "seed_data"
         resources/data/tan-three-day-split.json
 )
 
-qt_add_resources(fittrack "font_assets"
-    PREFIX "/fonts"
-    BASE "resources/fonts"
-    FILES
-        resources/fonts/InterVariable.ttf
-        resources/fonts/Inter-OFL.txt
-)
-
-file(GLOB_RECURSE ACTION_IMAGES CONFIGURE_DEPENDS
-    "${CMAKE_CURRENT_SOURCE_DIR}/resources/images/*"
+file(GLOB SHAREABLE_ACTION_IMAGES CONFIGURE_DEPENDS
+    "${CMAKE_CURRENT_SOURCE_DIR}/resources/images/exercises/shareable/*"
 )
 add_library(fittrack_action_images STATIC)
 qt_add_resources(fittrack_action_images "action_images"
     PREFIX "/"
     BASE "resources"
-    FILES ${ACTION_IMAGES}
+    FILES ${SHAREABLE_ACTION_IMAGES}
 )
 target_link_libraries(fittrack_action_images PUBLIC Qt6::Core)
 

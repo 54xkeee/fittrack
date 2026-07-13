@@ -41,14 +41,22 @@ QVariant ExerciseListModel::data(const QModelIndex &index, int role) const
     case IntroductionRole: return item.introduction;
     case StepsRole: return item.steps;
     case CautionsRole: return item.cautions;
+    case DifficultyRole: return item.difficulty;
+    case TechniquePointsRole: return item.techniquePoints;
+    case CommonMistakesRole: return item.commonMistakes;
+    case CollectionsRole: return item.collections;
     case PrimaryMusclesRole: return item.primaryMuscles;
     case SecondaryMusclesRole: return item.secondaryMuscles;
     case MediaUrlRole: return item.mediaUrl;
+    case MediaTitleRole: return item.mediaTitle;
+    case MediaSourceRole: return item.mediaSource;
     case MediaLicenseRole: return item.mediaLicense;
     case MediaSourceUrlRole: return item.mediaSourceUrl;
     case EquipmentTextRole: return item.equipmentText;
     case IsSystemRole: return item.isSystem;
     case IsFavoriteRole: return item.isFavorite;
+    case SourcesRole: return item.sources;
+    case MediaItemsRole: return item.mediaItems;
     default: return {};
     }
 }
@@ -67,14 +75,22 @@ QHash<int, QByteArray> ExerciseListModel::roleNames() const
         {IntroductionRole, "introduction"},
         {StepsRole, "steps"},
         {CautionsRole, "cautions"},
+        {DifficultyRole, "difficulty"},
+        {TechniquePointsRole, "techniquePoints"},
+        {CommonMistakesRole, "commonMistakes"},
+        {CollectionsRole, "collections"},
         {PrimaryMusclesRole, "primaryMuscles"},
         {SecondaryMusclesRole, "secondaryMuscles"},
         {MediaUrlRole, "mediaUrl"},
+        {MediaTitleRole, "mediaTitle"},
+        {MediaSourceRole, "mediaSource"},
         {MediaLicenseRole, "mediaLicense"},
         {MediaSourceUrlRole, "mediaSourceUrl"},
         {EquipmentTextRole, "equipmentText"},
         {IsSystemRole, "isSystem"},
         {IsFavoriteRole, "isFavorite"},
+        {SourcesRole, "sources"},
+        {MediaItemsRole, "mediaItems"},
     };
 }
 
@@ -126,6 +142,15 @@ void ExerciseListModel::setEquipmentFilter(const QString &equipment)
     reload();
 }
 
+QString ExerciseListModel::collectionFilter() const { return m_collectionFilter; }
+void ExerciseListModel::setCollectionFilter(const QString &collection)
+{
+    if (m_collectionFilter == collection) return;
+    m_collectionFilter = collection;
+    emit collectionFilterChanged();
+    reload();
+}
+
 bool ExerciseListModel::favoritesOnly() const { return m_favoritesOnly; }
 void ExerciseListModel::setFavoritesOnly(bool enabled)
 {
@@ -139,8 +164,9 @@ void ExerciseListModel::reload()
 {
     QString sql = QStringLiteral(
         "SELECT id,name_zh,body_part,movement,load_mode,recommended_sets,recommended_reps,rest_seconds,"
-        "introduction,steps_json,cautions_json,equipment_json,is_system,"
-        "EXISTS(SELECT 1 FROM favorite_exercise f WHERE f.exercise_id=exercise.id) "
+        "introduction,steps_json,cautions_json,difficulty,technique_points_json,common_mistakes_json,"
+        "collections_json,equipment_json,is_system,"
+        "EXISTS(SELECT 1 FROM favorite_exercise f WHERE f.exercise_id=exercise.id),source_json "
         "FROM exercise WHERE is_enabled=1");
     if (!m_searchText.trimmed().isEmpty()) {
         sql += QStringLiteral(" AND (name_zh LIKE ? OR name_en LIKE ? OR aliases_json LIKE ?)");
@@ -150,6 +176,7 @@ void ExerciseListModel::reload()
     }
     if (!m_movementFilter.trimmed().isEmpty()) sql += QStringLiteral(" AND movement LIKE ?");
     if (!m_equipmentFilter.trimmed().isEmpty()) sql += QStringLiteral(" AND equipment_json LIKE ?");
+    if (!m_collectionFilter.trimmed().isEmpty()) sql += QStringLiteral(" AND collections_json LIKE ?");
     if (m_favoritesOnly) sql += QStringLiteral(
         " AND EXISTS(SELECT 1 FROM favorite_exercise f WHERE f.exercise_id=exercise.id)");
     sql += QStringLiteral(" ORDER BY body_part,name_zh");
@@ -169,6 +196,8 @@ void ExerciseListModel::reload()
         query.addBindValue(QStringLiteral("%%1%").arg(m_movementFilter.trimmed()));
     if (!m_equipmentFilter.trimmed().isEmpty())
         query.addBindValue(QStringLiteral("%%1%").arg(m_equipmentFilter.trimmed()));
+    if (!m_collectionFilter.trimmed().isEmpty())
+        query.addBindValue(QStringLiteral("%\"%1\"%").arg(m_collectionFilter.trimmed()));
 
     QVector<Item> items;
     if (query.exec()) {
@@ -188,12 +217,21 @@ void ExerciseListModel::reload()
             for (const auto &step : steps) item.steps.append(step.toString());
             const auto cautions = QJsonDocument::fromJson(query.value(10).toByteArray()).array();
             for (const auto &caution : cautions) item.cautions.append(caution.toString());
-            const auto equipment = QJsonDocument::fromJson(query.value(11).toByteArray()).array();
+            item.difficulty = query.value(11).toString();
+            item.techniquePoints = QJsonDocument::fromJson(query.value(12).toByteArray())
+                                       .array().toVariantList();
+            item.commonMistakes = QJsonDocument::fromJson(query.value(13).toByteArray())
+                                      .array().toVariantList();
+            item.collections = QJsonDocument::fromJson(query.value(14).toByteArray())
+                                   .array().toVariantList();
+            const auto equipment = QJsonDocument::fromJson(query.value(15).toByteArray()).array();
             QStringList equipmentNames;
             for (const auto &value : equipment) equipmentNames.append(value.toString());
             item.equipmentText = equipmentNames.join(QStringLiteral("、"));
-            item.isSystem = query.value(12).toBool();
-            item.isFavorite = query.value(13).toBool();
+            item.isSystem = query.value(16).toBool();
+            item.isFavorite = query.value(17).toBool();
+            item.sources = QJsonDocument::fromJson(query.value(18).toByteArray())
+                               .array().toVariantList();
 
             QSqlQuery muscles(m_database);
             muscles.prepare(QStringLiteral(
@@ -208,13 +246,27 @@ void ExerciseListModel::reload()
             }
             QSqlQuery media(m_database);
             media.prepare(QStringLiteral(
-                "SELECT local_path,external_url,license FROM exercise_media "
-                "WHERE exercise_id=? ORDER BY id LIMIT 1"));
+                "SELECT local_path,external_url,title,source,license FROM exercise_media "
+                "WHERE exercise_id=? ORDER BY id"));
             media.addBindValue(item.id);
-            if (media.exec() && media.next()) {
-                item.mediaUrl = media.value(0).toString();
-                item.mediaSourceUrl = media.value(1).toString();
-                item.mediaLicense = media.value(2).toString();
+            if (media.exec()) {
+                while (media.next()) {
+                    const QVariantMap mediaItem{
+                        {QStringLiteral("url"), media.value(0).toString()},
+                        {QStringLiteral("sourceUrl"), media.value(1).toString()},
+                        {QStringLiteral("title"), media.value(2).toString()},
+                        {QStringLiteral("source"), media.value(3).toString()},
+                        {QStringLiteral("license"), media.value(4).toString()},
+                    };
+                    item.mediaItems.append(mediaItem);
+                    if (item.mediaUrl.isEmpty()) {
+                        item.mediaUrl = mediaItem.value(QStringLiteral("url")).toString();
+                        item.mediaSourceUrl = mediaItem.value(QStringLiteral("sourceUrl")).toString();
+                        item.mediaTitle = mediaItem.value(QStringLiteral("title")).toString();
+                        item.mediaSource = mediaItem.value(QStringLiteral("source")).toString();
+                        item.mediaLicense = mediaItem.value(QStringLiteral("license")).toString();
+                    }
+                }
             }
             items.append(item);
         }

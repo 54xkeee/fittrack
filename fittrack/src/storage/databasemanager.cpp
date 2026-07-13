@@ -65,7 +65,7 @@ bool DatabaseManager::createSchema(QString *errorMessage)
     const QStringList statements{
         QStringLiteral("CREATE TABLE IF NOT EXISTS app_meta (key TEXT PRIMARY KEY, value TEXT NOT NULL)"),
         QStringLiteral("CREATE TABLE IF NOT EXISTS muscle (id TEXT PRIMARY KEY, name_zh TEXT NOT NULL UNIQUE, body_part TEXT NOT NULL)"),
-        QStringLiteral("CREATE TABLE IF NOT EXISTS exercise (id TEXT PRIMARY KEY, name_zh TEXT NOT NULL, name_en TEXT, aliases_json TEXT NOT NULL DEFAULT '[]', body_part TEXT NOT NULL, movement TEXT NOT NULL, equipment_json TEXT NOT NULL DEFAULT '[]', load_mode TEXT NOT NULL, introduction TEXT NOT NULL DEFAULT '', steps_json TEXT NOT NULL DEFAULT '[]', cautions_json TEXT NOT NULL DEFAULT '[]', recommended_sets INTEGER NOT NULL DEFAULT 0, recommended_reps TEXT NOT NULL DEFAULT '', rest_seconds INTEGER NOT NULL DEFAULT 0, is_system INTEGER NOT NULL DEFAULT 1, is_enabled INTEGER NOT NULL DEFAULT 1, source_json TEXT NOT NULL DEFAULT '[]')"),
+        QStringLiteral("CREATE TABLE IF NOT EXISTS exercise (id TEXT PRIMARY KEY, name_zh TEXT NOT NULL, name_en TEXT, aliases_json TEXT NOT NULL DEFAULT '[]', body_part TEXT NOT NULL, movement TEXT NOT NULL, equipment_json TEXT NOT NULL DEFAULT '[]', load_mode TEXT NOT NULL, introduction TEXT NOT NULL DEFAULT '', steps_json TEXT NOT NULL DEFAULT '[]', cautions_json TEXT NOT NULL DEFAULT '[]', difficulty TEXT NOT NULL DEFAULT '', technique_points_json TEXT NOT NULL DEFAULT '[]', common_mistakes_json TEXT NOT NULL DEFAULT '[]', collections_json TEXT NOT NULL DEFAULT '[]', recommended_sets INTEGER NOT NULL DEFAULT 0, recommended_reps TEXT NOT NULL DEFAULT '', rest_seconds INTEGER NOT NULL DEFAULT 0, is_system INTEGER NOT NULL DEFAULT 1, is_enabled INTEGER NOT NULL DEFAULT 1, source_json TEXT NOT NULL DEFAULT '[]')"),
         QStringLiteral("CREATE TABLE IF NOT EXISTS exercise_muscle (exercise_id TEXT NOT NULL REFERENCES exercise(id) ON DELETE CASCADE, muscle_id TEXT NOT NULL REFERENCES muscle(id), role TEXT NOT NULL CHECK(role IN ('primary','secondary')), PRIMARY KEY(exercise_id, muscle_id, role))"),
         QStringLiteral("CREATE TABLE IF NOT EXISTS exercise_media (id INTEGER PRIMARY KEY AUTOINCREMENT, exercise_id TEXT NOT NULL REFERENCES exercise(id) ON DELETE CASCADE, media_type TEXT NOT NULL, local_path TEXT, external_url TEXT, title TEXT, source TEXT, license TEXT)"),
         QStringLiteral("CREATE TABLE IF NOT EXISTS exercise_alternative (exercise_id TEXT NOT NULL REFERENCES exercise(id) ON DELETE CASCADE, alternative_id TEXT NOT NULL REFERENCES exercise(id), PRIMARY KEY(exercise_id, alternative_id))"),
@@ -83,7 +83,16 @@ bool DatabaseManager::createSchema(QString *errorMessage)
         QStringLiteral("CREATE TABLE IF NOT EXISTS append_set_record (id TEXT PRIMARY KEY, parent_set_id TEXT NOT NULL REFERENCES set_record(id) ON DELETE CASCADE, weight_kg REAL, reps INTEGER NOT NULL, rest_seconds INTEGER NOT NULL, to_failure INTEGER NOT NULL DEFAULT 0)"),
         QStringLiteral("CREATE TABLE IF NOT EXISTS workout_cardio_target (session_id TEXT PRIMARY KEY REFERENCES workout_session(id) ON DELETE CASCADE, cardio_type TEXT NOT NULL CHECK(cardio_type IN ('TreadmillIncline','StairClimber')), duration_seconds INTEGER NOT NULL CHECK(duration_seconds > 0), incline REAL, speed_kmh REAL, machine_level REAL, notes TEXT NOT NULL DEFAULT '')"),
         QStringLiteral("CREATE TABLE IF NOT EXISTS cardio_record (id TEXT PRIMARY KEY, session_id TEXT REFERENCES workout_session(id) ON DELETE CASCADE, cardio_type TEXT NOT NULL, performed_at TEXT NOT NULL, duration_seconds INTEGER NOT NULL, incline REAL, speed_kmh REAL, distance_km REAL, machine_level REAL, floors INTEGER, steps INTEGER, average_heart_rate INTEGER, notes TEXT NOT NULL DEFAULT '')"),
-        QStringLiteral("INSERT OR IGNORE INTO app_meta(key, value) VALUES('schema_version', '4')"),
+        QStringLiteral("CREATE TRIGGER IF NOT EXISTS workout_session_single_active_insert "
+                       "BEFORE INSERT ON workout_session WHEN NEW.status='active' "
+                       "AND EXISTS(SELECT 1 FROM workout_session WHERE status='active') "
+                       "BEGIN SELECT RAISE(ABORT, '已有进行中的训练'); END"),
+        QStringLiteral("CREATE TRIGGER IF NOT EXISTS workout_session_single_active_update "
+                       "BEFORE UPDATE OF status ON workout_session WHEN NEW.status='active' "
+                       "AND OLD.status<>'active' AND EXISTS(SELECT 1 FROM workout_session "
+                       "WHERE status='active' AND id<>NEW.id) "
+                       "BEGIN SELECT RAISE(ABORT, '已有进行中的训练'); END"),
+        QStringLiteral("INSERT OR IGNORE INTO app_meta(key, value) VALUES('schema_version', '6')"),
     };
 
     auto db = database();
@@ -140,9 +149,23 @@ bool DatabaseManager::createSchema(QString *errorMessage)
         db.rollback();
         return false;
     }
+    const QList<QPair<QString, QString>> exerciseColumns{
+        {QStringLiteral("difficulty"), QStringLiteral("TEXT NOT NULL DEFAULT ''")},
+        {QStringLiteral("technique_points_json"), QStringLiteral("TEXT NOT NULL DEFAULT '[]'")},
+        {QStringLiteral("common_mistakes_json"), QStringLiteral("TEXT NOT NULL DEFAULT '[]'")},
+        {QStringLiteral("collections_json"), QStringLiteral("TEXT NOT NULL DEFAULT '[]'")},
+    };
+    for (const auto &[column, definition] : exerciseColumns) {
+        if (!hasColumn(QStringLiteral("exercise"), column)
+            && !execute(QStringLiteral("ALTER TABLE exercise ADD COLUMN %1 %2")
+                            .arg(column, definition), errorMessage)) {
+            db.rollback();
+            return false;
+        }
+    }
     if (!execute(QStringLiteral(
-        "INSERT INTO app_meta(key,value) VALUES('schema_version','4') "
-        "ON CONFLICT(key) DO UPDATE SET value='4'"), errorMessage)) {
+        "INSERT INTO app_meta(key,value) VALUES('schema_version','6') "
+        "ON CONFLICT(key) DO UPDATE SET value='6'"), errorMessage)) {
         db.rollback();
         return false;
     }

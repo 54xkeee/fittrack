@@ -22,7 +22,9 @@ Control {
     signal resumeRequested()
     signal stopRequested()
 
-    implicitHeight: 72
+    implicitHeight: Math.max(72,
+                             Design.Theme.typeCaption + Design.Theme.typeTitle
+                             + Design.Theme.space24)
     padding: Design.Theme.space12
     Accessible.name: qsTr("%1，剩余%2").arg(label).arg(timeText)
 
@@ -76,4 +78,3 @@ Control {
         }
     }
 }
-

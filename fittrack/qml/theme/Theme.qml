@@ -47,8 +47,11 @@ QtObject {
     readonly property int space16: 16
     readonly property int space24: 24
 
+    // Android fontScale is applied at the token level so every page scales together.
+    property real fontScale: 1.0
+
     // All interactive controls remain at least 48 logical pixels high.
-    readonly property int controlHeight: 52
+    readonly property int controlHeight: Math.max(52, typeLabel + 24)
     readonly property int touchTarget: 48
 
     readonly property int radiusSmall: 8
@@ -56,11 +59,11 @@ QtObject {
     readonly property int radiusLarge: 16
 
     // Compact mobile type scale: caption, label, body, title, display.
-    readonly property int typeCaption: 12
-    readonly property int typeLabel: 14
-    readonly property int typeBody: 16
-    readonly property int typeTitle: 20
-    readonly property int typeDisplay: 28
+    readonly property int typeCaption: Math.round(12 * fontScale)
+    readonly property int typeLabel: Math.round(14 * fontScale)
+    readonly property int typeBody: Math.round(16 * fontScale)
+    readonly property int typeTitle: Math.round(20 * fontScale)
+    readonly property int typeDisplay: Math.round(28 * fontScale)
 
     property bool reducedMotion: false
     readonly property int motionFast: reducedMotion ? 0 : 100

@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 600" role="img" aria-label="单臂器械划船起始与结束位置示意图">
+  <rect width="900" height="600" rx="36" fill="#f6f7f4"/><path d="M450 55v490" stroke="#d8ddd8" stroke-width="4"/>
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round"><g stroke="#59635d" stroke-width="16"><path d="M75 500h330M120 500V180h95l45 95M160 390h90v45h-90M495 500h330M540 500V180h95l45 95M580 390h90v45h-90"/></g>
+  <g fill="#d89e78"><circle cx="270" cy="250" r="33"/><circle cx="690" cy="250" r="33"/></g><g stroke="#a8ca35" stroke-width="44"><path d="M270 305v100M690 305v100"/></g><g stroke="#28312d" stroke-width="24"><path d="M270 405l-40 75m40-75 40 75M690 405l-40 75m40-75 40 75"/></g>
+  <g stroke="#d89e78" stroke-width="24"><path d="M255 315l-120-20m540 20-78-10"/></g><g stroke="#1f2521" stroke-width="16"><path d="M115 295h35m430 10h35"/></g><g stroke="#59635d" stroke-width="14"><path d="M135 295l-15-85m477 95-42-95"/></g><g fill="#1f2521"><circle cx="120" cy="205" r="28"/><circle cx="555" cy="205" r="28"/></g>
+  <path d="M345 292c35 5 50 24 55 48" stroke="#8aa326" stroke-width="9"/><path d="M393 331l8 14 8-14" fill="#8aa326" stroke="none"/></g>
+</svg>

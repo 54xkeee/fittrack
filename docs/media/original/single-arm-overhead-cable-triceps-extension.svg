@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 600" role="img" aria-label="单臂头顶绳索三头伸展起始与结束位置示意图">
+  <rect width="900" height="600" rx="36" fill="#f6f7f4"/><path d="M450 55v490" stroke="#d8ddd8" stroke-width="4"/>
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round"><g stroke="#59635d" stroke-width="15"><path d="M75 510h100V110H75zM495 510h100V110H495z"/></g><g fill="#d89e78"><circle cx="285" cy="235" r="35"/><circle cx="705" cy="235" r="35"/></g><g stroke="#a8ca35" stroke-width="48"><path d="M285 300v125M705 300v125"/></g><g stroke="#28312d" stroke-width="25"><path d="M285 425l-45 75m45-75 45 75M705 425l-45 75m45-75 45 75"/></g>
+  <g stroke="#d89e78" stroke-width="24"><path d="M270 305l-10-100 45-55M690 305l20-130 20-75"/></g><g stroke="#1f2521" stroke-width="12"><path d="M294 140l24 18m400-65 25 14"/></g><g stroke="#59635d" stroke-width="7"><path d="M306 150L125 130m605-30L545 130"/></g>
+  <path d="M345 245c34-15 52-40 52-70" stroke="#8aa326" stroke-width="9"/><path d="M391 185l6-16 11 12" fill="#8aa326" stroke="none"/></g>
+</svg>

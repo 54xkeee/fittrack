@@ -39,11 +39,20 @@ QVariantMap WorkoutSessionController::suggestedDay() const { return m_suggestedD
 QVariantList WorkoutSessionController::gyms() const { return m_gyms; }
 QVariantList WorkoutSessionController::equipment() const { return m_equipment; }
 QVariantList WorkoutSessionController::exercises() const { return m_exercises; }
+QVariantList WorkoutSessionController::activeSessions() const { return m_activeSessions; }
 QString WorkoutSessionController::selectedGymId() const { return m_selectedGymId; }
+QString WorkoutSessionController::sessionId() const { return m_sessionId; }
 QString WorkoutSessionController::sessionName() const { return m_sessionName; }
 QString WorkoutSessionController::sessionNotes() const { return m_sessionNotes; }
 bool WorkoutSessionController::active() const { return !m_sessionId.isEmpty(); }
 bool WorkoutSessionController::hasUnfinished() const { return m_hasUnfinished; }
+QString WorkoutSessionController::sessionState() const
+{
+    if (m_activeSessionCount > 1) return QStringLiteral("RecoveryRequired");
+    if (active()) return QStringLiteral("Active");
+    if (m_hasUnfinished) return QStringLiteral("Recoverable");
+    return QStringLiteral("Idle");
+}
 QString WorkoutSessionController::errorMessage() const { return m_errorMessage; }
 
 void WorkoutSessionController::loadPlanDays()
@@ -102,12 +111,38 @@ void WorkoutSessionController::loadSuggestedDay()
 void WorkoutSessionController::refreshUnfinished()
 {
     QSqlQuery query(m_database);
-    query.prepare(QStringLiteral("SELECT 1 FROM workout_session WHERE status='active' LIMIT 1"));
-    const bool value = query.exec() && query.next();
-    if (m_hasUnfinished != value) {
-        m_hasUnfinished = value;
+    query.prepare(QStringLiteral(
+        "SELECT ws.id,ws.name,ws.started_at,"
+        "(SELECT COUNT(*) FROM workout_exercise we WHERE we.session_id=ws.id),"
+        "(SELECT COUNT(*) FROM set_record sr JOIN workout_exercise we "
+        "ON we.id=sr.workout_exercise_id WHERE we.session_id=ws.id AND sr.completed=1) "
+        "FROM workout_session ws WHERE ws.status='active' "
+        "ORDER BY ws.started_at DESC,ws.id"));
+    QVariantList activeSessions;
+    if (query.exec()) {
+        while (query.next()) {
+            activeSessions.append(QVariantMap{
+                {QStringLiteral("id"), query.value(0)},
+                {QStringLiteral("name"), query.value(1)},
+                {QStringLiteral("startedAt"), query.value(2)},
+                {QStringLiteral("exerciseCount"), query.value(3)},
+                {QStringLiteral("completedSetCount"), query.value(4)},
+            });
+        }
+    }
+    const int count = activeSessions.size();
+    const bool hasUnfinished = count > 0;
+    const bool stateChanged = m_activeSessionCount != count;
+    m_activeSessionCount = count;
+    if (m_activeSessions != activeSessions) {
+        m_activeSessions = activeSessions;
+        emit activeSessionsChanged();
+    }
+    if (m_hasUnfinished != hasUnfinished) {
+        m_hasUnfinished = hasUnfinished;
         emit unfinishedChanged();
     }
+    if (stateChanged) emit sessionStateChanged();
 }
 
 void WorkoutSessionController::loadGyms()
@@ -440,12 +475,140 @@ bool WorkoutSessionController::saveCurrentAsPlan(
     return true;
 }
 
-bool WorkoutSessionController::startPlanDay(const QString &dayId)
+int WorkoutSessionController::activeSessionCount() const
+{
+    QSqlQuery query(m_database);
+    return query.exec(QStringLiteral(
+               "SELECT COUNT(*) FROM workout_session WHERE status='active'"))
+               && query.next()
+           ? query.value(0).toInt()
+           : 0;
+}
+
+QVariantMap WorkoutSessionController::activeSessionSummary() const
+{
+    QSqlQuery query(m_database);
+    query.prepare(QStringLiteral(
+        "SELECT id,name,started_at FROM workout_session WHERE status='active' "
+        "ORDER BY started_at DESC,id LIMIT 1"));
+    if (!query.exec() || !query.next()) return {};
+    return QVariantMap{
+        {QStringLiteral("currentSessionId"), query.value(0)},
+        {QStringLiteral("currentSessionName"), query.value(1)},
+        {QStringLiteral("currentStartedAt"), query.value(2)},
+    };
+}
+
+QVariantMap WorkoutSessionController::requestStart(
+    const QString &kind, const QString &targetId, const QString &displayName)
 {
     clearError();
-    if (active()) {
-        return fail(QStringLiteral("请先结束当前训练"));
+    const int count = activeSessionCount();
+    refreshUnfinished();
+    if (count > 0) {
+        QVariantMap result = activeSessionSummary();
+        result.insert(QStringLiteral("status"),
+                      count > 1 ? QStringLiteral("recoveryRequired")
+                                : QStringLiteral("conflict"));
+        result.insert(QStringLiteral("activeSessionCount"), count);
+        result.insert(QStringLiteral("requestedKind"), kind);
+        result.insert(QStringLiteral("requestedTargetId"), targetId);
+        result.insert(QStringLiteral("requestedName"), displayName);
+        return result;
     }
+
+    const bool started = kind == QStringLiteral("plan")
+        ? startPlanDay(targetId)
+        : startFreeWorkout(displayName);
+    return QVariantMap{
+        {QStringLiteral("status"), started ? QStringLiteral("started")
+                                            : QStringLiteral("error")},
+        {QStringLiteral("message"), m_errorMessage},
+    };
+}
+
+QVariantMap WorkoutSessionController::requestStartPlanDay(const QString &dayId)
+{
+    QSqlQuery day(m_database);
+    day.prepare(QStringLiteral("SELECT name FROM plan_day WHERE id=?"));
+    day.addBindValue(dayId);
+    if (!day.exec() || !day.next()) {
+        fail(QStringLiteral("找不到训练日"));
+        return QVariantMap{{QStringLiteral("status"), QStringLiteral("error")},
+                           {QStringLiteral("message"), m_errorMessage}};
+    }
+    return requestStart(QStringLiteral("plan"), dayId, day.value(0).toString());
+}
+
+QVariantMap WorkoutSessionController::requestStartSuggestedDay()
+{
+    const QString dayId = m_suggestedDay.value(QStringLiteral("dayId")).toString();
+    if (dayId.isEmpty()) {
+        fail(QStringLiteral("没有可开始的推荐训练"));
+        return QVariantMap{{QStringLiteral("status"), QStringLiteral("error")},
+                           {QStringLiteral("message"), m_errorMessage}};
+    }
+    return requestStartPlanDay(dayId);
+}
+
+QVariantMap WorkoutSessionController::requestStartFreeWorkout(const QString &name)
+{
+    const QString displayName = name.trimmed().isEmpty() ? QStringLiteral("自由训练")
+                                                         : name.trimmed();
+    return requestStart(QStringLiteral("free"), QString{}, displayName);
+}
+
+bool WorkoutSessionController::continueExistingWorkout()
+{
+    clearError();
+    const int count = activeSessionCount();
+    if (count > 1) return fail(QStringLiteral("检测到多条未完成训练，请先完成恢复处理"));
+    if (count == 0) return fail(QStringLiteral("没有未完成训练"));
+    if (active()) return true;
+    return resumeUnfinished();
+}
+
+bool WorkoutSessionController::recoverActiveSessions(
+    const QString &keepSessionId, bool discardOthers)
+{
+    clearError();
+    if (activeSessionCount() < 2) {
+        refreshUnfinished();
+        return fail(QStringLiteral("当前不需要多训练恢复"));
+    }
+
+    QSqlQuery selected(m_database);
+    selected.prepare(QStringLiteral(
+        "SELECT 1 FROM workout_session WHERE id=? AND status='active'"));
+    selected.addBindValue(keepSessionId);
+    if (!selected.exec() || !selected.next()) {
+        return fail(QStringLiteral("请选择一条仍在进行的训练"));
+    }
+
+    if (!m_database.transaction()) return fail(m_database.lastError().text());
+    QSqlQuery resolve(m_database);
+    if (discardOthers) {
+        resolve.prepare(QStringLiteral(
+            "DELETE FROM workout_session WHERE status='active' AND id<>?"));
+        resolve.addBindValue(keepSessionId);
+    } else {
+        resolve.prepare(QStringLiteral(
+            "UPDATE workout_session SET status='completed',ended_at=COALESCE(ended_at,?) "
+            "WHERE status='active' AND id<>?"));
+        resolve.addBindValue(QDateTime::currentDateTimeUtc().toString(Qt::ISODate));
+        resolve.addBindValue(keepSessionId);
+    }
+    if (!resolve.exec()) {
+        m_database.rollback();
+        return fail(resolve.lastError().text());
+    }
+    if (!m_database.commit()) return fail(m_database.lastError().text());
+    return loadSession(keepSessionId);
+}
+
+bool WorkoutSessionController::insertPlanDaySession(const QString &dayId, QString *sessionId)
+{
+    if (!sessionId) return fail(QStringLiteral("无法创建训练"));
 
     QSqlQuery day(m_database);
     day.prepare(QStringLiteral("SELECT d.name,d.plan_id FROM plan_day d WHERE d.id=?"));
@@ -455,31 +618,26 @@ bool WorkoutSessionController::startPlanDay(const QString &dayId)
     }
     const QString name = day.value(0).toString();
     const QString planId = day.value(1).toString();
-    const QString sessionId = newId();
+    *sessionId = newId();
 
-    if (!m_database.transaction()) {
-        return fail(m_database.lastError().text());
-    }
     QSqlQuery session(m_database);
     session.prepare(QStringLiteral(
         "INSERT INTO workout_session(id,name,source_plan_id,gym_id,started_at,status) VALUES(?,?,?,?,?, 'active')"));
-    session.addBindValue(sessionId);
+    session.addBindValue(*sessionId);
     session.addBindValue(name);
     session.addBindValue(planId);
     session.addBindValue(m_selectedGymId.isEmpty() ? QVariant{} : QVariant(m_selectedGymId));
     session.addBindValue(QDateTime::currentDateTimeUtc().toString(Qt::ISODate));
     if (!session.exec()) {
-        m_database.rollback();
         return fail(session.lastError().text());
     }
 
     QSqlQuery planned(m_database);
     planned.prepare(QStringLiteral(
         "SELECT exercise_id,sort_order,default_sets,default_reps,rest_seconds,notes "
-        "FROM plan_exercise WHERE day_id=? ORDER BY sort_order"));
+        "FROM plan_exercise WHERE day_id=? ORDER BY sort_order,id"));
     planned.addBindValue(dayId);
     if (!planned.exec()) {
-        m_database.rollback();
         return fail(planned.lastError().text());
     }
     while (planned.next()) {
@@ -488,12 +646,11 @@ bool WorkoutSessionController::startPlanDay(const QString &dayId)
         exercise.prepare(QStringLiteral(
             "INSERT INTO workout_exercise(id,session_id,exercise_id,sort_order,notes) VALUES(?,?,?,?,?)"));
         exercise.addBindValue(workoutExerciseId);
-        exercise.addBindValue(sessionId);
+        exercise.addBindValue(*sessionId);
         exercise.addBindValue(planned.value(0));
         exercise.addBindValue(planned.value(1));
         exercise.addBindValue(planned.value(5));
         if (!exercise.exec()) {
-            m_database.rollback();
             return fail(exercise.lastError().text());
         }
 
@@ -509,7 +666,6 @@ bool WorkoutSessionController::startPlanDay(const QString &dayId)
             const int target = targetForSet(reps, index);
             set.addBindValue(target > 0 ? QVariant(target) : QVariant{});
             if (!set.exec()) {
-                m_database.rollback();
                 return fail(set.lastError().text());
             }
         }
@@ -520,11 +676,40 @@ bool WorkoutSessionController::startPlanDay(const QString &dayId)
         "speed_kmh,machine_level,notes) "
         "SELECT ?,cardio_type,duration_seconds,incline,speed_kmh,machine_level,notes "
         "FROM plan_cardio WHERE day_id=?"));
-    cardioTarget.addBindValue(sessionId);
+    cardioTarget.addBindValue(*sessionId);
     cardioTarget.addBindValue(dayId);
     if (!cardioTarget.exec()) {
-        m_database.rollback();
         return fail(cardioTarget.lastError().text());
+    }
+    return true;
+}
+
+bool WorkoutSessionController::insertFreeWorkout(const QString &name, QString *sessionId)
+{
+    if (!sessionId) return fail(QStringLiteral("无法创建训练"));
+    *sessionId = newId();
+    QSqlQuery query(m_database);
+    query.prepare(QStringLiteral(
+        "INSERT INTO workout_session(id,name,gym_id,started_at,status) VALUES(?,?,?,?,'active')"));
+    query.addBindValue(*sessionId);
+    query.addBindValue(name.trimmed().isEmpty() ? QStringLiteral("自由训练") : name.trimmed());
+    query.addBindValue(m_selectedGymId.isEmpty() ? QVariant{} : QVariant(m_selectedGymId));
+    query.addBindValue(QDateTime::currentDateTimeUtc().toString(Qt::ISODate));
+    return query.exec() || fail(query.lastError().text());
+}
+
+bool WorkoutSessionController::startPlanDay(const QString &dayId)
+{
+    clearError();
+    if (activeSessionCount() > 0) {
+        refreshUnfinished();
+        return fail(QStringLiteral("已有进行中的训练"));
+    }
+    if (!m_database.transaction()) return fail(m_database.lastError().text());
+    QString sessionId;
+    if (!insertPlanDaySession(dayId, &sessionId)) {
+        m_database.rollback();
+        return false;
     }
     if (!m_database.commit()) {
         return fail(m_database.lastError().text());
@@ -541,21 +726,83 @@ bool WorkoutSessionController::startSuggestedDay()
 bool WorkoutSessionController::startFreeWorkout(const QString &name)
 {
     clearError();
-    if (active()) {
-        return fail(QStringLiteral("请先结束当前训练"));
+    if (activeSessionCount() > 0) {
+        refreshUnfinished();
+        return fail(QStringLiteral("已有进行中的训练"));
     }
-    const QString sessionId = newId();
-    QSqlQuery query(m_database);
-    query.prepare(QStringLiteral(
-        "INSERT INTO workout_session(id,name,gym_id,started_at,status) VALUES(?,?,?,?,'active')"));
-    query.addBindValue(sessionId);
-    query.addBindValue(name.trimmed().isEmpty() ? QStringLiteral("自由训练") : name.trimmed());
-    query.addBindValue(m_selectedGymId.isEmpty() ? QVariant{} : QVariant(m_selectedGymId));
-    query.addBindValue(QDateTime::currentDateTimeUtc().toString(Qt::ISODate));
-    if (!query.exec()) {
-        return fail(query.lastError().text());
+    if (!m_database.transaction()) return fail(m_database.lastError().text());
+    QString sessionId;
+    if (!insertFreeWorkout(name, &sessionId)) {
+        m_database.rollback();
+        return false;
     }
+    if (!m_database.commit()) return fail(m_database.lastError().text());
     return loadSession(sessionId);
+}
+
+bool WorkoutSessionController::switchWorkout(
+    const QString &kind, const QString &targetId, const QString &displayName, bool discardCurrent)
+{
+    clearError();
+    const int count = activeSessionCount();
+    if (count != 1) {
+        refreshUnfinished();
+        return fail(count > 1 ? QStringLiteral("检测到多条未完成训练，请先完成恢复处理")
+                              : QStringLiteral("没有可切换的进行中训练"));
+    }
+
+    QSqlQuery current(m_database);
+    current.prepare(QStringLiteral(
+        "SELECT id FROM workout_session WHERE status='active' ORDER BY started_at DESC,id LIMIT 1"));
+    if (!current.exec() || !current.next()) return fail(QStringLiteral("无法读取当前训练"));
+    const QString currentId = current.value(0).toString();
+
+    if (!m_database.transaction()) return fail(m_database.lastError().text());
+    QSqlQuery resolve(m_database);
+    if (discardCurrent) {
+        resolve.prepare(QStringLiteral("DELETE FROM workout_session WHERE id=? AND status='active'"));
+        resolve.addBindValue(currentId);
+    } else {
+        resolve.prepare(QStringLiteral(
+            "UPDATE workout_session SET status='completed',ended_at=? "
+            "WHERE id=? AND status='active'"));
+        resolve.addBindValue(QDateTime::currentDateTimeUtc().toString(Qt::ISODate));
+        resolve.addBindValue(currentId);
+    }
+    if (!resolve.exec() || resolve.numRowsAffected() != 1) {
+        m_database.rollback();
+        return fail(resolve.lastError().text().isEmpty()
+                        ? QStringLiteral("无法处理当前训练")
+                        : resolve.lastError().text());
+    }
+
+    QString newSessionId;
+    const bool inserted = kind == QStringLiteral("plan")
+        ? insertPlanDaySession(targetId, &newSessionId)
+        : insertFreeWorkout(displayName, &newSessionId);
+    if (!inserted) {
+        m_database.rollback();
+        return false;
+    }
+    if (!m_database.commit()) return fail(m_database.lastError().text());
+    return loadSession(newSessionId);
+}
+
+bool WorkoutSessionController::switchToPlanDay(const QString &dayId, bool discardCurrent)
+{
+    return switchWorkout(QStringLiteral("plan"), dayId, QString{}, discardCurrent);
+}
+
+bool WorkoutSessionController::switchToFreeWorkout(const QString &name, bool discardCurrent)
+{
+    const QString displayName = name.trimmed().isEmpty() ? QStringLiteral("自由训练")
+                                                         : name.trimmed();
+    return switchWorkout(QStringLiteral("free"), QString{}, displayName, discardCurrent);
+}
+
+void WorkoutSessionController::dismissError()
+{
+    clearError();
 }
 
 bool WorkoutSessionController::addExercise(const QString &exerciseId, int setCount, const QString &targetReps)
@@ -906,6 +1153,14 @@ bool WorkoutSessionController::addAppendSet(
 bool WorkoutSessionController::resumeUnfinished()
 {
     clearError();
+    const int count = activeSessionCount();
+    refreshUnfinished();
+    if (count > 1) {
+        return fail(QStringLiteral("检测到多条未完成训练，请先完成恢复处理"));
+    }
+    if (count == 0) {
+        return fail(QStringLiteral("没有未完成训练"));
+    }
     QSqlQuery query(m_database);
     query.prepare(QStringLiteral(
         "SELECT id FROM workout_session WHERE status='active' ORDER BY started_at DESC LIMIT 1"));
@@ -988,6 +1243,7 @@ void WorkoutSessionController::reloadReferenceData()
 
 void WorkoutSessionController::reloadAfterRestore()
 {
+    const bool wasActive = active();
     m_selectedGymId.clear();
     m_sessionId.clear();
     m_sessionName.clear();
@@ -997,12 +1253,14 @@ void WorkoutSessionController::reloadAfterRestore()
     emit equipmentChanged();
     emit exercisesChanged();
     emit sessionChanged();
+    if (wasActive) emit sessionStateChanged();
     reloadReferenceData();
     refreshUnfinished();
 }
 
 bool WorkoutSessionController::loadSession(const QString &sessionId)
 {
+    const bool wasActive = active();
     QSqlQuery session(m_database);
     session.prepare(QStringLiteral("SELECT name,gym_id,notes FROM workout_session WHERE id=? AND status='active'"));
     session.addBindValue(sessionId);
@@ -1117,6 +1375,7 @@ bool WorkoutSessionController::loadSession(const QString &sessionId)
     m_exercises = exercises;
     emit exercisesChanged();
     emit sessionChanged();
+    if (!wasActive) emit sessionStateChanged();
     refreshUnfinished();
     return true;
 }

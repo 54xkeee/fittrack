@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 600" role="img" aria-label="杠杆式胸部推举起始与结束位置示意图">
+  <rect width="900" height="600" rx="36" fill="#f6f7f4"/><path d="M450 55v490" stroke="#d8ddd8" stroke-width="4"/>
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round"><g stroke="#59635d" stroke-width="16"><path d="M70 505h330M115 505V165h90l45 125M165 410h105v45H165M490 505h330M535 505V165h90l45 125M585 410h105v45H585"/></g><g fill="#d89e78"><circle cx="265" cy="245" r="34"/><circle cx="685" cy="245" r="34"/></g><g stroke="#a8ca35" stroke-width="46"><path d="M265 302v108M685 302v108"/></g><g stroke="#28312d" stroke-width="24"><path d="M265 410l-45 80m45-80 45 80M685 410l-45 80m45-80 45 80"/></g>
+  <g stroke="#d89e78" stroke-width="24"><path d="M250 310l-55 25m85-25 55 25"/><path d="M670 310l-105 0m135 0 105 0"/></g><g stroke="#1f2521" stroke-width="15"><path d="M180 335h30m110 0h30M548 310h30m210 0h30"/></g><g stroke="#59635d" stroke-width="12"><path d="M195 335l-20-100m160 100 20-100M565 310l-20-75m260 75 20-75"/></g><g fill="#1f2521"><circle cx="173" cy="225" r="30"/><circle cx="357" cy="225" r="30"/><circle cx="543" cy="225" r="30"/><circle cx="827" cy="225" r="30"/></g>
+  <path d="M350 300c35 6 49 26 52 53" stroke="#8aa326" stroke-width="9"/><path d="M395 344l8 14 8-14" fill="#8aa326" stroke="none"/></g>
+</svg>

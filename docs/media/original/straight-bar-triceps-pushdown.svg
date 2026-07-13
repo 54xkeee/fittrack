@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 600" role="img" aria-label="直杆绳索下压起始与结束位置示意图">
+  <rect width="900" height="600" rx="36" fill="#f6f7f4"/><path d="M450 55v490" stroke="#d8ddd8" stroke-width="4"/>
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round"><g stroke="#59635d" stroke-width="15"><path d="M70 510h115V105H70zM490 510h115V105H490z"/></g><g fill="#d89e78"><circle cx="285" cy="205" r="35"/><circle cx="705" cy="205" r="35"/></g><g stroke="#a8ca35" stroke-width="48"><path d="M285 272v145M705 272v145"/></g><g stroke="#28312d" stroke-width="25"><path d="M285 417l-45 83m45-83 45 83M705 417l-45 83m45-83 45 83"/></g>
+  <g stroke="#d89e78" stroke-width="24"><path d="M265 285l-42 55 35 42m47-97 42 55-35 42"/><path d="M685 285l-32 80 5 85m67-165 32 80-5 85"/></g><g stroke="#1f2521" stroke-width="13"><path d="M230 387h110M630 452h150"/></g><g stroke="#59635d" stroke-width="7"><path d="M285 387L128 105m577 347L548 105"/></g>
+  <path d="M350 330c34 15 47 40 43 70" stroke="#8aa326" stroke-width="9"/><path d="M386 391l7 15 10-12" fill="#8aa326" stroke="none"/></g>
+</svg>

@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 600" role="img" aria-label="窄距坐姿绳索划船起始与结束位置示意图">
+  <rect width="900" height="600" rx="36" fill="#f6f7f4"/><path d="M450 55v490" stroke="#d8ddd8" stroke-width="4"/>
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round"><g stroke="#59635d" stroke-width="15"><path d="M70 500h330M90 500V165h55v335M210 430h135M490 500h330M510 500V165h55v335M630 430h135"/></g><g fill="#d89e78"><circle cx="285" cy="270" r="34"/><circle cx="705" cy="270" r="34"/></g><g stroke="#a8ca35" stroke-width="46"><path d="M285 327v100M705 327v100"/></g><g stroke="#28312d" stroke-width="24"><path d="M285 427l-85 58m85-58 60 58M705 427l-85 58m85-58 60 58"/></g>
+  <g stroke="#d89e78" stroke-width="24"><path d="M270 335l-115-20m145 20-145-20"/><path d="M690 335l-58 28m88-28 58 28"/></g><g stroke="#1f2521" stroke-width="11"><path d="M138 305l17 10 17-10m443 48 17 10 17-10m112 0 17 10 17-10"/></g><g stroke="#59635d" stroke-width="7"><path d="M155 315L90 465m542-102L510 465m268-102L510 465"/></g>
+  <path d="M350 310c35 5 51 25 55 52" stroke="#8aa326" stroke-width="9"/><path d="M398 353l8 14 8-14" fill="#8aa326" stroke="none"/></g>
+</svg>

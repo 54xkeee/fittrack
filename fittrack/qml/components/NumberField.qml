@@ -8,6 +8,7 @@ Control {
 
     property alias text: editor.text
     property alias placeholderText: editor.placeholderText
+    property alias editorItem: editor
     property string label: ""
     property string unit: ""
     property string errorText: ""
@@ -100,4 +101,3 @@ Control {
         }
     }
 }
-

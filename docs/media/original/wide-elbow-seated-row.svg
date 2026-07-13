@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 600" role="img" aria-label="坐姿开肘划船起始与结束位置示意图">
+  <rect width="900" height="600" rx="36" fill="#f6f7f4"/><path d="M450 55v490" stroke="#d8ddd8" stroke-width="4"/>
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round"><g stroke="#59635d" stroke-width="15"><path d="M65 485h330M85 485V165h55v320M220 415h115M485 485h330M505 485V165h55v320M640 415h115"/></g><g fill="#d89e78"><circle cx="285" cy="260" r="33"/><circle cx="705" cy="260" r="33"/></g><g stroke="#a8ca35" stroke-width="44"><path d="M285 315v95M705 315v95"/></g>
+  <g stroke="#28312d" stroke-width="24"><path d="M285 410l-75 55m75-55 55 55M705 410l-75 55m75-55 55 55"/></g><g stroke="#d89e78" stroke-width="24"><path d="M270 320l-130-35m160 35-160-35"/><path d="M690 320l-70-55m100 55 70-55"/></g><g stroke="#1f2521" stroke-width="16"><path d="M125 285h32m448-22h30m140 0h30"/></g><g stroke="#59635d" stroke-width="8"><path d="M140 285H85m550-22H505m285 0H505"/></g>
+  <path d="M350 285c35 5 50 25 54 52" stroke="#8aa326" stroke-width="9"/><path d="M397 328l8 14 8-14" fill="#8aa326" stroke="none"/></g>
+</svg>

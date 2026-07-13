@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 600" role="img" aria-label="坐姿髋外展起始与结束位置示意图">
+  <rect width="900" height="600" rx="36" fill="#f6f7f4"/><path d="M450 55v490" stroke="#d8ddd8" stroke-width="4"/>
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round"><g stroke="#59635d" stroke-width="18"><path d="M105 500h260M135 500V220h85v205h105M525 500h260M555 500V220h85v205h105"/></g><g fill="#d89e78"><circle cx="250" cy="245" r="34"/><circle cx="670" cy="245" r="34"/></g><g stroke="#a8ca35" stroke-width="46"><path d="M250 302v115M670 302v115"/></g><g stroke="#28312d" stroke-width="26"><path d="M250 417l-32 65m32-65 32 65"/><path d="M670 417l-92 55m92-55 92 55"/></g><g stroke="#59635d" stroke-width="22"><path d="M205 440h35m20 0h35M555 450h42m146 0h42"/></g>
+  <path d="M345 385c36 4 52 22 58 49" stroke="#8aa326" stroke-width="9"/><path d="M396 425l8 14 8-14" fill="#8aa326" stroke="none"/></g>
+</svg>

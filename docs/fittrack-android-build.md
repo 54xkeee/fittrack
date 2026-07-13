@@ -1,6 +1,6 @@
 # FitTrack Android 构建与真机验收
 
-本文记录 2026-07-13 已验证的 Android 构建基线，以及尚需在一加 Ace 5 Pro 上完成的检查。当前交付目标是自用并可把 APK 直接分享给其他用户安装；正式分发前不得跳过真机与签名步骤。AAB 构建能力保留给以后可能的应用商店发布。
+本文记录 2026-07-14 已验证的 Android 构建基线，以及尚需在一加 Ace 5 Pro 上完成的检查。当前交付目标是自用并可把 Debug APK 直接分享给其他用户侧载安装；应用商店上架、长期 Release 签名和 AAB 发布留作后续阶段。
 
 ## 工具链
 
@@ -33,6 +33,21 @@ C:\FitTrackDev\fittrack\build-android-arm64\android-build\build\outputs\apk\debu
 - min API：28
 - target/compile API：35
 - ABI：`arm64-v8a`
+
+2026-07-14 的已验证产物为：
+
+```text
+dist\FitTrack-0.1.0-arm64-debug.apk
+```
+
+- 文件大小：63,792,192 字节；
+- SHA-256：`C3DA93157BCDDFD55C6A798D4B6528C4F0587F62163050E7D76ACE337B7B55E7`；
+- Android Lint：0 issue；
+- 签名：Android Debug 证书，APK Signature Scheme v2 校验通过；
+- 包内 ABI：仅 `arm64-v8a`；
+- 媒体：58/58 张 shareable JPEG 已嵌入，116 张 MuscleDB 图片、旧图片目录和 Inter 字体均未进入 APK。
+
+Debug 证书适合直接侧载测试，但不能作为应用商店发布签名。若不同构建机使用不同 Debug 证书，后续包不能覆盖安装，需先卸载旧版。
 
 ## 构建 Release 包
 
@@ -82,7 +97,7 @@ powershell -ExecutionPolicy Bypass -File C:\FitTrackDev\fittrack\scripts\build-a
 
 如以后需要发布 AAB，将最后一条命令增加 `-Bundle`。脚本会在清理构建目录前检查四个环境变量是否齐全，并显式关闭未选择的签名模式，避免 CMake 缓存沿用旧的签名状态。
 
-当前已用一次性测试密钥验证 Release APK 的 V3 签名链路；测试 keystore 已删除，测试签名 APK 未进入交付目录。正式可分享 APK 仍需用户创建并保管长期发布密钥。
+当前已用一次性测试密钥验证 Release APK 的 V3 签名链路；测试 keystore 已删除，测试签名 APK 未进入交付目录。当前侧载分享使用 Debug APK；只有需要稳定覆盖升级或更正式的长期分发时，才必须由用户创建并保管长期发布密钥。
 
 ## 离线质量门禁
 
@@ -112,7 +127,7 @@ Get-FileHash $apk -Algorithm SHA256
 
 调试包使用 Android Debug 证书，只用于开发安装，不得上传商店。
 
-当前最终打包权限只有通知、前台服务和 AndroidX 动态广播接收器权限；`WRITE_EXTERNAL_STORAGE` 仅声明到 API 27，而应用最低 API 为 28。应用不执行内置网络请求，最终 APK/AAB 不包含 `INTERNET` 或 `ACCESS_NETWORK_STATE` 权限。动作资料中的外部链接交给系统浏览器打开。
+当前最终打包权限只有通知、前台服务和 AndroidX 动态广播接收器权限；`WRITE_EXTERNAL_STORAGE` 仅声明到 API 27，而应用最低 API 为 28。应用不执行内置网络请求，最终 APK/AAB 不包含 `INTERNET` 或 `ACCESS_NETWORK_STATE` 权限。动作资料不提供教学视频或媒体外链入口。
 
 ## 一加 Ace 5 Pro 真机回归
 
@@ -147,12 +162,10 @@ Get-FileHash $apk -Algorithm SHA256
 & "D:\FitTrackToolchains\AndroidSdk\platform-tools\adb.exe" logcat | Select-String -Pattern "fittrack|AndroidRuntime|Qt"
 ```
 
-## 直接分享前仍需完成
+## 直接侧载分享前仍需完成
 
-- 冻结包名；一旦把 APK 发给其他用户，后续版本不可随意更换。
-- 在仓库外创建并备份发布 keystore，不提交密码、密钥或签名属性文件。
-- 生成正式签名 Release APK，检查签名证书、包名、API、ABI、权限和 SHA-256。
-- 在一加 Ace 5 Pro 上完成首次安装、完整训练、后台计时、备份恢复和同签名覆盖升级。
-- 分发包同时提供简明安装说明、版本号、SHA-256、第三方许可和媒体来源清单。
+- 在一加 Ace 5 Pro 上完成首次安装、完整训练、后台计时、通知允许/拒绝、备份恢复、返回键、真实 TalkBack、系统大字体和数字键盘验收。
+- 分享时同时提供版本号、SHA-256、第三方许可和媒体来源清单，并明确这是 Debug 签名测试版。
+- 若需要让接收者以后直接覆盖升级，再冻结包名，并在仓库外创建、备份长期发布 keystore 后生成 Release APK。
 
 如以后决定进入应用商店，再补签名 AAB、公开隐私政策 URL、Health Apps 声明、商店截图、Feature Graphic 和商店版本说明；这些不阻塞当前自用与直接分享目标。

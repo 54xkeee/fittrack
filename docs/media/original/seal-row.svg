@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 600" role="img" aria-label="海豹划船起始与结束位置示意图">
+  <rect width="900" height="600" rx="36" fill="#f6f7f4"/><path d="M450 55v490" stroke="#d8ddd8" stroke-width="4"/>
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round"><g stroke="#59635d" stroke-width="18"><path d="M80 300h310M105 300l-35 205m295-205 35 205M510 300h310M535 300l-35 205m295-205 35 205"/></g>
+  <g stroke="#a8ca35" stroke-width="46"><path d="M160 275h145M590 275h145"/></g><g fill="#d89e78"><circle cx="335" cy="270" r="31"/><circle cx="765" cy="270" r="31"/></g><g stroke="#28312d" stroke-width="24"><path d="M160 275l-70-25m70 25-70 28M590 275l-70-25m70 25-70 28"/></g>
+  <g stroke="#d89e78" stroke-width="22"><path d="M220 290l20 135m20-135 20 135"/><path d="M650 290l-5 72 35 45m10-117 5 72-35 45"/></g><g stroke="#1f2521" stroke-width="12"><path d="M180 435h140M610 417h140"/></g><g stroke="#1f2521" stroke-width="18"><circle cx="165" cy="435" r="30"/><circle cx="335" cy="435" r="30"/><circle cx="595" cy="417" r="30"/><circle cx="765" cy="417" r="30"/></g>
+  <path d="M345 390c42-24 50-55 42-88" stroke="#8aa326" stroke-width="9"/><path d="M381 312l6-16 11 12" fill="#8aa326" stroke="none"/></g>
+</svg>

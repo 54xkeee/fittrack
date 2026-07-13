@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 600" role="img" aria-label="反向器械飞鸟起始与结束位置示意图">
+  <rect width="900" height="600" rx="36" fill="#f6f7f4"/><path d="M450 55v490" stroke="#d8ddd8" stroke-width="4"/>
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round"><g stroke="#59635d" stroke-width="14"><path d="M92 480h270M150 480V145h155v335M150 170h155M205 370h70v55h-70z"/><path d="M538 480h270M596 480V145h155v335M596 170h155M651 370h70v55h-70z"/></g>
+  <g stroke="#28312d" stroke-width="24"><path d="M225 275v115M675 275v115"/><path d="M225 390l-30 90m30-90 30 90M675 390l-30 90m30-90 30 90"/></g>
+  <g fill="#d89e78"><circle cx="225" cy="225" r="34"/><circle cx="675" cy="225" r="34"/></g><g stroke="#a8ca35" stroke-width="42"><path d="M225 280v92M675 280v92"/></g>
+  <g stroke="#d89e78" stroke-width="24"><path d="M210 290l-70-78m100 78 70-78"/><path d="M660 290l-118 18m148-18 118 18"/></g><g stroke="#1f2521" stroke-width="16"><path d="M132 205l22 14m142 0 22-14M534 308h26m230 0h26"/></g>
+  <path d="M337 260c35 12 50 35 58 67" stroke="#8aa326" stroke-width="9"/><path d="M387 318l9 13 7-14" fill="#8aa326" stroke="none"/></g>
+</svg>

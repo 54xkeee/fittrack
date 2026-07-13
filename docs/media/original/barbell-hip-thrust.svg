@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 600" role="img" aria-label="杠铃臀推起始与结束位置示意图">
+  <rect width="900" height="600" rx="36" fill="#f6f7f4"/><path d="M450 55v490" stroke="#d8ddd8" stroke-width="4"/>
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round"><g stroke="#59635d" stroke-width="22"><path d="M60 360h150v55H60zM90 415v70m90-70v70M480 360h150v55H480zM510 415v70m90-70v70"/></g><g fill="#d89e78"><circle cx="205" cy="330" r="32"/><circle cx="625" cy="330" r="32"/></g>
+  <g stroke="#a8ca35" stroke-width="44"><path d="M210 350l95 75M630 350l115 0"/></g><g stroke="#28312d" stroke-width="24"><path d="M305 425l65 15 35 55M745 350l50 90 35 55"/></g><g stroke="#d89e78" stroke-width="22"><path d="M260 390l45 42m375-78 55 8"/></g><g stroke="#1f2521" stroke-width="14"><path d="M245 395h125M665 350h145"/></g><g stroke="#1f2521" stroke-width="20"><circle cx="230" cy="395" r="34"/><circle cx="385" cy="395" r="34"/><circle cx="650" cy="350" r="34"/><circle cx="825" cy="350" r="34"/></g>
+  <path d="M345 360c36-25 49-58 40-92" stroke="#8aa326" stroke-width="9"/><path d="M379 278l6-16 11 12" fill="#8aa326" stroke="none"/></g>
+</svg>

@@ -105,28 +105,64 @@ void ExerciseSeedImporterTest::importsBundledExerciseData()
     QSqlQuery query(manager.database());
     QVERIFY(query.exec(QStringLiteral("SELECT COUNT(*) FROM exercise")));
     QVERIFY(query.next());
-    QCOMPARE(query.value(0).toInt(), 52);
+    QCOMPARE(query.value(0).toInt(), 58);
     QVERIFY(query.exec(QStringLiteral("SELECT COUNT(*) FROM exercise WHERE body_part IN ('Back','Biceps')")));
     QVERIFY(query.next());
     QCOMPARE(query.value(0).toInt(), 0);
     QVERIFY(query.exec(QStringLiteral(
-        "SELECT COUNT(*) FROM exercise WHERE json_array_length(steps_json)=4 "
-        "AND json_array_length(cautions_json)=3")));
+        "SELECT COUNT(*) FROM exercise WHERE json_array_length(technique_points_json)>0 "
+        "AND json_array_length(common_mistakes_json)>0")));
     QVERIFY(query.next());
-    QCOMPARE(query.value(0).toInt(), 52);
-    QVERIFY(query.exec(QStringLiteral(
-        "SELECT COUNT(*) FROM exercise WHERE introduction<>'' AND recommended_sets>0 "
-        "AND recommended_reps<>'' AND rest_seconds>0 AND json_array_length(equipment_json)>0 "
-        "AND json_array_length(source_json)>0")));
-    QVERIFY(query.next());
-    QCOMPARE(query.value(0).toInt(), 52);
+    QCOMPARE(query.value(0).toInt(), 29);
+    for (const auto &condition : {
+             QStringLiteral("introduction<>''"),
+             QStringLiteral("recommended_sets>0"),
+             QStringLiteral("recommended_reps<>''"),
+             QStringLiteral("rest_seconds>0"),
+             QStringLiteral("json_array_length(equipment_json)>0"),
+             QStringLiteral("json_array_length(source_json)>0")}) {
+        QVERIFY(query.exec(QStringLiteral("SELECT COUNT(*) FROM exercise WHERE ") + condition));
+        QVERIFY(query.next());
+        QVERIFY2(query.value(0).toInt() == 58,
+                 qPrintable(QStringLiteral("Condition failed: %1 (actual %2)")
+                                .arg(condition)
+                                .arg(query.value(0).toInt())));
+    }
     QVERIFY(query.exec(QStringLiteral("SELECT COUNT(*) FROM exercise_media")));
     QVERIFY(query.next());
-    QCOMPARE(query.value(0).toInt(), 28);
+    QCOMPARE(query.value(0).toInt(), 58);
     QVERIFY(query.exec(QStringLiteral(
-        "SELECT COUNT(*) FROM exercise_media WHERE local_path='' OR external_url='' OR license=''")));
+        "SELECT COUNT(*) FROM ("
+        "SELECT exercise.id, COUNT(exercise_media.id) AS media_count "
+        "FROM exercise LEFT JOIN exercise_media ON exercise_media.exercise_id=exercise.id "
+        "GROUP BY exercise.id HAVING media_count<>1)")));
     QVERIFY(query.next());
     QCOMPARE(query.value(0).toInt(), 0);
+    QVERIFY(query.exec(QStringLiteral(
+        "SELECT COUNT(*) FROM exercise_media WHERE local_path='' OR title='' OR source='' "
+        "OR license=''")));
+    QVERIFY(query.next());
+    QCOMPARE(query.value(0).toInt(), 0);
+    QVERIFY(query.exec(QStringLiteral(
+        "SELECT COUNT(*) FROM exercise_media WHERE media_type<>'localImage' "
+        "OR local_path NOT LIKE 'qrc:/images/exercises/shareable/%.jpg'")));
+    QVERIFY(query.next());
+    QCOMPARE(query.value(0).toInt(), 0);
+    QVERIFY(query.exec(QStringLiteral(
+        "SELECT COUNT(*) FROM exercise_media WHERE "
+        "source||' '||license||' '||title||' '||external_url LIKE '%MuscleDB%' OR "
+        "source||' '||license||' '||title||' '||external_url LIKE '%wrkout%' OR "
+        "source||' '||license||' '||title||' '||external_url LIKE '%仅限本人%' OR "
+        "source||' '||license||' '||title||' '||external_url LIKE '%未确认再分发%' OR "
+        "source||' '||license||' '||title||' '||external_url LIKE '%Bilibili%' OR "
+        "source||' '||license||' '||title||' '||external_url LIKE '%抖音%' OR "
+        "source||' '||license||' '||title||' '||external_url LIKE '%知乎%'")));
+    QVERIFY(query.next());
+    QCOMPARE(query.value(0).toInt(), 0);
+    QVERIFY(query.exec(QStringLiteral(
+        "SELECT COUNT(*) FROM exercise WHERE id='underhand-wide-lat-pulldown'")));
+    QVERIFY(query.next());
+    QCOMPARE(query.value(0).toInt(), 1);
     QVERIFY(query.exec(QStringLiteral("SELECT local_path FROM exercise_media")));
     while (query.next()) {
         const QString resourcePath = query.value(0).toString();

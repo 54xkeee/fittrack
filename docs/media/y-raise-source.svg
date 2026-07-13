@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 600" role="img" aria-label="俯卧上斜凳哑铃Y字侧平举示意图">
+  <rect width="900" height="600" rx="40" fill="#e9efe9"/>
+  <circle cx="450" cy="282" r="235" fill="#dce7df"/>
+
+  <!-- Incline bench, viewed from behind. -->
+  <path d="M360 486 L400 205 Q404 185 425 185 H475 Q496 185 500 205 L540 486 Z"
+        fill="#56615a"/>
+  <path d="M381 468 L414 218 Q416 207 430 207 H470 Q484 207 486 218 L519 468 Z"
+        fill="#77847b"/>
+  <path d="M358 468 H542 V500 H358 Z" fill="#3e4742"/>
+  <path d="M394 500 L350 566 H382 L424 500 Z M506 500 L476 500 L518 566 H550 Z"
+        fill="#3e4742"/>
+
+  <!-- Athlete lying prone on the bench. -->
+  <path d="M392 244 Q450 217 508 244 L498 388 Q450 424 402 388 Z"
+        fill="#a8ca35"/>
+  <path d="M402 388 Q450 424 498 388 L492 456 H408 Z" fill="#27312c"/>
+  <path d="M424 456 L412 552" stroke="#d8a27d" stroke-width="32" stroke-linecap="round"/>
+  <path d="M476 456 L488 552" stroke="#d8a27d" stroke-width="32" stroke-linecap="round"/>
+  <path d="M400 552 H432" stroke="#27312c" stroke-width="26" stroke-linecap="round"/>
+  <path d="M468 552 H500" stroke="#27312c" stroke-width="26" stroke-linecap="round"/>
+
+  <!-- Back of head and neck. -->
+  <path d="M431 221 V241 H469 V221" fill="#d8a27d"/>
+  <circle cx="450" cy="174" r="55" fill="#d8a27d"/>
+  <path d="M399 168 Q403 112 450 108 Q497 112 501 168 Q479 142 450 142 Q421 142 399 168 Z"
+        fill="#27312c"/>
+
+  <!-- Arms lifted in the scapular plane to form a clear Y. -->
+  <path d="M404 252 Q354 223 302 178 L225 110" fill="none" stroke="#d8a27d"
+        stroke-width="34" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M496 252 Q546 223 598 178 L675 110" fill="none" stroke="#d8a27d"
+        stroke-width="34" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M397 246 Q450 217 503 246" fill="none" stroke="#8eb124"
+        stroke-width="28" stroke-linecap="round"/>
+
+  <!-- Light dumbbells. -->
+  <g fill="#27312c">
+    <rect x="194" y="81" width="20" height="62" rx="8" transform="rotate(-42 204 112)"/>
+    <rect x="215" y="88" width="16" height="48" rx="7" transform="rotate(-42 223 112)"/>
+    <rect x="686" y="81" width="20" height="62" rx="8" transform="rotate(42 696 112)"/>
+    <rect x="669" y="88" width="16" height="48" rx="7" transform="rotate(42 677 112)"/>
+  </g>
+
+  <!-- Motion cues are shape-only so the asset remains locale independent. -->
+  <path d="M316 226 Q250 190 207 144" fill="none" stroke="#6f7d74" stroke-width="6"
+        stroke-linecap="round" stroke-dasharray="9 14"/>
+  <path d="M584 226 Q650 190 693 144" fill="none" stroke="#6f7d74" stroke-width="6"
+        stroke-linecap="round" stroke-dasharray="9 14"/>
+</svg>

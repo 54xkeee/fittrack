@@ -16,14 +16,15 @@
 
 #include <QDir>
 #include <QFile>
-#include <QFont>
-#include <QFontDatabase>
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
 #include <QQuickStyle>
 #include <QResource>
 #include <QStandardPaths>
+#ifdef Q_OS_ANDROID
+#include <QJniObject>
+#endif
 
 namespace {
 
@@ -68,6 +69,35 @@ bool initializeDatabase(fittrack::DatabaseManager &databaseManager)
     return true;
 }
 
+qreal platformFontScale()
+{
+    bool overrideOk = false;
+    const qreal overrideScale = qEnvironmentVariable("FITTRACK_FONT_SCALE").toDouble(&overrideOk);
+    if (overrideOk) {
+        return qBound<qreal>(0.85, overrideScale, 1.5);
+    }
+
+#ifdef Q_OS_ANDROID
+    const QJniObject context = QNativeInterface::QAndroidApplication::context();
+    if (!context.isValid()) {
+        return 1.0;
+    }
+    const QJniObject resources = context.callObjectMethod(
+        "getResources", "()Landroid/content/res/Resources;");
+    if (!resources.isValid()) {
+        return 1.0;
+    }
+    const QJniObject configuration = resources.callObjectMethod(
+        "getConfiguration", "()Landroid/content/res/Configuration;");
+    if (configuration.isValid()) {
+        return qBound<qreal>(0.85,
+                             static_cast<qreal>(configuration.getField<jfloat>("fontScale")),
+                             1.5);
+    }
+#endif
+    return 1.0;
+}
+
 } // namespace
 
 int main(int argc, char *argv[])
@@ -76,15 +106,7 @@ int main(int argc, char *argv[])
     QGuiApplication app(argc, argv);
     QGuiApplication::setApplicationName(QStringLiteral("FitTrack"));
     QGuiApplication::setOrganizationName(QStringLiteral("FitTrack"));
-#ifdef Q_OS_WIN
-#endif
     QQuickStyle::setStyle(QStringLiteral("Material"));
-    const int appFontId = QFontDatabase::addApplicationFont(
-        QStringLiteral(":/fonts/InterVariable.ttf"));
-    const QStringList appFontFamilies = QFontDatabase::applicationFontFamilies(appFontId);
-    if (!appFontFamilies.isEmpty()) {
-        app.setFont(QFont(appFontFamilies.constFirst()));
-    }
 
     fittrack::DatabaseManager databaseManager;
     if (!initializeDatabase(databaseManager)) {
@@ -165,6 +187,16 @@ int main(int argc, char *argv[])
         [] { QCoreApplication::exit(-1); },
         Qt::QueuedConnection);
     engine.loadFromModule(QStringLiteral("FitTrack"), QStringLiteral("Main"));
+    if (!engine.rootObjects().isEmpty()) {
+        engine.rootObjects().constFirst()->setProperty("fontScale", platformFontScale());
+    }
+    QObject::connect(
+        &app, &QGuiApplication::applicationStateChanged, &engine,
+        [&engine](Qt::ApplicationState state) {
+            if (state == Qt::ApplicationActive && !engine.rootObjects().isEmpty()) {
+                engine.rootObjects().constFirst()->setProperty("fontScale", platformFontScale());
+            }
+        });
 
     return app.exec();
 }

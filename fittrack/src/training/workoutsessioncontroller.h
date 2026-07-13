@@ -2,6 +2,7 @@
 
 #include <QObject>
 #include <QSqlDatabase>
+#include <QVariantMap>
 #include <QVariantList>
 
 namespace fittrack {
@@ -14,11 +15,14 @@ class WorkoutSessionController final : public QObject
     Q_PROPERTY(QVariantList gyms READ gyms NOTIFY gymsChanged)
     Q_PROPERTY(QVariantList equipment READ equipment NOTIFY equipmentChanged)
     Q_PROPERTY(QVariantList exercises READ exercises NOTIFY exercisesChanged)
+    Q_PROPERTY(QVariantList activeSessions READ activeSessions NOTIFY activeSessionsChanged)
     Q_PROPERTY(QString selectedGymId READ selectedGymId NOTIFY selectedGymChanged)
+    Q_PROPERTY(QString sessionId READ sessionId NOTIFY sessionChanged)
     Q_PROPERTY(QString sessionName READ sessionName NOTIFY sessionChanged)
     Q_PROPERTY(QString sessionNotes READ sessionNotes NOTIFY sessionChanged)
     Q_PROPERTY(bool active READ active NOTIFY sessionChanged)
     Q_PROPERTY(bool hasUnfinished READ hasUnfinished NOTIFY unfinishedChanged)
+    Q_PROPERTY(QString sessionState READ sessionState NOTIFY sessionStateChanged)
     Q_PROPERTY(QString errorMessage READ errorMessage NOTIFY errorMessageChanged)
 
 public:
@@ -29,13 +33,24 @@ public:
     QVariantList gyms() const;
     QVariantList equipment() const;
     QVariantList exercises() const;
+    QVariantList activeSessions() const;
     QString selectedGymId() const;
+    QString sessionId() const;
     QString sessionName() const;
     QString sessionNotes() const;
     bool active() const;
     bool hasUnfinished() const;
+    QString sessionState() const;
     QString errorMessage() const;
 
+    Q_INVOKABLE QVariantMap requestStartPlanDay(const QString &dayId);
+    Q_INVOKABLE QVariantMap requestStartSuggestedDay();
+    Q_INVOKABLE QVariantMap requestStartFreeWorkout(const QString &name = {});
+    Q_INVOKABLE bool continueExistingWorkout();
+    Q_INVOKABLE bool recoverActiveSessions(const QString &keepSessionId, bool discardOthers);
+    Q_INVOKABLE bool switchToPlanDay(const QString &dayId, bool discardCurrent);
+    Q_INVOKABLE bool switchToFreeWorkout(const QString &name, bool discardCurrent);
+    Q_INVOKABLE void dismissError();
     Q_INVOKABLE bool startPlanDay(const QString &dayId);
     Q_INVOKABLE bool startSuggestedDay();
     Q_INVOKABLE bool startFreeWorkout(const QString &name = {});
@@ -78,6 +93,8 @@ signals:
     void selectedGymChanged();
     void sessionChanged();
     void unfinishedChanged();
+    void activeSessionsChanged();
+    void sessionStateChanged();
     void errorMessageChanged();
     void setCompleted(int restSeconds);
     void workoutFinished(const QString &sessionId);
@@ -88,6 +105,14 @@ private:
     void loadGyms();
     void loadEquipment();
     void refreshUnfinished();
+    QVariantMap requestStart(const QString &kind, const QString &targetId,
+                             const QString &displayName);
+    QVariantMap activeSessionSummary() const;
+    int activeSessionCount() const;
+    bool insertPlanDaySession(const QString &dayId, QString *sessionId);
+    bool insertFreeWorkout(const QString &name, QString *sessionId);
+    bool switchWorkout(const QString &kind, const QString &targetId,
+                       const QString &displayName, bool discardCurrent);
     bool loadSession(const QString &sessionId);
     bool fail(const QString &message);
     void clearError();
@@ -98,12 +123,14 @@ private:
     QVariantList m_gyms;
     QVariantList m_equipment;
     QVariantList m_exercises;
+    QVariantList m_activeSessions;
     QString m_selectedGymId;
     QString m_sessionId;
     QString m_sessionName;
     QString m_sessionNotes;
     QString m_errorMessage;
     bool m_hasUnfinished = false;
+    int m_activeSessionCount = 0;
 };
 
 } // namespace fittrack

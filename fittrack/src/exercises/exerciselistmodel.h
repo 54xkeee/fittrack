@@ -16,6 +16,7 @@ class ExerciseListModel final : public QAbstractListModel
     Q_PROPERTY(QString bodyPart READ bodyPart WRITE setBodyPart NOTIFY bodyPartChanged)
     Q_PROPERTY(QString movementFilter READ movementFilter WRITE setMovementFilter NOTIFY movementFilterChanged)
     Q_PROPERTY(QString equipmentFilter READ equipmentFilter WRITE setEquipmentFilter NOTIFY equipmentFilterChanged)
+    Q_PROPERTY(QString collectionFilter READ collectionFilter WRITE setCollectionFilter NOTIFY collectionFilterChanged)
     Q_PROPERTY(bool favoritesOnly READ favoritesOnly WRITE setFavoritesOnly NOTIFY favoritesOnlyChanged)
 
 public:
@@ -31,14 +32,22 @@ public:
         IntroductionRole,
         StepsRole,
         CautionsRole,
+        DifficultyRole,
+        TechniquePointsRole,
+        CommonMistakesRole,
+        CollectionsRole,
         PrimaryMusclesRole,
         SecondaryMusclesRole,
         MediaUrlRole,
+        MediaTitleRole,
+        MediaSourceRole,
         MediaLicenseRole,
         MediaSourceUrlRole,
         EquipmentTextRole,
         IsSystemRole,
-        IsFavoriteRole
+        IsFavoriteRole,
+        SourcesRole,
+        MediaItemsRole
     };
 
     explicit ExerciseListModel(const QSqlDatabase &database,
@@ -56,6 +65,8 @@ public:
     void setMovementFilter(const QString &movement);
     QString equipmentFilter() const;
     void setEquipmentFilter(const QString &equipment);
+    QString collectionFilter() const;
+    void setCollectionFilter(const QString &collection);
     bool favoritesOnly() const;
     void setFavoritesOnly(bool enabled);
 
@@ -76,6 +87,7 @@ signals:
     void bodyPartChanged();
     void movementFilterChanged();
     void equipmentFilterChanged();
+    void collectionFilterChanged();
     void favoritesOnlyChanged();
 
 private:
@@ -91,14 +103,22 @@ private:
         QString introduction;
         QVariantList steps;
         QVariantList cautions;
+        QString difficulty;
+        QVariantList techniquePoints;
+        QVariantList commonMistakes;
+        QVariantList collections;
         QStringList primaryMuscles;
         QStringList secondaryMuscles;
         QString mediaUrl;
+        QString mediaTitle;
+        QString mediaSource;
         QString mediaLicense;
         QString mediaSourceUrl;
         QString equipmentText;
         bool isSystem = true;
         bool isFavorite = false;
+        QVariantList sources;
+        QVariantList mediaItems;
     };
 
     QSqlDatabase m_database;
@@ -106,6 +126,7 @@ private:
     QString m_bodyPart;
     QString m_movementFilter;
     QString m_equipmentFilter;
+    QString m_collectionFilter;
     bool m_favoritesOnly = false;
     QList<QByteArray> m_seedDocuments;
     QVector<Item> m_items;

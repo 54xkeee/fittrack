@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 600" role="img" aria-label="反手宽握高位下拉起始与结束位置示意图">
+  <rect width="900" height="600" rx="36" fill="#f6f7f4"/><path d="M450 55v490" stroke="#d8ddd8" stroke-width="4"/>
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round"><g stroke="#59635d" stroke-width="15"><path d="M75 500h330M105 500V95h270v405M170 430h110M495 500h330M525 500V95h270v405M590 430h110"/></g><g fill="#d89e78"><circle cx="235" cy="255" r="34"/><circle cx="655" cy="255" r="34"/></g><g stroke="#a8ca35" stroke-width="44"><path d="M235 310v115M655 310v115"/></g><g stroke="#28312d" stroke-width="24"><path d="M235 425l-35 65m35-65 35 65M655 425l-35 65m35-65 35 65"/></g>
+  <g stroke="#d89e78" stroke-width="24"><path d="M220 315l-75-150m105 150 75-150"/><path d="M640 315l-85-42m115 42 85-42"/></g><g stroke="#1f2521" stroke-width="14"><path d="M125 155h220m420 110H545"/></g><g stroke="#59635d" stroke-width="7"><path d="M235 155V95m420 170V95"/></g>
+  <path d="M350 220c38 22 53 50 47 82" stroke="#8aa326" stroke-width="9"/><path d="M390 293l7 15 10-12" fill="#8aa326" stroke="none"/></g>
+</svg>

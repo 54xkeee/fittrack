@@ -1,0 +1,756 @@
+[
+  {
+    "id": "back-extension",
+    "media": [
+      {
+        "type": "localImage",
+        "localPath": "qrc:/images/exercises/shareable/back-extension.jpg",
+        "url": "https://commons.wikimedia.org/wiki/File:Roman_chair_(hyperextension)_animation.gif",
+        "title": "Roman chair back extension illustration",
+        "source": "O'Dea / Wikimedia Commons",
+        "license": "CC BY-SA 4.0"
+      }
+    ]
+  },
+  {
+    "id": "barbell-back-squat",
+    "media": [
+      {
+        "type": "localImage",
+        "localPath": "qrc:/images/exercises/shareable/barbell-back-squat.jpg",
+        "url": "https://commons.wikimedia.org/wiki/File:Squats.svg",
+        "title": "Barbell back squat illustration",
+        "source": "Everkinetic; SVG by Urutseg / Wikimedia Commons",
+        "license": "CC BY-SA 3.0"
+      }
+    ]
+  },
+  {
+    "id": "barbell-bench-press",
+    "media": [
+      {
+        "type": "localImage",
+        "localPath": "qrc:/images/exercises/shareable/barbell-bench-press.jpg",
+        "url": "https://commons.wikimedia.org/wiki/File:Bench_press.png",
+        "title": "美军士兵进行杠铃卧推",
+        "source": "Wikimedia Commons / U.S. Army",
+        "license": "Public domain (U.S. federal government work)"
+      }
+    ]
+  },
+  {
+    "id": "barbell-hip-thrust",
+    "media": [
+      {
+        "type": "localImage",
+        "localPath": "qrc:/images/exercises/shareable/barbell-hip-thrust.jpg",
+        "url": "https://creativecommons.org/publicdomain/zero/1.0/",
+        "title": "杠铃臀推原创动作示意图",
+        "source": "FitTrack 项目原创",
+        "license": "CC0 1.0"
+      }
+    ]
+  },
+  {
+    "id": "bent-over-barbell-row",
+    "media": [
+      {
+        "type": "localImage",
+        "localPath": "qrc:/images/exercises/shareable/bent-over-barbell-row.jpg",
+        "url": "https://commons.wikimedia.org/wiki/File:Barbell_row.jpg",
+        "title": "Barbell rowing",
+        "source": "embhoo / Wikimedia Commons",
+        "license": "CC BY 2.0"
+      }
+    ]
+  },
+  {
+    "id": "bent-over-dumbbell-rear-delt-fly",
+    "media": [
+      {
+        "type": "localImage",
+        "localPath": "qrc:/images/exercises/shareable/bent-over-dumbbell-rear-delt-fly.jpg",
+        "url": "https://www.flickr.com/photos/lesmemorables/23106813816/",
+        "title": "Reverse flys!",
+        "source": "J@YGS / Flickr",
+        "license": "CC BY-SA 2.0"
+      }
+    ]
+  },
+  {
+    "id": "bulgarian-split-squat",
+    "media": [
+      {
+        "type": "localImage",
+        "localPath": "qrc:/images/exercises/shareable/bulgarian-split-squat.jpg",
+        "url": "https://wger.de/api/v2/exerciseimage/383/",
+        "title": "Bulgarian split squat exercise image",
+        "source": "Franpol / wger",
+        "license": "CC BY-SA 4.0"
+      }
+    ]
+  },
+  {
+    "id": "cable-lateral-raise",
+    "media": [
+      {
+        "type": "localImage",
+        "localPath": "qrc:/images/exercises/shareable/cable-lateral-raise.jpg",
+        "url": "https://wger.de/api/v2/exerciseimage/577/",
+        "title": "Standing cable lateral raise exercise image",
+        "source": "Rottekongen / wger",
+        "license": "CC BY-SA 4.0"
+      }
+    ]
+  },
+  {
+    "id": "cable-rope-curl",
+    "media": [
+      {
+        "type": "localImage",
+        "localPath": "qrc:/images/exercises/shareable/cable-rope-curl.jpg",
+        "url": "https://commons.wikimedia.org/wiki/File:Hammer_curls_with_rope_and_cable_1.svg",
+        "title": "Hammer curls with rope and cable illustration",
+        "source": "Everkinetic / Wikimedia Commons",
+        "license": "CC BY-SA 3.0"
+      }
+    ]
+  },
+  {
+    "id": "cable-triceps-pushdown",
+    "media": [
+      {
+        "type": "localImage",
+        "localPath": "qrc:/images/exercises/shareable/cable-triceps-pushdown.jpg",
+        "url": "https://commons.wikimedia.org/wiki/File:Triceps_pushdown_with_rope_and_cable_1.svg",
+        "title": "Triceps pushdown with rope and cable illustration",
+        "source": "Everkinetic / Wikimedia Commons",
+        "license": "CC BY-SA 3.0"
+      }
+    ]
+  },
+  {
+    "id": "chest-supported-machine-row",
+    "media": [
+      {
+        "type": "localImage",
+        "localPath": "qrc:/images/exercises/shareable/chest-supported-machine-row.jpg",
+        "url": "https://wger.de/api/v2/exerciseimage/598/",
+        "title": "Chest-supported machine row exercise image",
+        "source": "barry / wger",
+        "license": "CC BY-SA 4.0"
+      }
+    ]
+  },
+  {
+    "id": "close-grip-seated-cable-row",
+    "media": [
+      {
+        "type": "localImage",
+        "localPath": "qrc:/images/exercises/shareable/close-grip-seated-cable-row.jpg",
+        "url": "https://creativecommons.org/publicdomain/zero/1.0/",
+        "title": "窄距坐姿划船原创动作示意图",
+        "source": "FitTrack 项目原创",
+        "license": "CC0 1.0"
+      }
+    ]
+  },
+  {
+    "id": "dumbbell-front-raise",
+    "media": [
+      {
+        "type": "localImage",
+        "localPath": "qrc:/images/exercises/shareable/dumbbell-front-raise.jpg",
+        "url": "https://commons.wikimedia.org/wiki/File:Dumbbell-front-raises-1.png",
+        "title": "哑铃前平举动作示意图",
+        "source": "Everkinetic / Wikimedia Commons",
+        "license": "CC BY-SA 3.0"
+      }
+    ]
+  },
+  {
+    "id": "dumbbell-lateral-raise",
+    "media": [
+      {
+        "type": "localImage",
+        "localPath": "qrc:/images/exercises/shareable/dumbbell-lateral-raise.jpg",
+        "url": "https://commons.wikimedia.org/wiki/File:DumbbellLateralRaise.JPG",
+        "title": "哑铃侧平举",
+        "source": "GeorgeStepanek / Wikimedia Commons",
+        "license": "CC BY-SA 3.0"
+      }
+    ]
+  },
+  {
+    "id": "face-pull",
+    "media": [
+      {
+        "type": "localImage",
+        "localPath": "qrc:/images/exercises/shareable/face-pull.jpg",
+        "url": "https://www.flickr.com/photos/personaltrainertoronto/30010762508/",
+        "title": "Cable Face-Pull",
+        "source": "Eric Astrauskas / Flickr",
+        "license": "CC BY 2.0"
+      }
+    ]
+  },
+  {
+    "id": "flat-dumbbell-fly",
+    "media": [
+      {
+        "type": "localImage",
+        "localPath": "qrc:/images/exercises/shareable/flat-dumbbell-fly.jpg",
+        "url": "https://commons.wikimedia.org/wiki/File:Dumbbell_flys_2.svg",
+        "title": "哑铃飞鸟动作示意图",
+        "source": "Everkinetic / Wikimedia Commons",
+        "license": "CC BY-SA 3.0"
+      }
+    ]
+  },
+  {
+    "id": "goblet-squat",
+    "media": [
+      {
+        "type": "localImage",
+        "localPath": "qrc:/images/exercises/shareable/goblet-squat.jpg",
+        "url": "https://commons.wikimedia.org/wiki/File:Artemis_Program_Physical_Exercise_(7654258).jpg",
+        "title": "Goblet squat during physical training",
+        "source": "U.S. Marine Corps photo by Lance Cpl. Kristy Ordonez / Wikimedia Commons",
+        "license": "Public domain (U.S. federal government work)"
+      }
+    ]
+  },
+  {
+    "id": "hack-squat",
+    "media": [
+      {
+        "type": "localImage",
+        "localPath": "qrc:/images/exercises/shareable/hack-squat.jpg",
+        "url": "https://commons.wikimedia.org/wiki/File:Hack_squat_machine_1.svg",
+        "title": "Hack squat machine illustration",
+        "source": "Everkinetic / Wikimedia Commons",
+        "license": "CC BY-SA 3.0"
+      }
+    ]
+  },
+  {
+    "id": "hammer-curl",
+    "media": [
+      {
+        "type": "localImage",
+        "localPath": "qrc:/images/exercises/shareable/hammer-curl.jpg",
+        "url": "https://commons.wikimedia.org/wiki/File:Bicep_hammer_curl_with_dumbbell_1.svg",
+        "title": "Bicep hammer curl with dumbbell illustration",
+        "source": "Everkinetic / Wikimedia Commons",
+        "license": "CC BY-SA 3.0"
+      }
+    ]
+  },
+  {
+    "id": "hammer-strength-chest-press",
+    "media": [
+      {
+        "type": "localImage",
+        "localPath": "qrc:/images/exercises/shareable/hammer-strength-chest-press.jpg",
+        "url": "https://creativecommons.org/publicdomain/zero/1.0/",
+        "title": "悍马推胸原创动作示意图",
+        "source": "FitTrack 项目原创",
+        "license": "CC0 1.0"
+      }
+    ]
+  },
+  {
+    "id": "hammer-strength-lat-pulldown",
+    "media": [
+      {
+        "type": "localImage",
+        "localPath": "qrc:/images/exercises/shareable/hammer-strength-lat-pulldown.jpg",
+        "url": "https://creativecommons.org/publicdomain/zero/1.0/",
+        "title": "悍马高位下拉原创动作示意图",
+        "source": "FitTrack 项目原创",
+        "license": "CC0 1.0"
+      }
+    ]
+  },
+  {
+    "id": "hip-abduction-machine",
+    "media": [
+      {
+        "type": "localImage",
+        "localPath": "qrc:/images/exercises/shareable/hip-abduction-machine.jpg",
+        "url": "https://creativecommons.org/publicdomain/zero/1.0/",
+        "title": "腿外展原创动作示意图",
+        "source": "FitTrack 项目原创",
+        "license": "CC0 1.0"
+      }
+    ]
+  },
+  {
+    "id": "hip-adduction-machine",
+    "media": [
+      {
+        "type": "localImage",
+        "localPath": "qrc:/images/exercises/shareable/hip-adduction-machine.jpg",
+        "url": "https://creativecommons.org/publicdomain/zero/1.0/",
+        "title": "腿内收原创动作示意图",
+        "source": "FitTrack 项目原创",
+        "license": "CC0 1.0"
+      }
+    ]
+  },
+  {
+    "id": "incline-barbell-bench-press",
+    "media": [
+      {
+        "type": "localImage",
+        "localPath": "qrc:/images/exercises/shareable/incline-barbell-bench-press.jpg",
+        "url": "https://commons.wikimedia.org/wiki/File:Incline-bench-press-1.png",
+        "title": "上斜杠铃卧推起始位置示意图",
+        "source": "Everkinetic / Wikimedia Commons",
+        "license": "CC BY-SA 3.0"
+      }
+    ]
+  },
+  {
+    "id": "incline-dumbbell-bench-press",
+    "media": [
+      {
+        "type": "localImage",
+        "localPath": "qrc:/images/exercises/shareable/incline-dumbbell-bench-press.jpg",
+        "url": "https://commons.wikimedia.org/wiki/File:Dumbbell-incline-bench-press-1.png",
+        "title": "上斜哑铃卧推起始位置示意图",
+        "source": "Everkinetic / Wikimedia Commons",
+        "license": "CC BY-SA 3.0"
+      }
+    ]
+  },
+  {
+    "id": "lat-pulldown",
+    "media": [
+      {
+        "type": "localImage",
+        "localPath": "qrc:/images/exercises/shareable/lat-pulldown.jpg",
+        "url": "https://commons.wikimedia.org/wiki/File:Girl_doing_lat_pulldown_exercise.jpg",
+        "title": "Girl doing lat pulldown exercise",
+        "source": "Tyler Read / PTPioneer / Wikimedia Commons",
+        "license": "CC BY 2.0"
+      }
+    ]
+  },
+  {
+    "id": "leg-extension",
+    "media": [
+      {
+        "type": "localImage",
+        "localPath": "qrc:/images/exercises/shareable/leg-extension.jpg",
+        "url": "https://commons.wikimedia.org/wiki/File:Leg-extensions-1-672x1024.png",
+        "title": "坐姿腿屈伸起始位置示意图",
+        "source": "Everkinetic / Wikimedia Commons",
+        "license": "CC BY-SA 3.0"
+      }
+    ]
+  },
+  {
+    "id": "leg-press",
+    "media": [
+      {
+        "type": "localImage",
+        "localPath": "qrc:/images/exercises/shareable/leg-press.jpg",
+        "url": "https://commons.wikimedia.org/wiki/File:Leg-press-2-1024x670.png",
+        "title": "Leg press illustration",
+        "source": "Everkinetic / Wikimedia Commons",
+        "license": "CC BY-SA 3.0"
+      }
+    ]
+  },
+  {
+    "id": "lying-barbell-triceps-extension",
+    "media": [
+      {
+        "type": "localImage",
+        "localPath": "qrc:/images/exercises/shareable/lying-barbell-triceps-extension.jpg",
+        "url": "https://commons.wikimedia.org/wiki/File:Lying-triceps-extension-1.gif",
+        "title": "仰卧杠铃臂屈伸动作示意图",
+        "source": "Everkinetic / Wikimedia Commons",
+        "license": "CC BY-SA 3.0"
+      }
+    ]
+  },
+  {
+    "id": "lying-leg-curl",
+    "media": [
+      {
+        "type": "localImage",
+        "localPath": "qrc:/images/exercises/shareable/lying-leg-curl.jpg",
+        "url": "https://commons.wikimedia.org/wiki/File:Lying_leg_curl_machine_1.svg",
+        "title": "俯卧腿弯举器械起始位置示意图",
+        "source": "Everkinetic / Wikimedia Commons",
+        "license": "CC BY-SA 3.0"
+      }
+    ]
+  },
+  {
+    "id": "neutral-grip-lat-pulldown",
+    "media": [
+      {
+        "type": "localImage",
+        "localPath": "qrc:/images/exercises/shareable/neutral-grip-lat-pulldown.jpg",
+        "url": "https://commons.wikimedia.org/wiki/File:V_bar_pull_down_1.svg",
+        "title": "V-bar pull-down illustration",
+        "source": "Everkinetic / Wikimedia Commons",
+        "license": "CC BY-SA 3.0"
+      }
+    ]
+  },
+  {
+    "id": "overhead-cable-triceps-extension",
+    "media": [
+      {
+        "type": "localImage",
+        "localPath": "qrc:/images/exercises/shareable/overhead-cable-triceps-extension.jpg",
+        "url": "https://www.flickr.com/photos/personaltrainertoronto/28957105537/",
+        "title": "Cable Overhead Tricep Extensions",
+        "source": "Eric Astrauskas / Flickr",
+        "license": "CC BY 2.0"
+      }
+    ]
+  },
+  {
+    "id": "parallel-bar-dip",
+    "media": [
+      {
+        "type": "localImage",
+        "localPath": "qrc:/images/exercises/shareable/parallel-bar-dip.jpg",
+        "url": "https://commons.wikimedia.org/wiki/File:Dipexercise.svg",
+        "title": "双杠臂屈伸动作示意图",
+        "source": "Bitethesilverbullet / Wikimedia Commons",
+        "license": "CC BY-SA 4.0"
+      }
+    ]
+  },
+  {
+    "id": "pec-deck-fly",
+    "media": [
+      {
+        "type": "localImage",
+        "localPath": "qrc:/images/exercises/shareable/pec-deck-fly.jpg",
+        "url": "https://commons.wikimedia.org/wiki/File:Butterfly_machine_1.svg",
+        "title": "Butterfly machine illustration",
+        "source": "Everkinetic / Wikimedia Commons",
+        "license": "CC BY-SA 3.0"
+      }
+    ]
+  },
+  {
+    "id": "preacher-curl",
+    "media": [
+      {
+        "type": "localImage",
+        "localPath": "qrc:/images/exercises/shareable/preacher-curl.jpg",
+        "url": "https://commons.wikimedia.org/wiki/File:Preacher-curl-1.gif",
+        "title": "Preacher curl illustration",
+        "source": "Everkinetic / Wikimedia Commons",
+        "license": "CC BY-SA 3.0"
+      }
+    ]
+  },
+  {
+    "id": "pull-up",
+    "media": [
+      {
+        "type": "localImage",
+        "localPath": "qrc:/images/exercises/shareable/pull-up.jpg",
+        "url": "https://commons.wikimedia.org/wiki/File:Pull-ups_exercise_from_back.jpg",
+        "title": "Pull-ups exercise from the back",
+        "source": "PTPioneer / Wikimedia Commons",
+        "license": "CC BY 2.0"
+      }
+    ]
+  },
+  {
+    "id": "push-up",
+    "media": [
+      {
+        "type": "localImage",
+        "localPath": "qrc:/images/exercises/shareable/push-up.jpg",
+        "url": "https://commons.wikimedia.org/wiki/File:Push-ups-2.png",
+        "title": "标准俯卧撑动作示意图",
+        "source": "Everkinetic / Wikimedia Commons",
+        "license": "CC BY-SA 3.0"
+      }
+    ]
+  },
+  {
+    "id": "reverse-pec-deck-fly",
+    "media": [
+      {
+        "type": "localImage",
+        "localPath": "qrc:/images/exercises/shareable/reverse-pec-deck-fly.jpg",
+        "url": "https://creativecommons.org/publicdomain/zero/1.0/",
+        "title": "反向器械飞鸟原创动作示意图",
+        "source": "FitTrack 项目原创",
+        "license": "CC0 1.0"
+      }
+    ]
+  },
+  {
+    "id": "romanian-deadlift",
+    "media": [
+      {
+        "type": "localImage",
+        "localPath": "qrc:/images/exercises/shareable/romanian-deadlift.jpg",
+        "url": "https://commons.wikimedia.org/wiki/File:Romanian-deadlift-2.png",
+        "title": "Romanian deadlift illustration",
+        "source": "Everkinetic / Wikimedia Commons",
+        "license": "CC BY-SA 3.0"
+      }
+    ]
+  },
+  {
+    "id": "seal-row",
+    "media": [
+      {
+        "type": "localImage",
+        "localPath": "qrc:/images/exercises/shareable/seal-row.jpg",
+        "url": "https://creativecommons.org/publicdomain/zero/1.0/",
+        "title": "海豹划船原创动作示意图",
+        "source": "FitTrack 项目原创",
+        "license": "CC0 1.0"
+      }
+    ]
+  },
+  {
+    "id": "seated-cable-rope-curl",
+    "media": [
+      {
+        "type": "localImage",
+        "localPath": "qrc:/images/exercises/shareable/seated-cable-rope-curl.jpg",
+        "url": "https://creativecommons.org/publicdomain/zero/1.0/",
+        "title": "坐姿绳索弯举原创动作示意图",
+        "source": "FitTrack 项目原创",
+        "license": "CC0 1.0"
+      }
+    ]
+  },
+  {
+    "id": "seated-cable-row",
+    "media": [
+      {
+        "type": "localImage",
+        "localPath": "qrc:/images/exercises/shareable/seated-cable-row.jpg",
+        "url": "https://commons.wikimedia.org/wiki/File:Cable-seated-rows-1.png",
+        "title": "Cable seated row",
+        "source": "Everkinetic / Wikimedia Commons",
+        "license": "CC BY-SA 3.0"
+      }
+    ]
+  },
+  {
+    "id": "seated-calf-raise",
+    "media": [
+      {
+        "type": "localImage",
+        "localPath": "qrc:/images/exercises/shareable/seated-calf-raise.jpg",
+        "url": "https://commons.wikimedia.org/wiki/File:Seated_calf_raise_using_machine_1.svg",
+        "title": "Seated calf raise using machine illustration",
+        "source": "Everkinetic / Wikimedia Commons",
+        "license": "CC BY-SA 3.0"
+      }
+    ]
+  },
+  {
+    "id": "seated-leg-curl",
+    "media": [
+      {
+        "type": "localImage",
+        "localPath": "qrc:/images/exercises/shareable/seated-leg-curl.jpg",
+        "url": "https://commons.wikimedia.org/wiki/File:Seated-leg-curl-1.png",
+        "title": "Seated leg curl illustration",
+        "source": "Everkinetic / Wikimedia Commons",
+        "license": "CC BY-SA 3.0"
+      }
+    ]
+  },
+  {
+    "id": "seated-shoulder-press",
+    "media": [
+      {
+        "type": "localImage",
+        "localPath": "qrc:/images/exercises/shareable/seated-shoulder-press.jpg",
+        "url": "https://commons.wikimedia.org/wiki/File:Dumbbell_shoulder_press_2.svg",
+        "title": "哑铃推肩动作示意图",
+        "source": "Everkinetic / Wikimedia Commons",
+        "license": "CC BY-SA 3.0"
+      }
+    ]
+  },
+  {
+    "id": "single-arm-cable-pulldown",
+    "media": [
+      {
+        "type": "localImage",
+        "localPath": "qrc:/images/exercises/shareable/single-arm-cable-pulldown.jpg",
+        "url": "https://www.flickr.com/photos/personaltrainertoronto/30011004318/",
+        "title": "Single Arm Pulldown",
+        "source": "Eric Astrauskas / Flickr",
+        "license": "CC BY 2.0"
+      }
+    ]
+  },
+  {
+    "id": "single-arm-cable-triceps-extension",
+    "media": [
+      {
+        "type": "localImage",
+        "localPath": "qrc:/images/exercises/shareable/single-arm-cable-triceps-extension.jpg",
+        "url": "https://creativecommons.org/publicdomain/zero/1.0/",
+        "title": "单手绳索臂屈伸原创动作示意图",
+        "source": "FitTrack 项目原创",
+        "license": "CC0 1.0"
+      }
+    ]
+  },
+  {
+    "id": "single-arm-machine-row",
+    "media": [
+      {
+        "type": "localImage",
+        "localPath": "qrc:/images/exercises/shareable/single-arm-machine-row.jpg",
+        "url": "https://creativecommons.org/publicdomain/zero/1.0/",
+        "title": "单手器械划船原创动作示意图",
+        "source": "FitTrack 项目原创",
+        "license": "CC0 1.0"
+      }
+    ]
+  },
+  {
+    "id": "single-arm-overhead-cable-triceps-extension",
+    "media": [
+      {
+        "type": "localImage",
+        "localPath": "qrc:/images/exercises/shareable/single-arm-overhead-cable-triceps-extension.jpg",
+        "url": "https://creativecommons.org/publicdomain/zero/1.0/",
+        "title": "单手颈后臂屈伸原创动作示意图",
+        "source": "FitTrack 项目原创",
+        "license": "CC0 1.0"
+      }
+    ]
+  },
+  {
+    "id": "single-leg-deadlift",
+    "media": [
+      {
+        "type": "localImage",
+        "localPath": "qrc:/images/exercises/shareable/single-leg-deadlift.jpg",
+        "url": "https://www.flickr.com/photos/personaltrainertoronto/28920837767/",
+        "title": "Single Leg Deadlift Video",
+        "source": "Eric Astrauskas / Flickr",
+        "license": "CC BY 2.0"
+      }
+    ]
+  },
+  {
+    "id": "smith-machine-squat",
+    "media": [
+      {
+        "type": "localImage",
+        "localPath": "qrc:/images/exercises/shareable/smith-machine-squat.jpg",
+        "url": "https://commons.wikimedia.org/wiki/File:Smith_machine_squats_1.svg",
+        "title": "Smith machine squat illustration",
+        "source": "Everkinetic / Wikimedia Commons",
+        "license": "CC BY-SA 3.0"
+      }
+    ]
+  },
+  {
+    "id": "standing-calf-raise",
+    "media": [
+      {
+        "type": "localImage",
+        "localPath": "qrc:/images/exercises/shareable/standing-calf-raise.jpg",
+        "url": "https://commons.wikimedia.org/wiki/File:Standing-calf-raises-1.gif",
+        "title": "Standing calf raise illustration",
+        "source": "Everkinetic / Wikimedia Commons",
+        "license": "CC BY-SA 3.0"
+      }
+    ]
+  },
+  {
+    "id": "straight-arm-cable-pulldown",
+    "media": [
+      {
+        "type": "localImage",
+        "localPath": "qrc:/images/exercises/shareable/straight-arm-cable-pulldown.jpg",
+        "url": "https://commons.wikimedia.org/wiki/File:Straight_arm_push_down_1.svg",
+        "title": "Straight-arm cable push-down illustration",
+        "source": "Everkinetic / Wikimedia Commons",
+        "license": "CC BY-SA 3.0"
+      }
+    ]
+  },
+  {
+    "id": "straight-bar-triceps-pushdown",
+    "media": [
+      {
+        "type": "localImage",
+        "localPath": "qrc:/images/exercises/shareable/straight-bar-triceps-pushdown.jpg",
+        "url": "https://creativecommons.org/publicdomain/zero/1.0/",
+        "title": "直杆三头下压原创动作示意图",
+        "source": "FitTrack 项目原创",
+        "license": "CC0 1.0"
+      }
+    ]
+  },
+  {
+    "id": "t-bar-row",
+    "media": [
+      {
+        "type": "localImage",
+        "localPath": "qrc:/images/exercises/shareable/t-bar-row.jpg",
+        "url": "https://commons.wikimedia.org/wiki/File:T-bar-row-1.png",
+        "title": "T 杠划船起始位置示意图",
+        "source": "Everkinetic / Wikimedia Commons",
+        "license": "CC BY-SA 3.0"
+      }
+    ]
+  },
+  {
+    "id": "underhand-wide-lat-pulldown",
+    "media": [
+      {
+        "type": "localImage",
+        "localPath": "qrc:/images/exercises/shareable/underhand-wide-lat-pulldown.jpg",
+        "url": "https://creativecommons.org/publicdomain/zero/1.0/",
+        "title": "反手宽距高位下拉原创动作示意图",
+        "source": "FitTrack 项目原创",
+        "license": "CC0 1.0"
+      }
+    ]
+  },
+  {
+    "id": "wide-elbow-seated-row",
+    "media": [
+      {
+        "type": "localImage",
+        "localPath": "qrc:/images/exercises/shareable/wide-elbow-seated-row.jpg",
+        "url": "https://creativecommons.org/publicdomain/zero/1.0/",
+        "title": "坐姿开肘划船原创动作示意图",
+        "source": "FitTrack 项目原创",
+        "license": "CC0 1.0"
+      }
+    ]
+  },
+  {
+    "id": "y-raise",
+    "media": [
+      {
+        "type": "localImage",
+        "localPath": "qrc:/images/exercises/shareable/y-raise.jpg",
+        "url": "https://creativecommons.org/publicdomain/zero/1.0/",
+        "title": "Y 字侧平举原创动作示意图",
+        "source": "FitTrack 项目原创",
+        "license": "CC0 1.0"
+      }
+    ]
+  }
+]

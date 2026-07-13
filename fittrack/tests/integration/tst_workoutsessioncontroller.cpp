@@ -5,6 +5,39 @@
 #include <QSqlQuery>
 #include <QtTest>
 
+namespace {
+
+void seedStartablePlan(const QSqlDatabase &database)
+{
+    QSqlQuery query(database);
+    QVERIFY(query.exec(QStringLiteral(
+        "INSERT INTO exercise(id,name_zh,body_part,movement,load_mode) "
+        "VALUES('bench','杠铃卧推','胸部','水平推','Standard')")));
+    QVERIFY(query.exec(QStringLiteral(
+        "INSERT INTO training_plan(id,name,is_system,is_read_only) "
+        "VALUES('plan','测试计划',1,1)")));
+    QVERIFY(query.exec(QStringLiteral(
+        "INSERT INTO plan_day(id,plan_id,name,sort_order) VALUES"
+        "('day-a','plan','训练 A',0),('day-b','plan','训练 B',1)")));
+    QVERIFY(query.exec(QStringLiteral(
+        "INSERT INTO plan_exercise(id,day_id,exercise_id,sort_order,default_sets,default_reps,rest_seconds) "
+        "VALUES('exercise-a','day-a','bench',0,1,'8',120),"
+        "('exercise-b','day-b','bench',0,1,'8',120)")));
+}
+
+int activeCount(const QSqlDatabase &database)
+{
+    QSqlQuery query(database);
+    if (!query.exec(QStringLiteral(
+            "SELECT COUNT(*) FROM workout_session WHERE status='active'"))
+        || !query.next()) {
+        return -1;
+    }
+    return query.value(0).toInt();
+}
+
+} // namespace
+
 class WorkoutSessionControllerTest final : public QObject
 {
     Q_OBJECT
@@ -12,6 +45,9 @@ class WorkoutSessionControllerTest final : public QObject
 private slots:
     void createsPersistsAndResumesWorkout();
     void suggestsNextTanDay();
+    void reportsConflictWithoutCreatingAnotherWorkout();
+    void switchesWorkoutAtomically();
+    void requiresRecoveryForMultipleLegacyActiveWorkouts();
 };
 
 void WorkoutSessionControllerTest::createsPersistsAndResumesWorkout()
@@ -197,6 +233,119 @@ void WorkoutSessionControllerTest::suggestsNextTanDay()
     QVERIFY(controller.startSuggestedDay());
     QVERIFY(controller.finishWorkout());
     QCOMPARE(controller.suggestedDay().value(QStringLiteral("dayId")).toString(), QStringLiteral("pull"));
+}
+
+void WorkoutSessionControllerTest::reportsConflictWithoutCreatingAnotherWorkout()
+{
+    fittrack::DatabaseManager manager;
+    QString error;
+    QVERIFY2(manager.initialize(QStringLiteral(":memory:"), &error), qPrintable(error));
+    seedStartablePlan(manager.database());
+
+    fittrack::WorkoutSessionController first(manager.database());
+    const QVariantMap started = first.requestStartPlanDay(QStringLiteral("day-a"));
+    QCOMPARE(started.value(QStringLiteral("status")).toString(), QStringLiteral("started"));
+    const QString sessionId = first.sessionId();
+
+    fittrack::WorkoutSessionController restarted(manager.database());
+    QCOMPARE(restarted.sessionState(), QStringLiteral("Recoverable"));
+    const QVariantMap conflict = restarted.requestStartPlanDay(QStringLiteral("day-b"));
+    QCOMPARE(conflict.value(QStringLiteral("status")).toString(), QStringLiteral("conflict"));
+    QCOMPARE(conflict.value(QStringLiteral("currentSessionId")).toString(), sessionId);
+    QCOMPARE(conflict.value(QStringLiteral("currentSessionName")).toString(), QStringLiteral("训练 A"));
+    QCOMPARE(conflict.value(QStringLiteral("requestedName")).toString(), QStringLiteral("训练 B"));
+    QCOMPARE(conflict.value(QStringLiteral("activeSessionCount")).toInt(), 1);
+    QVERIFY(restarted.errorMessage().isEmpty());
+    QCOMPARE(activeCount(manager.database()), 1);
+
+    QVERIFY(restarted.continueExistingWorkout());
+    QCOMPARE(restarted.sessionId(), sessionId);
+    QCOMPARE(restarted.sessionState(), QStringLiteral("Active"));
+}
+
+void WorkoutSessionControllerTest::switchesWorkoutAtomically()
+{
+    fittrack::DatabaseManager manager;
+    QString error;
+    QVERIFY2(manager.initialize(QStringLiteral(":memory:"), &error), qPrintable(error));
+    seedStartablePlan(manager.database());
+
+    fittrack::WorkoutSessionController controller(manager.database());
+    QVERIFY(controller.startPlanDay(QStringLiteral("day-a")));
+    const QString firstId = controller.sessionId();
+    QVERIFY(!controller.switchToPlanDay(QStringLiteral("missing"), false));
+    QCOMPARE(activeCount(manager.database()), 1);
+    QSqlQuery stillActive(manager.database());
+    QVERIFY(stillActive.exec(QStringLiteral(
+        "SELECT status FROM workout_session WHERE id='%1'").arg(firstId)));
+    QVERIFY(stillActive.next());
+    QCOMPARE(stillActive.value(0).toString(), QStringLiteral("active"));
+
+    QVERIFY(controller.switchToPlanDay(QStringLiteral("day-b"), false));
+    QVERIFY(controller.sessionId() != firstId);
+    QCOMPARE(controller.sessionName(), QStringLiteral("训练 B"));
+    QCOMPARE(activeCount(manager.database()), 1);
+    QSqlQuery completed(manager.database());
+    completed.prepare(QStringLiteral("SELECT status FROM workout_session WHERE id=?"));
+    completed.addBindValue(firstId);
+    QVERIFY(completed.exec());
+    QVERIFY(completed.next());
+    QCOMPARE(completed.value(0).toString(), QStringLiteral("completed"));
+
+    const QString secondId = controller.sessionId();
+    QVERIFY(controller.switchToFreeWorkout(QStringLiteral("自由训练"), true));
+    QCOMPARE(activeCount(manager.database()), 1);
+    QSqlQuery discarded(manager.database());
+    discarded.prepare(QStringLiteral("SELECT 1 FROM workout_session WHERE id=?"));
+    discarded.addBindValue(secondId);
+    QVERIFY(discarded.exec());
+    QVERIFY(!discarded.next());
+}
+
+void WorkoutSessionControllerTest::requiresRecoveryForMultipleLegacyActiveWorkouts()
+{
+    fittrack::DatabaseManager manager;
+    QString error;
+    QVERIFY2(manager.initialize(QStringLiteral(":memory:"), &error), qPrintable(error));
+    seedStartablePlan(manager.database());
+    QSqlQuery query(manager.database());
+    QVERIFY(query.exec(QStringLiteral("DROP TRIGGER workout_session_single_active_insert")));
+    QVERIFY(query.exec(QStringLiteral(
+        "INSERT INTO workout_session(id,name,started_at,status) VALUES"
+        "('legacy-a','旧训练 A','2026-07-14T08:00:00Z','active'),"
+        "('legacy-b','旧训练 B','2026-07-14T09:00:00Z','active')")));
+
+    fittrack::WorkoutSessionController controller(manager.database());
+    QCOMPARE(controller.sessionState(), QStringLiteral("RecoveryRequired"));
+    const QVariantMap result = controller.requestStartPlanDay(QStringLiteral("day-a"));
+    QCOMPARE(result.value(QStringLiteral("status")).toString(), QStringLiteral("recoveryRequired"));
+    QCOMPARE(result.value(QStringLiteral("activeSessionCount")).toInt(), 2);
+    QVERIFY(!controller.continueExistingWorkout());
+    QVERIFY(!controller.resumeUnfinished());
+    QCOMPARE(activeCount(manager.database()), 2);
+
+    QVERIFY(controller.recoverActiveSessions(QStringLiteral("legacy-a"), false));
+    QCOMPARE(controller.sessionId(), QStringLiteral("legacy-a"));
+    QCOMPARE(controller.sessionState(), QStringLiteral("Active"));
+    QCOMPARE(activeCount(manager.database()), 1);
+    QVERIFY(query.exec(QStringLiteral(
+        "SELECT status,ended_at FROM workout_session WHERE id='legacy-b'")));
+    QVERIFY(query.next());
+    QCOMPARE(query.value(0).toString(), QStringLiteral("completed"));
+    QVERIFY(!query.value(1).toString().isEmpty());
+
+    QVERIFY(query.exec(QStringLiteral(
+        "INSERT INTO workout_session(id,name,started_at,status) "
+        "VALUES('legacy-c','旧训练 C','2026-07-14T10:00:00Z','active')")));
+    controller.reloadAfterRestore();
+    QCOMPARE(controller.sessionState(), QStringLiteral("RecoveryRequired"));
+    QVERIFY(controller.recoverActiveSessions(QStringLiteral("legacy-c"), true));
+    QCOMPARE(controller.sessionId(), QStringLiteral("legacy-c"));
+    QCOMPARE(activeCount(manager.database()), 1);
+    QVERIFY(query.exec(QStringLiteral(
+        "SELECT COUNT(*) FROM workout_session WHERE id='legacy-a'")));
+    QVERIFY(query.next());
+    QCOMPARE(query.value(0).toInt(), 0);
 }
 
 QTEST_GUILESS_MAIN(WorkoutSessionControllerTest)

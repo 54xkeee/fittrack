@@ -101,9 +101,9 @@ bool ExerciseSeedImporter::importDocuments(
 
         QSqlQuery exerciseQuery(db);
         exerciseQuery.prepare(QStringLiteral(
-            "INSERT INTO exercise(id,name_zh,name_en,aliases_json,body_part,movement,equipment_json,load_mode,introduction,steps_json,cautions_json,recommended_sets,recommended_reps,rest_seconds,is_system,is_enabled,source_json) "
-            "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,1,1,?) "
-            "ON CONFLICT(id) DO UPDATE SET name_zh=excluded.name_zh,name_en=excluded.name_en,aliases_json=excluded.aliases_json,body_part=excluded.body_part,movement=excluded.movement,equipment_json=excluded.equipment_json,load_mode=excluded.load_mode,introduction=excluded.introduction,steps_json=excluded.steps_json,cautions_json=excluded.cautions_json,recommended_sets=excluded.recommended_sets,recommended_reps=excluded.recommended_reps,rest_seconds=excluded.rest_seconds,is_system=1,is_enabled=1,source_json=excluded.source_json"));
+            "INSERT INTO exercise(id,name_zh,name_en,aliases_json,body_part,movement,equipment_json,load_mode,introduction,steps_json,cautions_json,difficulty,technique_points_json,common_mistakes_json,collections_json,recommended_sets,recommended_reps,rest_seconds,is_system,is_enabled,source_json) "
+            "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,1,1,?) "
+            "ON CONFLICT(id) DO UPDATE SET name_zh=excluded.name_zh,name_en=excluded.name_en,aliases_json=excluded.aliases_json,body_part=excluded.body_part,movement=excluded.movement,equipment_json=excluded.equipment_json,load_mode=excluded.load_mode,introduction=excluded.introduction,steps_json=excluded.steps_json,cautions_json=excluded.cautions_json,difficulty=excluded.difficulty,technique_points_json=excluded.technique_points_json,common_mistakes_json=excluded.common_mistakes_json,collections_json=excluded.collections_json,recommended_sets=excluded.recommended_sets,recommended_reps=excluded.recommended_reps,rest_seconds=excluded.rest_seconds,is_system=1,is_enabled=1,source_json=excluded.source_json"));
         exerciseQuery.addBindValue(id);
         exerciseQuery.addBindValue(exercise.value(QStringLiteral("nameZh")).toString());
         exerciseQuery.addBindValue(exercise.value(QStringLiteral("nameEn")).toString());
@@ -115,6 +115,11 @@ bool ExerciseSeedImporter::importDocuments(
         exerciseQuery.addBindValue(exercise.value(QStringLiteral("introduction")).toString());
         exerciseQuery.addBindValue(compactJson(exercise.value(QStringLiteral("steps"))));
         exerciseQuery.addBindValue(compactJson(exercise.value(QStringLiteral("cautions"))));
+        exerciseQuery.addBindValue(exercise.value(QStringLiteral("difficulty"))
+                                       .toString(QStringLiteral("")));
+        exerciseQuery.addBindValue(compactJson(exercise.value(QStringLiteral("techniquePoints"))));
+        exerciseQuery.addBindValue(compactJson(exercise.value(QStringLiteral("commonMistakes"))));
+        exerciseQuery.addBindValue(compactJson(exercise.value(QStringLiteral("collections"))));
         exerciseQuery.addBindValue(exercise.value(QStringLiteral("recommendedSets")).toInt());
         exerciseQuery.addBindValue(exercise.value(QStringLiteral("recommendedReps")).toString());
         exerciseQuery.addBindValue(exercise.value(QStringLiteral("restSeconds")).toInt());

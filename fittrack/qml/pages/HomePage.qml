@@ -111,11 +111,6 @@ AppPage {
     }
 
     function beginOrResumeWorkout() {
-        if (!workoutController.active && workoutController.hasUnfinished) {
-            if (workoutController.resumeUnfinished())
-                page.startTrainingRequested()
-            return
-        }
         page.startTrainingRequested()
     }
 

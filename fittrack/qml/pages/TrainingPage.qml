@@ -8,6 +8,8 @@ AppPage {
     id: page
 
     implicitWidth: 0
+    signal planStartRequested(string dayId)
+    signal freeStartRequested(string name)
     property string selectedExerciseId: ""
     property bool submittingSet: false
 
@@ -158,6 +160,11 @@ AppPage {
         }
 
         function onSetCompleted(restSeconds) {
+            page.Accessible.announce(
+                        restSeconds > 0
+                        ? qsTr("本组已保存，已开始 %1 秒休息计时").arg(restSeconds)
+                        : qsTr("本组已保存"),
+                        Accessible.Polite)
             const completedExerciseIndex = page.exerciseIndexById(page.selectedExerciseId)
             if (completedExerciseIndex >= 0
                     && page.firstIncompleteSetIndex(workoutController.exercises[completedExerciseIndex]) < 0) {
@@ -171,88 +178,179 @@ AppPage {
         }
     }
 
-    Menu {
+    Connections {
+        target: restTimer
+
+        function onFinished() {
+            page.Accessible.announce(qsTr("休息计时结束"), Accessible.Assertive)
+        }
+    }
+
+    AppDialog {
         id: sessionMenu
+        objectName: "sessionActionsDialog"
+        title: qsTr("训练操作")
+        primaryText: qsTr("关闭")
+        primaryVariant: "secondary"
+        secondaryVisible: false
+        initialFocusItem: addExerciseAction
 
-        MenuItem {
-            text: qsTr("添加动作")
-            onTriggered: exercisePicker.openForExercise("")
-        }
-        MenuItem {
-            text: qsTr("保存为个人计划")
-            onTriggered: {
-                savedPlanName.text = workoutController.sessionName
-                savedDayName.text = workoutController.sessionName
-                savedSectionName.text = ""
-                savePlanDialog.open()
+        ColumnLayout {
+            anchors.fill: parent
+            spacing: Design.Theme.space8
+
+            AppButton {
+                id: addExerciseAction
+                Layout.fillWidth: true
+                text: qsTr("添加动作")
+                variant: "secondary"
+                onClicked: {
+                    sessionMenu.close()
+                    Qt.callLater(function() { exercisePicker.openForExercise("") })
+                }
             }
-        }
-        MenuItem {
-            text: qsTr("训练备注")
-            onTriggered: {
-                sessionNotes.text = workoutController.sessionNotes
-                sessionNotesDialog.open()
+            AppButton {
+                Layout.fillWidth: true
+                text: qsTr("保存为个人计划")
+                variant: "secondary"
+                onClicked: {
+                    sessionMenu.close()
+                    Qt.callLater(function() {
+                        savedPlanName.text = workoutController.sessionName
+                        savedDayName.text = workoutController.sessionName
+                        savedSectionName.text = ""
+                        savePlanDialog.open()
+                    })
+                }
             }
-        }
-        MenuSeparator {}
-        MenuItem {
-            text: qsTr("放弃本次训练")
-            onTriggered: discardWorkoutConfirm.open()
+            AppButton {
+                Layout.fillWidth: true
+                text: qsTr("训练备注")
+                variant: "secondary"
+                onClicked: {
+                    sessionMenu.close()
+                    Qt.callLater(function() {
+                        sessionNotes.text = workoutController.sessionNotes
+                        sessionNotesDialog.open()
+                    })
+                }
+            }
+            AppButton {
+                Layout.fillWidth: true
+                text: qsTr("放弃本次训练")
+                variant: "destructive"
+                onClicked: {
+                    sessionMenu.close()
+                    Qt.callLater(function() { discardWorkoutConfirm.open() })
+                }
+            }
         }
     }
 
-    Menu {
+    AppDialog {
         id: exerciseActions
+        objectName: "exerciseActionsDialog"
         property string targetExerciseId: ""
+        title: qsTr("动作操作")
+        primaryText: qsTr("关闭")
+        primaryVariant: "secondary"
+        secondaryVisible: false
+        initialFocusItem: configureExerciseAction
 
-        MenuItem {
-            text: qsTr("设置组数与目标次数")
-            onTriggered: configureDialog.openForExercise(exerciseActions.targetExerciseId)
-        }
-        MenuItem {
-            text: qsTr("选择具体器械")
-            onTriggered: equipmentChoiceDialog.openForExercise(exerciseActions.targetExerciseId)
-        }
-        MenuItem {
-            text: qsTr("动作备注")
-            onTriggered: exerciseNotesDialog.openForExercise(exerciseActions.targetExerciseId)
-        }
-        MenuItem {
-            text: qsTr("替换动作")
-            onTriggered: exercisePicker.openForExercise(exerciseActions.targetExerciseId)
-        }
-        MenuSeparator {}
-        MenuItem {
-            text: qsTr("上移")
-            enabled: page.exerciseIndexById(exerciseActions.targetExerciseId) > 0
-            onTriggered: {
-                const index = page.exerciseIndexById(exerciseActions.targetExerciseId)
-                workoutController.moveExercise(index, index - 1)
+        ColumnLayout {
+            anchors.fill: parent
+            spacing: Design.Theme.space8
+
+            AppButton {
+                id: configureExerciseAction
+                Layout.fillWidth: true
+                text: qsTr("设置组数与目标次数")
+                variant: "secondary"
+                onClicked: {
+                    exerciseActions.close()
+                    Qt.callLater(function() {
+                        configureDialog.openForExercise(exerciseActions.targetExerciseId)
+                    })
+                }
             }
-        }
-        MenuItem {
-            text: qsTr("下移")
-            enabled: {
-                const index = page.exerciseIndexById(exerciseActions.targetExerciseId)
-                return index >= 0 && index + 1 < workoutController.exercises.length
+            AppButton {
+                Layout.fillWidth: true
+                text: qsTr("选择具体器械")
+                variant: "secondary"
+                onClicked: {
+                    exerciseActions.close()
+                    Qt.callLater(function() {
+                        equipmentChoiceDialog.openForExercise(exerciseActions.targetExerciseId)
+                    })
+                }
             }
-            onTriggered: {
-                const index = page.exerciseIndexById(exerciseActions.targetExerciseId)
-                workoutController.moveExercise(index, index + 1)
+            AppButton {
+                Layout.fillWidth: true
+                text: qsTr("动作备注")
+                variant: "secondary"
+                onClicked: {
+                    exerciseActions.close()
+                    Qt.callLater(function() {
+                        exerciseNotesDialog.openForExercise(exerciseActions.targetExerciseId)
+                    })
+                }
             }
-        }
-        MenuSeparator {}
-        MenuItem {
-            text: qsTr("删除动作")
-            onTriggered: {
-                removeExerciseConfirm.targetExerciseId = exerciseActions.targetExerciseId
-                removeExerciseConfirm.open()
+            AppButton {
+                Layout.fillWidth: true
+                text: qsTr("替换动作")
+                variant: "secondary"
+                onClicked: {
+                    exerciseActions.close()
+                    Qt.callLater(function() {
+                        exercisePicker.openForExercise(exerciseActions.targetExerciseId)
+                    })
+                }
+            }
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: Design.Theme.space8
+                AppButton {
+                    Layout.fillWidth: true
+                    text: qsTr("上移")
+                    variant: "secondary"
+                    enabled: page.exerciseIndexById(exerciseActions.targetExerciseId) > 0
+                    onClicked: {
+                        const index = page.exerciseIndexById(exerciseActions.targetExerciseId)
+                        exerciseActions.close()
+                        workoutController.moveExercise(index, index - 1)
+                    }
+                }
+                AppButton {
+                    Layout.fillWidth: true
+                    text: qsTr("下移")
+                    variant: "secondary"
+                    enabled: {
+                        const index = page.exerciseIndexById(exerciseActions.targetExerciseId)
+                        return index >= 0 && index + 1 < workoutController.exercises.length
+                    }
+                    onClicked: {
+                        const index = page.exerciseIndexById(exerciseActions.targetExerciseId)
+                        exerciseActions.close()
+                        workoutController.moveExercise(index, index + 1)
+                    }
+                }
+            }
+            AppButton {
+                Layout.fillWidth: true
+                text: qsTr("删除动作")
+                variant: "destructive"
+                onClicked: {
+                    removeExerciseConfirm.targetExerciseId = exerciseActions.targetExerciseId
+                    exerciseActions.close()
+                    Qt.callLater(function() { removeExerciseConfirm.open() })
+                }
             }
         }
     }
 
-    Dialog {
+    AppDialog {
         id: exercisePicker
+        objectName: "exercisePickerDialog"
         property string replaceExerciseId: ""
         property string oldSearch: ""
         property string oldBodyPart: ""
@@ -275,13 +373,13 @@ AppPage {
             open()
         }
 
-        parent: Overlay.overlay
-        anchors.centerIn: Overlay.overlay
-        width: Math.min(520, Overlay.overlay.width - Design.Theme.space16 * 2)
-        height: Math.min(680, Overlay.overlay.height - Design.Theme.space24 * 2)
-        modal: true
+        width: Math.min(520, safeAvailableWidth)
+        height: Math.min(680, safeAvailableHeight)
         title: replaceExerciseId.length > 0 ? qsTr("替换动作") : qsTr("添加动作")
-        standardButtons: Dialog.Close
+        primaryText: qsTr("关闭")
+        primaryVariant: "secondary"
+        secondaryVisible: false
+        initialFocusItem: exerciseSearch
 
         onClosed: {
             exerciseModel.searchText = oldSearch
@@ -296,9 +394,11 @@ AppPage {
             spacing: Design.Theme.space8
 
             TextField {
+                id: exerciseSearch
                 Layout.fillWidth: true
                 implicitHeight: Design.Theme.controlHeight
                 placeholderText: qsTr("搜索动作")
+                Accessible.name: qsTr("搜索动作")
                 onTextChanged: exerciseModel.searchText = text
             }
 
@@ -319,6 +419,7 @@ AppPage {
                     width: ListView.view.width
                     implicitHeight: 56
                     text: name + "  ·  " + bodyPart
+                    Accessible.name: qsTr("选择%1，%2").arg(name).arg(bodyPart)
                     onClicked: {
                         let success = false
                         if (exercisePicker.replaceExerciseId.length > 0) {
@@ -330,14 +431,20 @@ AppPage {
                         }
                         if (success)
                             exercisePicker.close()
+                        else
+                            exercisePicker.showError(
+                                        workoutController.errorMessage.length > 0
+                                        ? workoutController.errorMessage
+                                        : qsTr("动作更新失败，请重试。"))
                     }
                 }
             }
         }
     }
 
-    Dialog {
+    AppDialog {
         id: configureDialog
+        objectName: "configureExerciseDialog"
         property string targetExerciseId: ""
 
         function openForExercise(exerciseId) {
@@ -353,45 +460,69 @@ AppPage {
             open()
         }
 
-        parent: Overlay.overlay
-        anchors.centerIn: Overlay.overlay
-        width: Math.min(380, Overlay.overlay.width - Design.Theme.space16 * 2)
-        modal: true
+        width: Math.min(380, safeAvailableWidth)
         title: qsTr("设置训练组")
-        standardButtons: Dialog.Ok | Dialog.Cancel
-        onAccepted: {
+        primaryText: qsTr("应用设置")
+        autoAccept: false
+        initialFocusItem: quickWeight.editorItem
+        onPrimaryRequested: {
             const index = page.exerciseIndexById(targetExerciseId)
-            if (index >= 0)
-                workoutController.configureExercise(
-                            index,
-                            Number.isFinite(quickWeight.numericValue) ? quickWeight.numericValue : 0,
-                            Number.isFinite(quickReps.numericValue) ? quickReps.numericValue : 0,
-                            quickSets.value)
+            const succeeded = index >= 0 && workoutController.configureExercise(
+                                  index,
+                                  Number.isFinite(quickWeight.numericValue) ? quickWeight.numericValue : 0,
+                                  Number.isFinite(quickReps.numericValue) ? quickReps.numericValue : 0,
+                                  quickSets.value)
+            if (succeeded)
+                accept()
+            else
+                showError(workoutController.errorMessage.length > 0
+                          ? workoutController.errorMessage
+                          : qsTr("训练组设置失败，请重试。"))
         }
 
-        ColumnLayout {
+        ScrollView {
+            id: configureScroll
             anchors.fill: parent
-            spacing: Design.Theme.space12
+            implicitHeight: Math.min(configureForm.implicitHeight,
+                                     Overlay.overlay ? Overlay.overlay.height * 0.5 : 400)
+            clip: true
+            contentWidth: availableWidth
+            ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
 
-            Label {
-                text: qsTr("重量 × 次数 × 组数，一次生成后仍可逐组修改。")
-                color: Design.Theme.surfaceMuted
-                wrapMode: Text.WordWrap
-                Layout.fillWidth: true
-            }
-            NumberField { id: quickWeight; Layout.fillWidth: true; label: qsTr("重量"); unit: "kg"; decimals: 2 }
-            NumberField { id: quickReps; Layout.fillWidth: true; label: qsTr("目标次数"); decimals: 0; keyboardHints: Qt.ImhDigitsOnly }
-            RowLayout {
-                Layout.fillWidth: true
-                Label { text: qsTr("组数"); color: Design.Theme.surfaceMuted }
-                Item { Layout.fillWidth: true }
-                SpinBox { id: quickSets; from: 1; to: 20; value: 3; editable: true }
+            ColumnLayout {
+                id: configureForm
+                width: configureScroll.availableWidth
+                spacing: Design.Theme.space12
+
+                Label {
+                    text: qsTr("重量 × 次数 × 组数，一次生成后仍可逐组修改。")
+                    color: Design.Theme.surfaceMuted
+                    wrapMode: Text.WordWrap
+                    Layout.fillWidth: true
+                }
+                NumberField { id: quickWeight; Layout.fillWidth: true; label: qsTr("重量"); unit: "kg"; decimals: 2 }
+                NumberField { id: quickReps; Layout.fillWidth: true; label: qsTr("目标次数"); decimals: 0; keyboardHints: Qt.ImhDigitsOnly }
+                RowLayout {
+                    Layout.fillWidth: true
+                    Label { text: qsTr("组数"); color: Design.Theme.surfaceMuted }
+                    Item { Layout.fillWidth: true }
+                    SpinBox {
+                        id: quickSets
+                        from: 1
+                        to: 20
+                        value: 3
+                        editable: true
+                        implicitHeight: Design.Theme.controlHeight
+                        Accessible.name: qsTr("组数")
+                    }
+                }
             }
         }
     }
 
-    Dialog {
+    AppDialog {
         id: editSetDialog
+        objectName: "editCompletedSetDialog"
         property string targetExerciseId: ""
         property string targetSetId: ""
 
@@ -412,76 +543,102 @@ AppPage {
             open()
         }
 
-        parent: Overlay.overlay
-        anchors.centerIn: Overlay.overlay
-        width: Math.min(380, Overlay.overlay.width - Design.Theme.space16 * 2)
-        modal: true
+        width: Math.min(380, safeAvailableWidth)
         title: qsTr("修正已完成组")
-        standardButtons: Dialog.Save | Dialog.Cancel
-        onAccepted: {
+        primaryText: qsTr("保存修改")
+        autoAccept: false
+        initialFocusItem: editWeight.editorItem
+        onPrimaryRequested: {
             const exerciseIndex = page.exerciseIndexById(targetExerciseId)
             const setIndex = page.setIndexById(exerciseIndex, targetSetId)
+            let succeeded = false
             if (exerciseIndex >= 0 && setIndex >= 0) {
-                const updated = workoutController.updateCompletedSet(
-                            exerciseIndex,
-                            setIndex,
-                            Number.isFinite(editWeight.numericValue) ? editWeight.numericValue : 0,
-                            Number.isFinite(editReps.numericValue) ? editReps.numericValue : 0,
-                            editFailure.checked,
-                            editBodyweightMode.visible
-                                ? editBodyweightMode.model[editBodyweightMode.currentIndex].value
-                                : "Bodyweight")
-                if (updated && editTargetReps.text.trim().length)
-                    workoutController.setTargetReps(exerciseIndex, setIndex, editTargetReps.numericValue)
-                if (updated)
-                    workoutController.setSetNotes(exerciseIndex, setIndex, editNotes.text)
+                succeeded = workoutController.updateCompletedSet(
+                                exerciseIndex,
+                                setIndex,
+                                Number.isFinite(editWeight.numericValue) ? editWeight.numericValue : 0,
+                                Number.isFinite(editReps.numericValue) ? editReps.numericValue : 0,
+                                editFailure.checked,
+                                editBodyweightMode.visible
+                                    ? editBodyweightMode.model[editBodyweightMode.currentIndex].value
+                                    : "Bodyweight")
+                if (succeeded && editTargetReps.text.trim().length)
+                    succeeded = workoutController.setTargetReps(
+                                exerciseIndex, setIndex, editTargetReps.numericValue)
+                if (succeeded)
+                    succeeded = workoutController.setSetNotes(exerciseIndex, setIndex, editNotes.text)
             }
+            if (succeeded)
+                accept()
+            else
+                showError(workoutController.errorMessage.length > 0
+                          ? workoutController.errorMessage
+                          : qsTr("训练组修改失败，请重试。"))
         }
 
-        ColumnLayout {
+        ScrollView {
+            id: editSetScroll
             anchors.fill: parent
-            spacing: Design.Theme.space12
-            NumberField { id: editWeight; Layout.fillWidth: true; label: qsTr("实际重量"); unit: "kg"; decimals: 2 }
-            NumberField { id: editReps; Layout.fillWidth: true; label: qsTr("实际次数"); decimals: 0; keyboardHints: Qt.ImhDigitsOnly }
-            NumberField {
-                id: editTargetReps
-                Layout.fillWidth: true
-                label: qsTr("目标次数（选填）")
-                from: 1
-                to: 999
-                decimals: 0
-                keyboardHints: Qt.ImhDigitsOnly
-            }
-            ComboBox {
-                id: editBodyweightMode
-                Layout.fillWidth: true
-                textRole: "label"
-                model: [
-                    {"label": qsTr("纯自重"), "value": "Bodyweight"},
-                    {"label": qsTr("附加负重"), "value": "Added"},
-                    {"label": qsTr("辅助重量"), "value": "Assisted"}
-                ]
-            }
-            CheckBox { id: editFailure; text: qsTr("本组力竭") }
-            TextArea {
-                id: editNotes
-                Layout.fillWidth: true
-                Layout.preferredHeight: 84
-                placeholderText: qsTr("本组备注（可选）")
-                wrapMode: TextEdit.Wrap
-                color: Design.Theme.surfaceText
-                background: Rectangle {
-                    color: Design.Theme.surfaceElevated
-                    radius: Design.Theme.radiusSmall
-                    border.width: editNotes.activeFocus ? 2 : 1
-                    border.color: editNotes.activeFocus
-                                  ? Design.Theme.primary : Design.Theme.outline
+            implicitHeight: Math.min(editSetForm.implicitHeight,
+                                     Overlay.overlay ? Overlay.overlay.height * 0.55 : 440)
+            clip: true
+            contentWidth: availableWidth
+
+            ColumnLayout {
+                id: editSetForm
+                width: editSetScroll.availableWidth
+                spacing: Design.Theme.space12
+                NumberField { id: editWeight; Layout.fillWidth: true; label: qsTr("实际重量"); unit: "kg"; decimals: 2 }
+                NumberField { id: editReps; Layout.fillWidth: true; label: qsTr("实际次数"); decimals: 0; keyboardHints: Qt.ImhDigitsOnly }
+                NumberField {
+                    id: editTargetReps
+                    Layout.fillWidth: true
+                    label: qsTr("目标次数（选填）")
+                    from: 1
+                    to: 999
+                    decimals: 0
+                    keyboardHints: Qt.ImhDigitsOnly
+                }
+                ComboBox {
+                    id: editBodyweightMode
+                    Layout.fillWidth: true
+                    implicitHeight: Design.Theme.controlHeight
+                    Accessible.name: qsTr("自重负荷方式")
+                    textRole: "label"
+                    model: [
+                        {"label": qsTr("纯自重"), "value": "Bodyweight"},
+                        {"label": qsTr("附加负重"), "value": "Added"},
+                        {"label": qsTr("辅助重量"), "value": "Assisted"}
+                    ]
+                }
+                CheckBox {
+                    id: editFailure
+                    objectName: "editSetFailureCheckBox"
+                    Layout.fillWidth: true
+                    implicitHeight: Design.Theme.controlHeight
+                    text: qsTr("本组力竭")
+                }
+                TextArea {
+                    id: editNotes
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 84
+                    placeholderText: qsTr("本组备注（可选）")
+                    Accessible.name: qsTr("本组备注")
+                    wrapMode: TextEdit.Wrap
+                    color: Design.Theme.surfaceText
+                    background: Rectangle {
+                        color: Design.Theme.surfaceElevated
+                        radius: Design.Theme.radiusSmall
+                        border.width: editNotes.activeFocus ? 2 : 1
+                        border.color: editNotes.activeFocus
+                                      ? Design.Theme.primary : Design.Theme.outline
+                    }
                 }
             }
         }
     }
 
-    Dialog {
+    AppDialog {
         id: targetRepsDialog
         objectName: "targetRepsDialog"
         property string targetExerciseId: ""
@@ -498,38 +655,26 @@ AppPage {
         function submit() {
             const exerciseIndex = page.exerciseIndexById(targetExerciseId)
             const setIndex = page.setIndexById(exerciseIndex, targetSetId)
-            if (exerciseIndex >= 0 && setIndex >= 0
-                    && workoutController.setTargetReps(exerciseIndex, setIndex, targetRepsValue.value))
-                close()
+            const succeeded = exerciseIndex >= 0 && setIndex >= 0
+                    && workoutController.setTargetReps(
+                        exerciseIndex, setIndex, targetRepsValue.value)
+            if (succeeded)
+                accept()
+            else
+                showError(workoutController.errorMessage.length > 0
+                          ? workoutController.errorMessage
+                          : qsTr("目标次数保存失败，请重试。"))
         }
 
-        parent: Overlay.overlay
-        anchors.centerIn: Overlay.overlay
-        width: Math.min(340, Overlay.overlay.width - Design.Theme.space16 * 2)
-        modal: true
-        focus: true
-        padding: Design.Theme.space24
-        closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
+        width: Math.min(340, safeAvailableWidth)
         title: qsTr("修改本组目标次数")
+        primaryText: qsTr("保存目标")
+        autoAccept: false
+        initialFocusItem: targetRepsValue
+        onPrimaryRequested: submit()
 
-        Overlay.modal: Rectangle { color: Design.Theme.scrim }
-        background: Rectangle {
-            color: Design.Theme.surface
-            radius: Design.Theme.radiusLarge
-            border.width: 1
-            border.color: Design.Theme.outline
-        }
-        header: Label {
-            text: targetRepsDialog.title
-            color: Design.Theme.surfaceText
-            font.pixelSize: Design.Theme.typeTitle
-            font.weight: Font.DemiBold
-            leftPadding: Design.Theme.space24
-            rightPadding: Design.Theme.space24
-            topPadding: Design.Theme.space24
-        }
-
-        contentItem: ColumnLayout {
+        ColumnLayout {
+            anchors.fill: parent
             spacing: Design.Theme.space12
             Label {
                 Layout.fillWidth: true
@@ -540,35 +685,21 @@ AppPage {
             RowLayout {
                 Layout.fillWidth: true
                 Label { text: qsTr("目标次数"); color: Design.Theme.surfaceText; Layout.fillWidth: true }
-                SpinBox { id: targetRepsValue; from: 1; to: 999; editable: true }
-            }
-        }
-
-        footer: Item {
-            implicitHeight: Design.Theme.controlHeight + Design.Theme.space24
-            RowLayout {
-                anchors.fill: parent
-                anchors.leftMargin: Design.Theme.space24
-                anchors.rightMargin: Design.Theme.space24
-                anchors.bottomMargin: Design.Theme.space24
-                spacing: Design.Theme.space8
-                AppButton {
-                    Layout.fillWidth: true
-                    variant: "secondary"
-                    text: qsTr("取消")
-                    onClicked: targetRepsDialog.close()
-                }
-                AppButton {
-                    Layout.fillWidth: true
-                    text: qsTr("保存目标")
-                    onClicked: targetRepsDialog.submit()
+                SpinBox {
+                    id: targetRepsValue
+                    from: 1
+                    to: 999
+                    editable: true
+                    implicitHeight: Design.Theme.controlHeight
+                    Accessible.name: qsTr("本组目标次数")
                 }
             }
         }
     }
 
-    Dialog {
+    AppDialog {
         id: appendSetDialog
+        objectName: "appendSetDialog"
         property string targetExerciseId: ""
         property string targetSetId: ""
 
@@ -583,24 +714,28 @@ AppPage {
             open()
         }
 
-        parent: Overlay.overlay
-        anchors.centerIn: Overlay.overlay
-        width: Math.min(380, Overlay.overlay.width - Design.Theme.space16 * 2)
-        modal: true
+        width: Math.min(380, safeAvailableWidth)
         title: qsTr("添加短休追加组")
-        standardButtons: Dialog.Ok | Dialog.Cancel
-        onAccepted: {
+        primaryText: qsTr("添加追加组")
+        autoAccept: false
+        initialFocusItem: appendWeight.editorItem
+        onPrimaryRequested: {
             const exerciseIndex = page.exerciseIndexById(targetExerciseId)
             const setIndex = page.setIndexById(exerciseIndex, targetSetId)
-            if (exerciseIndex >= 0 && setIndex >= 0) {
-                workoutController.addAppendSet(
-                            exerciseIndex,
-                            setIndex,
-                            Number.isFinite(appendWeight.numericValue) ? appendWeight.numericValue : 0,
-                            Number.isFinite(appendReps.numericValue) ? appendReps.numericValue : 0,
-                            appendRest.value,
-                            appendFailure.checked)
-            }
+            const succeeded = exerciseIndex >= 0 && setIndex >= 0
+                    && workoutController.addAppendSet(
+                        exerciseIndex,
+                        setIndex,
+                        Number.isFinite(appendWeight.numericValue) ? appendWeight.numericValue : 0,
+                        Number.isFinite(appendReps.numericValue) ? appendReps.numericValue : 0,
+                        appendRest.value,
+                        appendFailure.checked)
+            if (succeeded)
+                accept()
+            else
+                showError(workoutController.errorMessage.length > 0
+                          ? workoutController.errorMessage
+                          : qsTr("追加组保存失败，请重试。"))
         }
 
         ColumnLayout {
@@ -612,28 +747,49 @@ AppPage {
                 Layout.fillWidth: true
                 Label { text: qsTr("短休秒数"); color: Design.Theme.surfaceMuted }
                 Item { Layout.fillWidth: true }
-                SpinBox { id: appendRest; from: 0; to: 300; value: 5; editable: true }
+                SpinBox {
+                    id: appendRest
+                    from: 0
+                    to: 300
+                    value: 5
+                    editable: true
+                    implicitHeight: Design.Theme.controlHeight
+                    Accessible.name: qsTr("短休秒数")
+                }
             }
-            CheckBox { id: appendFailure; text: qsTr("追加组力竭") }
+            CheckBox {
+                id: appendFailure
+                objectName: "appendSetFailureCheckBox"
+                Layout.fillWidth: true
+                implicitHeight: Design.Theme.controlHeight
+                text: qsTr("追加组力竭")
+            }
         }
     }
 
-    Dialog {
+    AppDialog {
         id: timerDialog
-        parent: Overlay.overlay
-        anchors.centerIn: Overlay.overlay
-        width: Math.min(380, Overlay.overlay.width - Design.Theme.space16 * 2)
-        modal: true
+        objectName: "restTimerDialog"
+        width: Math.min(380, safeAvailableWidth)
         title: qsTr("休息计时")
-        standardButtons: Dialog.Close
+        primaryText: qsTr("关闭")
+        primaryVariant: "secondary"
+        secondaryVisible: false
+        initialFocusItem: timerMinutes
 
         ColumnLayout {
             anchors.fill: parent
             spacing: Design.Theme.space12
-            RowLayout {
+            GridLayout {
+                id: timerPresetGrid
                 Layout.fillWidth: true
+                columns: Design.Theme.fontScale >= 1.3 ? 2 : 3
+                columnSpacing: Design.Theme.space8
+                rowSpacing: Design.Theme.space8
                 AppButton {
+                    objectName: "twoMinuteTimerButton"
                     Layout.fillWidth: true
+                    Layout.minimumWidth: 0
                     text: qsTr("2 分钟")
                     onClicked: {
                         restTimer.start(120)
@@ -641,7 +797,9 @@ AppPage {
                     }
                 }
                 AppButton {
+                    objectName: "threeMinuteTimerButton"
                     Layout.fillWidth: true
+                    Layout.minimumWidth: 0
                     text: qsTr("3 分钟")
                     onClicked: {
                         restTimer.start(180)
@@ -649,7 +807,10 @@ AppPage {
                     }
                 }
                 AppButton {
+                    objectName: "fiveMinuteTimerButton"
                     Layout.fillWidth: true
+                    Layout.columnSpan: timerPresetGrid.columns === 2 ? 2 : 1
+                    Layout.minimumWidth: 0
                     text: qsTr("5 分钟")
                     onClicked: {
                         restTimer.start(300)
@@ -657,17 +818,59 @@ AppPage {
                     }
                 }
             }
+            Label {
+                Layout.fillWidth: true
+                text: qsTr("自定义时长")
+                color: Design.Theme.surfaceMuted
+                font.pixelSize: Design.Theme.typeLabel
+            }
             RowLayout {
                 Layout.fillWidth: true
-                Label { text: qsTr("自定义") }
-                SpinBox { id: timerMinutes; from: 0; to: 59; value: 2; editable: true }
-                Label { text: qsTr("分") }
-                SpinBox { id: timerSeconds; from: 0; to: 59; value: 0; editable: true }
-                Label { text: qsTr("秒") }
+                spacing: Design.Theme.space8
+
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    spacing: Design.Theme.space4
+                    Label {
+                        text: qsTr("分钟")
+                        color: Design.Theme.surfaceMuted
+                        font.pixelSize: Design.Theme.typeCaption
+                    }
+                    SpinBox {
+                        id: timerMinutes
+                        Layout.fillWidth: true
+                        from: 0
+                        to: 59
+                        value: 2
+                        editable: true
+                        implicitHeight: Design.Theme.controlHeight
+                        Accessible.name: qsTr("自定义分钟")
+                    }
+                }
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    spacing: Design.Theme.space4
+                    Label {
+                        text: qsTr("秒数")
+                        color: Design.Theme.surfaceMuted
+                        font.pixelSize: Design.Theme.typeCaption
+                    }
+                    SpinBox {
+                        id: timerSeconds
+                        Layout.fillWidth: true
+                        from: 0
+                        to: 59
+                        value: 0
+                        editable: true
+                        implicitHeight: Design.Theme.controlHeight
+                        Accessible.name: qsTr("自定义秒数")
+                    }
+                }
             }
             AppButton {
                 Layout.fillWidth: true
                 text: qsTr("开始计时")
+                enabled: timerMinutes.value > 0 || timerSeconds.value > 0
                 onClicked: {
                     restTimer.start(timerMinutes.value * 60 + timerSeconds.value)
                     timerDialog.close()
@@ -676,8 +879,9 @@ AppPage {
         }
     }
 
-    Dialog {
+    AppDialog {
         id: equipmentChoiceDialog
+        objectName: "equipmentChoiceDialog"
         property string targetExerciseId: ""
 
         function openForExercise(exerciseId) {
@@ -690,19 +894,25 @@ AppPage {
             open()
         }
 
-        parent: Overlay.overlay
-        anchors.centerIn: Overlay.overlay
-        width: Math.min(400, Overlay.overlay.width - Design.Theme.space16 * 2)
-        modal: true
+        width: Math.min(400, safeAvailableWidth)
         title: qsTr("本次使用器械")
-        standardButtons: Dialog.Ok | Dialog.Cancel
-        onAccepted: {
+        primaryText: qsTr("保存器械")
+        autoAccept: false
+        initialFocusItem: equipmentChoice
+        onPrimaryRequested: {
             const index = page.exerciseIndexById(targetExerciseId)
+            let succeeded = false
             if (index >= 0) {
                 const equipmentId = equipmentChoice.currentIndex >= 0
                         ? workoutController.equipment[equipmentChoice.currentIndex].id : ""
-                workoutController.setExerciseEquipment(index, equipmentId)
+                succeeded = workoutController.setExerciseEquipment(index, equipmentId)
             }
+            if (succeeded)
+                accept()
+            else
+                showError(workoutController.errorMessage.length > 0
+                          ? workoutController.errorMessage
+                          : qsTr("器械选择保存失败，请重试。"))
         }
 
         ColumnLayout {
@@ -715,6 +925,7 @@ AppPage {
                 model: workoutController.equipment
                 textRole: "displayName"
                 displayText: currentIndex >= 0 ? currentText : qsTr("不指定具体器械")
+                Accessible.name: qsTr("本次使用器械")
             }
             AppButton {
                 Layout.fillWidth: true
@@ -731,54 +942,91 @@ AppPage {
         }
     }
 
-    Dialog {
+    AppDialog {
         id: gymDialog
-        parent: Overlay.overlay
-        anchors.centerIn: Overlay.overlay
-        width: Math.min(380, Overlay.overlay.width - Design.Theme.space16 * 2)
-        modal: true
+        objectName: "createGymDialog"
+        width: Math.min(380, safeAvailableWidth)
         title: qsTr("新建健身房")
-        standardButtons: Dialog.Ok | Dialog.Cancel
-        onAccepted: workoutController.addGym(gymName.text)
+        primaryText: qsTr("创建健身房")
+        primaryEnabled: gymName.text.trim().length > 0
+        autoAccept: false
+        initialFocusItem: gymName
+        onPrimaryRequested: {
+            if (workoutController.addGym(gymName.text))
+                accept()
+            else
+                showError(workoutController.errorMessage.length > 0
+                          ? workoutController.errorMessage
+                          : qsTr("健身房创建失败，请重试。"))
+        }
         TextField {
             id: gymName
             anchors.fill: parent
             placeholderText: qsTr("例如：学校健身房")
+            implicitHeight: Design.Theme.controlHeight
+            Accessible.name: qsTr("健身房名称")
         }
     }
 
-    Dialog {
+    AppDialog {
         id: equipmentDialog
-        parent: Overlay.overlay
-        anchors.centerIn: Overlay.overlay
-        width: Math.min(400, Overlay.overlay.width - Design.Theme.space16 * 2)
-        modal: true
+        objectName: "createEquipmentDialog"
+        width: Math.min(400, safeAvailableWidth)
         title: qsTr("新建具体器械")
-        standardButtons: Dialog.Ok | Dialog.Cancel
-        onAccepted: workoutController.addEquipment(
-                        equipmentName.text, equipmentCode.text, equipmentNotes.text)
-        ColumnLayout {
+        primaryText: qsTr("创建器械")
+        primaryEnabled: equipmentName.text.trim().length > 0
+        autoAccept: false
+        initialFocusItem: equipmentName
+        onPrimaryRequested: {
+            if (workoutController.addEquipment(
+                        equipmentName.text, equipmentCode.text, equipmentNotes.text))
+                accept()
+            else
+                showError(workoutController.errorMessage.length > 0
+                          ? workoutController.errorMessage
+                          : qsTr("器械创建失败，请重试。"))
+        }
+        ScrollView {
+            id: equipmentFormScroll
             anchors.fill: parent
-            TextField {
-                id: equipmentName
-                Layout.fillWidth: true
-                placeholderText: qsTr("器械名称")
-            }
-            TextField {
-                id: equipmentCode
-                Layout.fillWidth: true
-                placeholderText: qsTr("编号，例如 1 号")
-            }
-            TextField {
-                id: equipmentNotes
-                Layout.fillWidth: true
-                placeholderText: qsTr("座椅档位、把手等，可选")
+            implicitHeight: Math.min(equipmentForm.implicitHeight,
+                                     Overlay.overlay ? Overlay.overlay.height * 0.45 : 360)
+            clip: true
+            contentWidth: availableWidth
+            ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
+
+            ColumnLayout {
+                id: equipmentForm
+                width: equipmentFormScroll.availableWidth
+                spacing: Design.Theme.space8
+                TextField {
+                    id: equipmentName
+                    Layout.fillWidth: true
+                    placeholderText: qsTr("器械名称")
+                    implicitHeight: Design.Theme.controlHeight
+                    Accessible.name: qsTr("器械名称")
+                }
+                TextField {
+                    id: equipmentCode
+                    Layout.fillWidth: true
+                    placeholderText: qsTr("编号，例如 1 号")
+                    implicitHeight: Design.Theme.controlHeight
+                    Accessible.name: qsTr("器械编号")
+                }
+                TextField {
+                    id: equipmentNotes
+                    Layout.fillWidth: true
+                    placeholderText: qsTr("座椅档位、把手等，可选")
+                    implicitHeight: Design.Theme.controlHeight
+                    Accessible.name: qsTr("器械备注")
+                }
             }
         }
     }
 
-    Dialog {
+    AppDialog {
         id: exerciseNotesDialog
+        objectName: "exerciseNotesDialog"
         property string targetExerciseId: ""
 
         function openForExercise(exerciseId) {
@@ -790,74 +1038,118 @@ AppPage {
             open()
         }
 
-        parent: Overlay.overlay
-        anchors.centerIn: Overlay.overlay
-        width: Math.min(400, Overlay.overlay.width - Design.Theme.space16 * 2)
-        modal: true
+        width: Math.min(400, safeAvailableWidth)
         title: qsTr("动作备注")
-        standardButtons: Dialog.Save | Dialog.Cancel
-        onAccepted: {
+        primaryText: qsTr("保存备注")
+        autoAccept: false
+        initialFocusItem: exerciseNotes
+        onPrimaryRequested: {
             const index = page.exerciseIndexById(targetExerciseId)
-            if (index >= 0)
-                workoutController.setExerciseNotes(index, exerciseNotes.text)
+            const succeeded = index >= 0
+                    && workoutController.setExerciseNotes(index, exerciseNotes.text)
+            if (succeeded)
+                accept()
+            else
+                showError(workoutController.errorMessage.length > 0
+                          ? workoutController.errorMessage
+                          : qsTr("动作备注保存失败，请重试。"))
         }
         TextArea {
             id: exerciseNotes
             anchors.fill: parent
+            implicitHeight: 112
             wrapMode: TextEdit.Wrap
             placeholderText: qsTr("器械档位或本次感受，可选")
+            Accessible.name: qsTr("动作备注")
         }
     }
 
-    Dialog {
+    AppDialog {
         id: sessionNotesDialog
-        parent: Overlay.overlay
-        anchors.centerIn: Overlay.overlay
-        width: Math.min(400, Overlay.overlay.width - Design.Theme.space16 * 2)
-        modal: true
+        objectName: "sessionNotesDialog"
+        width: Math.min(400, safeAvailableWidth)
         title: qsTr("训练备注")
-        standardButtons: Dialog.Save | Dialog.Cancel
-        onAccepted: workoutController.setSessionNotes(sessionNotes.text)
+        primaryText: qsTr("保存备注")
+        autoAccept: false
+        initialFocusItem: sessionNotes
+        onPrimaryRequested: {
+            if (workoutController.setSessionNotes(sessionNotes.text))
+                accept()
+            else
+                showError(workoutController.errorMessage.length > 0
+                          ? workoutController.errorMessage
+                          : qsTr("训练备注保存失败，请重试。"))
+        }
         TextArea {
             id: sessionNotes
             anchors.fill: parent
+            implicitHeight: 112
             wrapMode: TextEdit.Wrap
             placeholderText: qsTr("本次训练备注，可选")
+            Accessible.name: qsTr("训练备注")
         }
     }
 
-    Dialog {
+    AppDialog {
         id: savePlanDialog
-        parent: Overlay.overlay
-        anchors.centerIn: Overlay.overlay
-        width: Math.min(400, Overlay.overlay.width - Design.Theme.space16 * 2)
-        modal: true
+        objectName: "savePlanDialog"
+        width: Math.min(400, safeAvailableWidth)
         title: qsTr("保存为个人计划")
-        standardButtons: Dialog.Save | Dialog.Cancel
-        onAccepted: workoutController.saveCurrentAsPlan(
-                        savedPlanName.text, savedDayName.text, savedSectionName.text)
-        ColumnLayout {
+        primaryText: qsTr("保存计划")
+        primaryEnabled: savedPlanName.text.trim().length > 0
+                        && savedDayName.text.trim().length > 0
+        autoAccept: false
+        initialFocusItem: savedPlanName
+        onPrimaryRequested: {
+            if (workoutController.saveCurrentAsPlan(
+                        savedPlanName.text, savedDayName.text, savedSectionName.text))
+                accept()
+            else
+                showError(workoutController.errorMessage.length > 0
+                          ? workoutController.errorMessage
+                          : qsTr("个人计划保存失败，请重试。"))
+        }
+        ScrollView {
+            id: savePlanFormScroll
             anchors.fill: parent
-            TextField {
-                id: savedPlanName
-                Layout.fillWidth: true
-                placeholderText: qsTr("计划名称")
-            }
-            TextField {
-                id: savedDayName
-                Layout.fillWidth: true
-                placeholderText: qsTr("训练日名称，例如 Push A")
-            }
-            TextField {
-                id: savedSectionName
-                Layout.fillWidth: true
-                placeholderText: qsTr("动作分组名称，可选")
+            implicitHeight: Math.min(savePlanForm.implicitHeight,
+                                     Overlay.overlay ? Overlay.overlay.height * 0.45 : 360)
+            clip: true
+            contentWidth: availableWidth
+            ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
+
+            ColumnLayout {
+                id: savePlanForm
+                width: savePlanFormScroll.availableWidth
+                spacing: Design.Theme.space8
+                TextField {
+                    id: savedPlanName
+                    Layout.fillWidth: true
+                    placeholderText: qsTr("计划名称")
+                    implicitHeight: Design.Theme.controlHeight
+                    Accessible.name: qsTr("计划名称")
+                }
+                TextField {
+                    id: savedDayName
+                    Layout.fillWidth: true
+                    placeholderText: qsTr("训练日名称，例如 Push A")
+                    implicitHeight: Design.Theme.controlHeight
+                    Accessible.name: qsTr("训练日名称")
+                }
+                TextField {
+                    id: savedSectionName
+                    Layout.fillWidth: true
+                    placeholderText: qsTr("动作分组名称，可选")
+                    implicitHeight: Design.Theme.controlHeight
+                    Accessible.name: qsTr("动作分组名称")
+                }
             }
         }
     }
 
     ConfirmDialog {
         id: discardWorkoutConfirm
+        objectName: "discardWorkoutConfirmDialog"
         title: qsTr("放弃本次训练？")
         message: qsTr("本次训练和已经填写的组记录都会被删除，此操作无法撤销。")
         confirmText: qsTr("放弃训练")
@@ -867,6 +1159,7 @@ AppPage {
 
     ConfirmDialog {
         id: discardUnfinishedConfirm
+        objectName: "discardUnfinishedConfirmDialog"
         title: qsTr("删除未完成训练？")
         message: qsTr("已经保存的组记录也会一并删除。")
         confirmText: qsTr("删除")
@@ -876,6 +1169,7 @@ AppPage {
 
     ConfirmDialog {
         id: removeExerciseConfirm
+        objectName: "removeExerciseConfirmDialog"
         property string targetExerciseId: ""
         title: qsTr("删除这个动作？")
         message: qsTr("只有尚未完成任何组的动作可以删除。")
@@ -890,6 +1184,7 @@ AppPage {
 
     ConfirmDialog {
         id: finishWorkoutConfirm
+        objectName: "finishWorkoutConfirmDialog"
         title: qsTr("提前结束训练？")
         message: qsTr("仍有未完成的组。已完成的数据会保留，未完成组不会计入统计。")
         confirmText: qsTr("保存并结束")
@@ -1038,7 +1333,7 @@ AppPage {
                                 required property var modelData
                                 Layout.fillWidth: true
                                 text: modelData.planName + " · " + modelData.name
-                                onClicked: workoutController.startPlanDay(modelData.dayId)
+                                onClicked: page.planStartRequested(modelData.dayId)
                             }
                         }
 
@@ -1046,7 +1341,7 @@ AppPage {
                             Layout.fillWidth: true
                             variant: "secondary"
                             text: qsTr("自由训练")
-                            onClicked: workoutController.startFreeWorkout("")
+                            onClicked: page.freeStartRequested("")
                         }
                     }
                 }
@@ -1092,7 +1387,9 @@ AppPage {
                             }
                             IconButton {
                                 glyph: "⋯"
-                                accessibleName: qsTr("当前动作更多操作")
+                                accessibleName: page.currentExercise
+                                                ? qsTr("%1更多操作").arg(page.currentExercise.name)
+                                                : qsTr("当前动作更多操作")
                                 onClicked: {
                                     exerciseActions.targetExerciseId = page.selectedExerciseId
                                     exerciseActions.open()
@@ -1204,13 +1501,15 @@ AppPage {
                                     }
                                     IconButton {
                                         glyph: "＋"
-                                        accessibleName: qsTr("添加短休追加组")
+                                        accessibleName: qsTr("第 %1 组，添加短休追加组")
+                                                        .arg(modelData.number)
                                         onClicked: appendSetDialog.openForSet(
                                                        page.selectedExerciseId, modelData)
                                     }
                                     IconButton {
                                         glyph: "✎"
-                                        accessibleName: qsTr("修正本组")
+                                        accessibleName: qsTr("第 %1 组，修正已完成数据")
+                                                        .arg(modelData.number)
                                         onClicked: editSetDialog.openForSet(
                                                        page.selectedExerciseId,
                                                        modelData,
@@ -1292,6 +1591,16 @@ AppPage {
                         border.width: 1
                         border.color: page.selectedExerciseId === modelData.id
                                       ? Design.Theme.primary : Design.Theme.outline
+                        activeFocusOnTab: true
+                        Accessible.role: Accessible.Button
+                        Accessible.name: qsTr("%1，已完成 %2 / %3 组")
+                                         .arg(modelData.name)
+                                         .arg(page.completedSetCount(modelData))
+                                         .arg(modelData.sets.length)
+                        Accessible.description: page.selectedExerciseId === modelData.id
+                                                ? qsTr("当前动作") : qsTr("双击切换到该动作")
+                        Accessible.selected: page.selectedExerciseId === modelData.id
+                        Accessible.onPressAction: page.selectExercise(modelData.id)
                         Drag.active: exerciseDrag.active
                         Drag.source: exerciseRow
                         Drag.hotSpot.x: width / 2
@@ -1315,7 +1624,8 @@ AppPage {
 
                             IconButton {
                                 glyph: "↕"
-                                accessibleName: qsTr("拖动调整动作顺序")
+                                accessibleName: qsTr("拖动调整%1的顺序").arg(modelData.name)
+                                Accessible.ignored: true
                                 DragHandler { id: exerciseDrag; target: exerciseRow }
                             }
                             ColumnLayout {
@@ -1340,7 +1650,7 @@ AppPage {
                             }
                             IconButton {
                                 glyph: "⋯"
-                                accessibleName: qsTr("动作更多操作")
+                                accessibleName: qsTr("%1更多操作").arg(modelData.name)
                                 onClicked: {
                                     page.selectExercise(modelData.id)
                                     exerciseActions.targetExerciseId = modelData.id
@@ -1352,6 +1662,13 @@ AppPage {
                         TapHandler {
                             acceptedButtons: Qt.LeftButton
                             onTapped: page.selectExercise(exerciseRow.modelData.id)
+                        }
+                        Keys.onPressed: event => {
+                            if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter
+                                    || event.key === Qt.Key_Space) {
+                                page.selectExercise(exerciseRow.modelData.id)
+                                event.accepted = true
+                            }
                         }
                     }
                 }
@@ -1414,15 +1731,28 @@ AppPage {
                 onActionTriggered: restTimer.reset()
             }
 
-            RowLayout {
+            GridLayout {
+                id: currentSetActions
                 Layout.fillWidth: true
-                spacing: Design.Theme.space8
+                columns: page.width < 400 || Design.Theme.fontScale >= 1.2 ? 2 : 4
+                rowSpacing: Design.Theme.space8
+                columnSpacing: Design.Theme.space8
                 ItemDelegate {
+                    objectName: "currentSetTargetButton"
                     Layout.fillWidth: true
-                    implicitHeight: Design.Theme.controlHeight
+                    Layout.columnSpan: 2
+                    implicitHeight: Math.max(Design.Theme.controlHeight,
+                                             Design.Theme.typeBody + Design.Theme.typeCaption
+                                             + Design.Theme.space4)
                     leftPadding: 0
                     rightPadding: Design.Theme.space8
                     enabled: page.currentSet !== null
+                    Accessible.name: page.currentSet
+                                     ? qsTr("当前第 %1 组，目标 %2 次，双击修改")
+                                       .arg(page.currentSet.number)
+                                       .arg(page.currentSet.targetReps !== null
+                                            ? page.currentSet.targetReps : qsTr("未设置"))
+                                     : qsTr("当前动作已完成")
                     onClicked: targetRepsDialog.openForSet(page.currentExercise.id, page.currentSet)
                     background: Item { }
                     contentItem: ColumnLayout {
@@ -1446,7 +1776,9 @@ AppPage {
                     }
                 }
                 AppButton {
-                    Layout.preferredWidth: 82
+                    objectName: "openRestTimerButton"
+                    Layout.fillWidth: true
+                    Layout.columnSpan: setFailure.visible ? 1 : 2
                     variant: "secondary"
                     text: qsTr("计时")
                     onClicked: timerDialog.open()
@@ -1454,6 +1786,8 @@ AppPage {
                 CheckBox {
                     id: setFailure
                     visible: page.currentSet !== null
+                    Layout.fillWidth: true
+                    implicitHeight: Design.Theme.controlHeight
                     text: qsTr("力竭")
                 }
             }
@@ -1464,6 +1798,7 @@ AppPage {
                 spacing: Design.Theme.space8
                 NumberField {
                     id: setWeight
+                    objectName: "setWeightField"
                     Layout.fillWidth: true
                     label: page.pureBodyweight ? qsTr("负重") : qsTr("实际重量")
                     placeholderText: page.pureBodyweight ? qsTr("纯自重") : qsTr("0")
@@ -1473,6 +1808,7 @@ AppPage {
                 }
                 NumberField {
                     id: setReps
+                    objectName: "setRepsField"
                     Layout.fillWidth: true
                     label: qsTr("实际次数")
                     placeholderText: page.currentSet && page.currentSet.targetReps !== null
@@ -1485,6 +1821,7 @@ AppPage {
 
             ComboBox {
                 id: bodyweightMode
+                objectName: "bodyweightModeSelector"
                 visible: page.currentSet !== null && page.currentIsBodyweight
                 Layout.fillWidth: true
                 implicitHeight: Design.Theme.controlHeight
@@ -1494,6 +1831,7 @@ AppPage {
                     {"label": qsTr("附加负重"), "value": "Added"},
                     {"label": qsTr("辅助重量"), "value": "Assisted"}
                 ]
+                Accessible.name: qsTr("自重动作负荷方式")
                 onCurrentIndexChanged: {
                     if (currentIndex === 0)
                         setWeight.text = ""
@@ -1502,6 +1840,7 @@ AppPage {
 
             AppButton {
                 id: completeSetButton
+                objectName: "completeSetButton"
                 visible: page.currentSet !== null
                 Layout.fillWidth: true
                 text: page.submittingSet ? qsTr("正在保存…") : qsTr("完成本组")

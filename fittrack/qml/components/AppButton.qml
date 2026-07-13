@@ -50,7 +50,10 @@ Button {
             return root.down ? Design.Theme.surfacePressed : Design.Theme.surfaceElevated
         }
         border.width: root.activeFocus || (!root.isPrimary && !root.isDestructive) ? 1 : 0
-        border.color: root.activeFocus ? Design.Theme.primary : Design.Theme.outline
+        border.color: root.activeFocus
+                      ? (root.isPrimary || root.isDestructive
+                         ? Design.Theme.surfaceText : Design.Theme.primary)
+                      : Design.Theme.outline
         opacity: root.enabled ? 1 : Design.Theme.disabledOpacity
 
         Behavior on color {
@@ -58,4 +61,3 @@ Button {
         }
     }
 }
-

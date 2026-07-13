@@ -29,7 +29,10 @@ Button {
         color: root.destructive ? (root.down ? Design.Theme.errorPressed : Design.Theme.error)
                                 : (root.accent ? (root.down ? Design.Theme.primaryPressed : Design.Theme.primary)
                                                : (root.down ? Design.Theme.surfacePressed : Design.Theme.surfaceElevated))
-        border.width: root.accent || root.destructive ? 0 : 1
-        border.color: root.activeFocus ? Design.Theme.primary : Design.Theme.outline
+        border.width: root.activeFocus || (!root.accent && !root.destructive) ? 1 : 0
+        border.color: root.activeFocus
+                      ? (root.accent || root.destructive
+                         ? Design.Theme.surfaceText : Design.Theme.primary)
+                      : Design.Theme.outline
     }
 }

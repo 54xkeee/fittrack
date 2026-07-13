@@ -14,6 +14,7 @@ private slots:
     void initializeCreatesCompleteSchema();
     void initializeIsIdempotent();
     void migratesVersionOneBodyweightRecords();
+    void preventsMultipleActiveWorkouts();
 };
 
 void DatabaseManagerTest::initializeCreatesCompleteSchema()
@@ -53,7 +54,17 @@ void DatabaseManagerTest::initializeCreatesCompleteSchema()
     QSqlQuery query(manager.database());
     QVERIFY(query.exec(QStringLiteral("SELECT value FROM app_meta WHERE key='schema_version'")));
     QVERIFY(query.next());
-    QCOMPARE(query.value(0).toString(), QStringLiteral("4"));
+    QCOMPARE(query.value(0).toString(), QStringLiteral("6"));
+    QVERIFY(query.exec(QStringLiteral("PRAGMA table_info(exercise)")));
+    QStringList exerciseColumns;
+    while (query.next())
+        exerciseColumns.append(query.value(1).toString());
+    for (const auto &column : {QStringLiteral("difficulty"),
+                              QStringLiteral("technique_points_json"),
+                              QStringLiteral("common_mistakes_json"),
+                              QStringLiteral("collections_json")}) {
+        QVERIFY2(exerciseColumns.contains(column), qPrintable(QStringLiteral("Missing exercise column: %1").arg(column)));
+    }
     QVERIFY(query.exec(QStringLiteral("PRAGMA table_info(set_record)")));
     bool hasBodyweightLoadType = false;
     while (query.next()) {
@@ -115,7 +126,30 @@ void DatabaseManagerTest::migratesVersionOneBodyweightRecords()
     QCOMPARE(migrated.value(0).toString(), QStringLiteral("Bodyweight"));
     QVERIFY(migrated.exec(QStringLiteral("SELECT value FROM app_meta WHERE key='schema_version'")));
     QVERIFY(migrated.next());
-    QCOMPARE(migrated.value(0).toString(), QStringLiteral("4"));
+    QCOMPARE(migrated.value(0).toString(), QStringLiteral("6"));
+}
+
+void DatabaseManagerTest::preventsMultipleActiveWorkouts()
+{
+    DatabaseManager manager;
+    QString error;
+    QVERIFY2(manager.initialize(QStringLiteral(":memory:"), &error), qPrintable(error));
+    QSqlQuery query(manager.database());
+    QVERIFY(query.exec(QStringLiteral(
+        "INSERT INTO workout_session(id,name,started_at,status) "
+        "VALUES('active-1','训练一','2026-07-14T08:00:00Z','active')")));
+    QVERIFY(!query.exec(QStringLiteral(
+        "INSERT INTO workout_session(id,name,started_at,status) "
+        "VALUES('active-2','训练二','2026-07-14T09:00:00Z','active')")));
+    QVERIFY(query.exec(QStringLiteral(
+        "INSERT INTO workout_session(id,name,started_at,status) "
+        "VALUES('completed','已结束','2026-07-13T08:00:00Z','completed')")));
+    QVERIFY(!query.exec(QStringLiteral(
+        "UPDATE workout_session SET status='active' WHERE id='completed'")));
+    QVERIFY(query.exec(QStringLiteral(
+        "SELECT COUNT(*) FROM workout_session WHERE status='active'")));
+    QVERIFY(query.next());
+    QCOMPARE(query.value(0).toInt(), 1);
 }
 
 QTEST_GUILESS_MAIN(DatabaseManagerTest)

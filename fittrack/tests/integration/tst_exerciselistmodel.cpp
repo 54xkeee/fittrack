@@ -41,7 +41,7 @@ void ExerciseListModelTest::exposesAllBundledExercises()
     QVERIFY(ExerciseSeedImporter::importDocuments(manager.database(), documents(), &error));
 
     ExerciseListModel model(manager.database());
-    QCOMPARE(model.rowCount(), 52);
+    QCOMPARE(model.rowCount(), 58);
     int benchRow = -1;
     for (int row = 0; row < model.rowCount(); ++row) {
         if (model.data(model.index(row), ExerciseListModel::ExerciseIdRole).toString()
@@ -54,9 +54,24 @@ void ExerciseListModelTest::exposesAllBundledExercises()
     const QModelIndex bench = model.index(benchRow);
     QVERIFY(!model.data(bench, ExerciseListModel::IntroductionRole).toString().isEmpty());
     QCOMPARE(model.data(bench, ExerciseListModel::StepsRole).toList().size(), 4);
-    QCOMPARE(model.data(bench, ExerciseListModel::CautionsRole).toList().size(), 3);
+    QCOMPARE(model.data(bench, ExerciseListModel::CautionsRole).toList().size(), 4);
+    QCOMPARE(model.data(bench, ExerciseListModel::MediaItemsRole).toList().size(), 1);
+    QVERIFY(!model.data(bench, ExerciseListModel::TechniquePointsRole).toList().isEmpty());
+    QVERIFY(!model.data(bench, ExerciseListModel::CommonMistakesRole).toList().isEmpty());
+    QVERIFY(model.data(bench, ExerciseListModel::CollectionsRole).toStringList()
+                .contains(QStringLiteral("tan-three-day-push")));
     QVERIFY(model.data(bench, ExerciseListModel::MediaUrlRole).toString().startsWith(QStringLiteral("qrc:/images/")));
+    QVERIFY(!model.data(bench, ExerciseListModel::MediaTitleRole).toString().isEmpty());
+    QVERIFY(!model.data(bench, ExerciseListModel::MediaSourceRole).toString().isEmpty());
     QVERIFY(!model.data(bench, ExerciseListModel::MediaLicenseRole).toString().isEmpty());
+    const QVariantList sources = model.data(bench, ExerciseListModel::SourcesRole).toList();
+    QCOMPARE(sources.size(), 3);
+    QCOMPARE(sources.constFirst().toMap().value(QStringLiteral("type")).toString(),
+             QStringLiteral("exerciseGuide"));
+    QVERIFY(!sources.constFirst().toMap().value(QStringLiteral("title")).toString().isEmpty());
+    QCOMPARE(model.roleNames().value(ExerciseListModel::MediaTitleRole), QByteArray("mediaTitle"));
+    QCOMPARE(model.roleNames().value(ExerciseListModel::MediaSourceRole), QByteArray("mediaSource"));
+    QCOMPARE(model.roleNames().value(ExerciseListModel::SourcesRole), QByteArray("sources"));
 }
 
 void ExerciseListModelTest::filtersByAliasAndBodyPart()
@@ -69,11 +84,19 @@ void ExerciseListModelTest::filtersByAliasAndBodyPart()
     ExerciseListModel model(manager.database());
     model.setSearchText(QStringLiteral("保加利亚深蹲"));
     QCOMPARE(model.rowCount(), 1);
-    QCOMPARE(model.data(model.index(0), ExerciseListModel::NameRole).toString(), QStringLiteral("保加利亚分腿蹲"));
+    QCOMPARE(model.data(model.index(0), ExerciseListModel::NameRole).toString(), QStringLiteral("单腿保加利亚蹲"));
 
     model.setSearchText({});
     model.setBodyPart(QStringLiteral("背部"));
-    QCOMPARE(model.rowCount(), 13);
+    QCOMPARE(model.rowCount(), 15);
+
+    model.setBodyPart({});
+    model.setCollectionFilter(QStringLiteral("tan-fenjue-back"));
+    QVERIFY(model.rowCount() > 0);
+    for (int row = 0; row < model.rowCount(); ++row) {
+        QVERIFY(model.data(model.index(row), ExerciseListModel::CollectionsRole).toStringList()
+                    .contains(QStringLiteral("tan-fenjue-back")));
+    }
 }
 
 void ExerciseListModelTest::managesFavoritesFiltersAndCustomExercises()

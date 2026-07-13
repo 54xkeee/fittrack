@@ -1,8 +1,8 @@
 # FitTrack 第三方组件说明
 
-更新时间：2026-07-13
+更新时间：2026-07-14
 
-本文是直接分享 FitTrack APK 时的第三方组件清单。正式分发压缩包应同时包含本文、动作图片署名清单和相应许可证全文。
+本文记录 FitTrack 可侧载分享版本涉及的第三方组件。当前目标包含直接分享 APK，不包含应用商店上架；每次分发前仍需以实际 APK 和所用 Qt 版本重新核对依赖与媒体清单。
 
 ## Qt 6.9.1
 
@@ -23,21 +23,26 @@ Qt Android 打包当前解析到 AndroidX Core 1.13.1 及其传递依赖，包�
 - [AndroidX 源码与许可](https://source.android.com/docs/setup/about/licenses)
 - [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0)
 
-## Inter Variable
+## 系统字体
 
-应用内置 Inter Variable 字体，用于英文、数字和单位显示。字体按 SIL Open Font License 1.1 提供，许可证全文已保存在 `fittrack/resources/fonts/Inter-OFL.txt`。
-
-- [Inter 项目](https://github.com/rsms/inter)
-- [SIL Open Font License 1.1](https://openfontlicense.org/open-font-license-official-text/)
+生产应用不打包 Inter 或其他第三方字体，直接使用 Android/Windows 系统字体。测试进程在 Windows 离屏渲染时可加载开发机已有的微软雅黑，但该文件不会复制到源码或 APK，因此分发清单不包含 SIL OFL 字体项。
 
 ## 动作图片
 
-应用当前内置 28 张来自 Wikimedia Commons 的开放许可或公共领域图片。逐项作者、来源 URL、许可证和修改说明见 [`fittrack-media-credits.md`](fittrack-media-credits.md)。
+应用当前 58 个动作各使用 1 张已审核图片，共 58 张：42 张开放许可/公共领域素材，16 张 FitTrack 原创 CC0 图。第三方素材涉及 CC BY 2.0、CC BY-SA 2.0、CC BY-SA 3.0、CC BY-SA 4.0 和美国联邦政府公共领域作品。逐项标题、作者/来源、原始页面、许可证和本地路径见 [`fittrack-media-credits.md`](fittrack-media-credits.md) 与 `fittrack/resources/data/exercise-media-shareable.json`。
+
+- [Creative Commons Attribution 2.0](https://creativecommons.org/licenses/by/2.0/)
+- [Creative Commons Attribution-ShareAlike 2.0](https://creativecommons.org/licenses/by-sa/2.0/)
+- [Creative Commons Attribution-ShareAlike 3.0](https://creativecommons.org/licenses/by-sa/3.0/)
+- [Creative Commons Attribution-ShareAlike 4.0](https://creativecommons.org/licenses/by-sa/4.0/)
+- [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/)
+
+所有内置图片均被统一缩放、裁切或补边并重新编码为 JPEG；原许可证与署名继续保留。MuscleDB 的 116 张本地图片、旧图片目录和国内视频平台素材不进入分发 APK。
 
 ## 分发前检查
 
 - 使用发布产物实际解析依赖，不从开发机的全部 Qt 安装内容推断最终包内容。
-- 将 LGPL 3.0、Apache 2.0、SIL OFL 1.1 和图片所需的 Creative Commons 许可证全文放入分发压缩包。
+- 将 LGPL 3.0、Apache 2.0 和图片所需的 Creative Commons 许可证全文放入分发包或配套许可目录。
 - 保留 Qt 对应版本源码获取方式和动态链接说明。
 - 任何新增动作图片都必须带作者、原始页面、许可证和本地资源路径。
-- 不把抖音、B站、知乎等平台的未授权截图或视频帧加入分发包。
+- 确认 APK 只包含 `resources/images/exercises/shareable/` 对应的 58 张图，不包含 MuscleDB、旧动作图片或自定义字体资源。

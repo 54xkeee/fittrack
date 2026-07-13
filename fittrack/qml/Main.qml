@@ -15,9 +15,17 @@ ApplicationWindow {
     visible: true
     title: qsTr("训迹 FitTrack")
     color: Design.Theme.background
+    property real fontScale: 1.0
     Material.theme: Material.Dark
     Material.accent: Design.Theme.primary
     Material.primary: Design.Theme.surface
+    property var pendingWorkoutRequest: ({})
+
+    Binding {
+        target: Design.Theme
+        property: "fontScale"
+        value: Math.max(0.85, Math.min(1.5, window.fontScale))
+    }
 
     function handleBack() {
         if (navigation.currentIndex === 4 && insightsPage.handleBack())
@@ -27,6 +35,66 @@ ApplicationWindow {
         navigation.currentIndex = 0
         mainStack.forceActiveFocus()
         return true
+    }
+
+    function showStartError(message) {
+        startErrorDialog.message = String(message || qsTr("无法开始训练，请重试"))
+        startErrorDialog.open()
+        workoutController.dismissError()
+    }
+
+    function handleStartResult(result) {
+        const status = String(result.status || "error")
+        if (status === "started") {
+            navigation.currentIndex = 2
+            return
+        }
+        if (status === "conflict") {
+            pendingWorkoutRequest = result
+            workoutStartConflictDialog.conflict = result
+            workoutStartConflictDialog.open()
+            return
+        }
+        if (status === "recoveryRequired") {
+            workoutRecoveryDialog.open()
+            return
+        }
+        showStartError(result.message)
+    }
+
+    function requestPlanDay(dayId) {
+        handleStartResult(workoutController.requestStartPlanDay(dayId))
+    }
+
+    function requestFreeWorkout(name) {
+        handleStartResult(workoutController.requestStartFreeWorkout(name || ""))
+    }
+
+    function requestSuggestedOrContinue() {
+        if (workoutController.active || workoutController.hasUnfinished) {
+            if (workoutController.sessionState === "RecoveryRequired")
+                workoutRecoveryDialog.open()
+            else if (workoutController.continueExistingWorkout())
+                navigation.currentIndex = 2
+            else
+                showStartError(workoutController.errorMessage)
+            return
+        }
+        handleStartResult(workoutController.requestStartSuggestedDay())
+    }
+
+    function switchPendingWorkout(discardCurrent) {
+        const request = pendingWorkoutRequest || ({})
+        const succeeded = request.requestedKind === "plan"
+                ? workoutController.switchToPlanDay(request.requestedTargetId, discardCurrent)
+                : workoutController.switchToFreeWorkout(request.requestedName || "", discardCurrent)
+        if (!succeeded) {
+            workoutStartConflictDialog.showError(workoutController.errorMessage)
+            return
+        }
+        workoutStartConflictDialog.close()
+        pendingWorkoutRequest = ({})
+        navigation.currentIndex = 2
     }
 
     StackLayout {
@@ -46,11 +114,7 @@ ApplicationWindow {
             Layout.fillWidth: true
             Layout.fillHeight: true
             Layout.minimumWidth: 0
-            onStartTrainingRequested: {
-                if (!workoutController.active)
-                    workoutController.startSuggestedDay()
-                navigation.currentIndex = 2
-            }
+            onStartTrainingRequested: window.requestSuggestedOrContinue()
             onShowAnalysisRequested: navigation.currentIndex = 4
         }
 
@@ -58,10 +122,16 @@ ApplicationWindow {
             Layout.fillWidth: true
             Layout.fillHeight: true
             Layout.minimumWidth: 0
-            onTrainingRequested: navigation.currentIndex = 2
+            onTrainingRequested: dayId => window.requestPlanDay(dayId)
         }
 
-        TrainingPage { Layout.fillWidth: true; Layout.fillHeight: true; Layout.minimumWidth: 0 }
+        TrainingPage {
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            Layout.minimumWidth: 0
+            onPlanStartRequested: dayId => window.requestPlanDay(dayId)
+            onFreeStartRequested: name => window.requestFreeWorkout(name)
+        }
 
         ExerciseLibraryPage { Layout.fillWidth: true; Layout.fillHeight: true; Layout.minimumWidth: 0 }
 
@@ -85,6 +155,53 @@ ApplicationWindow {
         }
     }
 
+    WorkoutStartConflictDialog {
+        id: workoutStartConflictDialog
+        onContinueRequested: {
+            if (!workoutController.continueExistingWorkout()) {
+                showError(workoutController.errorMessage)
+                return
+            }
+            close()
+            window.pendingWorkoutRequest = ({})
+            navigation.currentIndex = 2
+        }
+        onSwitchRequested: discardCurrent => window.switchPendingWorkout(discardCurrent)
+        onRejected: window.pendingWorkoutRequest = ({})
+    }
+
+    WorkoutRecoveryDialog {
+        id: workoutRecoveryDialog
+        sessions: workoutController.activeSessions
+        onRecoveryRequested: (keepSessionId, discardOthers) => {
+            if (!workoutController.recoverActiveSessions(keepSessionId, discardOthers)) {
+                showError(workoutController.errorMessage)
+                return
+            }
+            close()
+            workoutHistory.reload()
+            analyticsDashboard.reload()
+            navigation.currentIndex = 2
+        }
+    }
+
+    AppDialog {
+        id: startErrorDialog
+        objectName: "workoutStartErrorDialog"
+        property string message: ""
+        title: qsTr("无法开始训练")
+        primaryText: qsTr("知道了")
+        secondaryVisible: false
+
+        contentItem: Label {
+            text: startErrorDialog.message
+            color: Design.Theme.surfaceMuted
+            font.pixelSize: Design.Theme.typeBody
+            wrapMode: Text.WordWrap
+            Accessible.name: text
+        }
+    }
+
     footer: Rectangle {
         id: navigation
         objectName: "navigation"
@@ -97,7 +214,9 @@ ApplicationWindow {
             {"label": qsTr("分析"), "glyph": "↗"}
         ]
 
-        implicitHeight: 68 + SafeArea.margins.bottom
+        implicitHeight: Math.max(68,
+                                 Design.Theme.typeBody + Design.Theme.typeCaption
+                                 + Design.Theme.space12) + SafeArea.margins.bottom
         color: Design.Theme.surface
         border.width: 1
         border.color: Design.Theme.outline
@@ -120,16 +239,21 @@ ApplicationWindow {
                     required property var modelData
                     required property int index
 
+                    function activate() {
+                        navigation.currentIndex = index
+                        mainStack.forceActiveFocus()
+                    }
+
                     Layout.fillWidth: true
                     Layout.fillHeight: true
                     implicitHeight: Design.Theme.touchTarget
                     padding: 0
                     flat: true
                     Accessible.name: modelData.label
-                    onClicked: {
-                        navigation.currentIndex = index
-                        mainStack.forceActiveFocus()
-                    }
+                    Accessible.role: Accessible.PageTab
+                    Accessible.selected: navigation.currentIndex === index
+                    Accessible.onPressAction: activate()
+                    onClicked: activate()
 
                     contentItem: ColumnLayout {
                         spacing: 0
