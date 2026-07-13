@@ -402,6 +402,8 @@ AppPage {
                     ? String(Number(setData.weightKg)) : ""
             editReps.text = setData.actualReps !== null && setData.actualReps !== undefined
                     ? String(setData.actualReps) : ""
+            editTargetReps.text = setData.targetReps !== null && setData.targetReps !== undefined
+                    ? String(setData.targetReps) : ""
             editFailure.checked = setData.toFailure
             editNotes.text = String(setData.notes || "")
             editBodyweightMode.visible = loadMode === "Bodyweight"
@@ -429,6 +431,8 @@ AppPage {
                             editBodyweightMode.visible
                                 ? editBodyweightMode.model[editBodyweightMode.currentIndex].value
                                 : "Bodyweight")
+                if (updated && editTargetReps.text.trim().length)
+                    workoutController.setTargetReps(exerciseIndex, setIndex, editTargetReps.numericValue)
                 if (updated)
                     workoutController.setSetNotes(exerciseIndex, setIndex, editNotes.text)
             }
@@ -439,6 +443,15 @@ AppPage {
             spacing: Design.Theme.space12
             NumberField { id: editWeight; Layout.fillWidth: true; label: qsTr("实际重量"); unit: "kg"; decimals: 2 }
             NumberField { id: editReps; Layout.fillWidth: true; label: qsTr("实际次数"); decimals: 0; keyboardHints: Qt.ImhDigitsOnly }
+            NumberField {
+                id: editTargetReps
+                Layout.fillWidth: true
+                label: qsTr("目标次数（选填）")
+                from: 1
+                to: 999
+                decimals: 0
+                keyboardHints: Qt.ImhDigitsOnly
+            }
             ComboBox {
                 id: editBodyweightMode
                 Layout.fillWidth: true
@@ -463,6 +476,92 @@ AppPage {
                     border.width: editNotes.activeFocus ? 2 : 1
                     border.color: editNotes.activeFocus
                                   ? Design.Theme.primary : Design.Theme.outline
+                }
+            }
+        }
+    }
+
+    Dialog {
+        id: targetRepsDialog
+        objectName: "targetRepsDialog"
+        property string targetExerciseId: ""
+        property string targetSetId: ""
+
+        function openForSet(exerciseId, setData) {
+            targetExerciseId = exerciseId
+            targetSetId = setData.id
+            targetRepsValue.value = setData.targetReps !== null && setData.targetReps !== undefined
+                    ? Number(setData.targetReps) : 1
+            open()
+        }
+
+        function submit() {
+            const exerciseIndex = page.exerciseIndexById(targetExerciseId)
+            const setIndex = page.setIndexById(exerciseIndex, targetSetId)
+            if (exerciseIndex >= 0 && setIndex >= 0
+                    && workoutController.setTargetReps(exerciseIndex, setIndex, targetRepsValue.value))
+                close()
+        }
+
+        parent: Overlay.overlay
+        anchors.centerIn: Overlay.overlay
+        width: Math.min(340, Overlay.overlay.width - Design.Theme.space16 * 2)
+        modal: true
+        focus: true
+        padding: Design.Theme.space24
+        closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
+        title: qsTr("修改本组目标次数")
+
+        Overlay.modal: Rectangle { color: Design.Theme.scrim }
+        background: Rectangle {
+            color: Design.Theme.surface
+            radius: Design.Theme.radiusLarge
+            border.width: 1
+            border.color: Design.Theme.outline
+        }
+        header: Label {
+            text: targetRepsDialog.title
+            color: Design.Theme.surfaceText
+            font.pixelSize: Design.Theme.typeTitle
+            font.weight: Font.DemiBold
+            leftPadding: Design.Theme.space24
+            rightPadding: Design.Theme.space24
+            topPadding: Design.Theme.space24
+        }
+
+        contentItem: ColumnLayout {
+            spacing: Design.Theme.space12
+            Label {
+                Layout.fillWidth: true
+                text: qsTr("只调整本组目标，不会生成重量或次数建议。")
+                color: Design.Theme.surfaceMuted
+                wrapMode: Text.WordWrap
+            }
+            RowLayout {
+                Layout.fillWidth: true
+                Label { text: qsTr("目标次数"); color: Design.Theme.surfaceText; Layout.fillWidth: true }
+                SpinBox { id: targetRepsValue; from: 1; to: 999; editable: true }
+            }
+        }
+
+        footer: Item {
+            implicitHeight: Design.Theme.controlHeight + Design.Theme.space24
+            RowLayout {
+                anchors.fill: parent
+                anchors.leftMargin: Design.Theme.space24
+                anchors.rightMargin: Design.Theme.space24
+                anchors.bottomMargin: Design.Theme.space24
+                spacing: Design.Theme.space8
+                AppButton {
+                    Layout.fillWidth: true
+                    variant: "secondary"
+                    text: qsTr("取消")
+                    onClicked: targetRepsDialog.close()
+                }
+                AppButton {
+                    Layout.fillWidth: true
+                    text: qsTr("保存目标")
+                    onClicked: targetRepsDialog.submit()
                 }
             }
         }
@@ -1318,23 +1417,32 @@ AppPage {
             RowLayout {
                 Layout.fillWidth: true
                 spacing: Design.Theme.space8
-                ColumnLayout {
+                ItemDelegate {
                     Layout.fillWidth: true
-                    spacing: 0
-                    Label {
-                        text: page.currentSet
-                              ? qsTr("当前 · 第 %1 组").arg(page.currentSet.number)
-                              : (page.allExercisesComplete ? qsTr("训练记录已完成") : qsTr("当前动作已完成"))
-                        color: Design.Theme.surfaceText
-                        font.pixelSize: Design.Theme.typeBody
-                        font.weight: Font.DemiBold
-                    }
-                    Label {
-                        visible: page.currentSet !== null
-                        text: page.currentSet && page.currentSet.targetReps !== null
-                              ? qsTr("目标 %1 次").arg(page.currentSet.targetReps) : qsTr("填写实际次数")
-                        color: Design.Theme.surfaceMuted
-                        font.pixelSize: Design.Theme.typeCaption
+                    implicitHeight: Design.Theme.controlHeight
+                    leftPadding: 0
+                    rightPadding: Design.Theme.space8
+                    enabled: page.currentSet !== null
+                    onClicked: targetRepsDialog.openForSet(page.currentExercise.id, page.currentSet)
+                    background: Item { }
+                    contentItem: ColumnLayout {
+                        spacing: 0
+                        Label {
+                            text: page.currentSet
+                                  ? qsTr("当前 · 第 %1 组").arg(page.currentSet.number)
+                                  : (page.allExercisesComplete ? qsTr("训练记录已完成") : qsTr("当前动作已完成"))
+                            color: Design.Theme.surfaceText
+                            font.pixelSize: Design.Theme.typeBody
+                            font.weight: Font.DemiBold
+                        }
+                        Label {
+                            visible: page.currentSet !== null
+                            text: page.currentSet && page.currentSet.targetReps !== null
+                                  ? qsTr("目标 %1 次 · 点击修改").arg(page.currentSet.targetReps)
+                                  : qsTr("设置本组目标次数")
+                            color: Design.Theme.surfaceMuted
+                            font.pixelSize: Design.Theme.typeCaption
+                        }
                     }
                 }
                 AppButton {

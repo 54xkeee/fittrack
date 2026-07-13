@@ -102,17 +102,21 @@ AppPage {
         width: Math.min(Overlay.overlay.width - Design.Theme.space16 * 2, 430)
         title: qsTr("记录跑步机爬坡")
         onOpened: {
+            const target = cardioController.pendingTarget || {}
+            const hasTarget = target.type === "TreadmillIncline"
             formError = ""
-            treadmillDuration.value = 30
-            treadmillIncline.text = "9"
+            treadmillDuration.value = hasTarget ? Number(target.durationMinutes) : 30
+            treadmillIncline.text = hasTarget && target.incline !== null
+                    ? String(target.incline) : "9"
             treadmillIncline.errorText = ""
-            treadmillSpeed.text = "5"
+            treadmillSpeed.text = hasTarget && target.speedKmh !== null
+                    ? String(target.speedKmh) : "5"
             treadmillSpeed.errorText = ""
             treadmillDistance.text = ""
             treadmillDistance.errorText = ""
             treadmillHeart.text = ""
             treadmillHeart.errorText = ""
-            treadmillNotes.text = ""
+            treadmillNotes.text = hasTarget ? String(target.notes || "") : ""
         }
         ColumnLayout {
             anchors.fill: parent
@@ -240,9 +244,12 @@ AppPage {
         width: Math.min(Overlay.overlay.width - Design.Theme.space16 * 2, 430)
         title: qsTr("记录爬楼机")
         onOpened: {
+            const target = cardioController.pendingTarget || {}
+            const hasTarget = target.type === "StairClimber"
             formError = ""
-            stairDuration.value = 20
-            stairLevel.text = ""
+            stairDuration.value = hasTarget ? Number(target.durationMinutes) : 20
+            stairLevel.text = hasTarget && target.machineLevel !== null
+                    ? String(target.machineLevel) : ""
             stairLevel.errorText = ""
             stairFloors.text = ""
             stairFloors.errorText = ""
@@ -250,7 +257,7 @@ AppPage {
             stairSteps.errorText = ""
             stairHeart.text = ""
             stairHeart.errorText = ""
-            stairNotes.text = ""
+            stairNotes.text = hasTarget ? String(target.notes || "") : ""
         }
         ColumnLayout {
             anchors.fill: parent

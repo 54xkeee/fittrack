@@ -324,6 +324,37 @@ bool WorkoutSessionController::setSetNotes(int exerciseIndex, int setIndex, cons
     return loadSession(m_sessionId);
 }
 
+bool WorkoutSessionController::setTargetReps(int exerciseIndex, int setIndex, int targetReps)
+{
+    clearError();
+    if (!active()) {
+        return fail(QStringLiteral("没有进行中的训练"));
+    }
+    if (exerciseIndex < 0 || exerciseIndex >= m_exercises.size()
+        || targetReps < 1 || targetReps > 999) {
+        return fail(QStringLiteral("目标次数无效"));
+    }
+    const auto sets = m_exercises.at(exerciseIndex).toMap().value(QStringLiteral("sets")).toList();
+    if (setIndex < 0 || setIndex >= sets.size()) {
+        return fail(QStringLiteral("组序号无效"));
+    }
+    QSqlQuery update(m_database);
+    update.prepare(QStringLiteral(
+        "UPDATE set_record SET target_reps=? WHERE id=? AND workout_exercise_id IN ("
+        "SELECT we.id FROM workout_exercise we JOIN workout_session ws ON ws.id=we.session_id "
+        "WHERE ws.id=? AND ws.status='active')"));
+    update.addBindValue(targetReps);
+    update.addBindValue(sets.at(setIndex).toMap().value(QStringLiteral("id")));
+    update.addBindValue(m_sessionId);
+    if (!update.exec()) {
+        return fail(update.lastError().text());
+    }
+    if (update.numRowsAffected() != 1) {
+        return fail(QStringLiteral("找不到当前训练组"));
+    }
+    return loadSession(m_sessionId);
+}
+
 bool WorkoutSessionController::saveCurrentAsPlan(
     const QString &planName, const QString &dayName, const QString &sectionName)
 {
@@ -482,6 +513,18 @@ bool WorkoutSessionController::startPlanDay(const QString &dayId)
                 return fail(set.lastError().text());
             }
         }
+    }
+    QSqlQuery cardioTarget(m_database);
+    cardioTarget.prepare(QStringLiteral(
+        "INSERT INTO workout_cardio_target(session_id,cardio_type,duration_seconds,incline,"
+        "speed_kmh,machine_level,notes) "
+        "SELECT ?,cardio_type,duration_seconds,incline,speed_kmh,machine_level,notes "
+        "FROM plan_cardio WHERE day_id=?"));
+    cardioTarget.addBindValue(sessionId);
+    cardioTarget.addBindValue(dayId);
+    if (!cardioTarget.exec()) {
+        m_database.rollback();
+        return fail(cardioTarget.lastError().text());
     }
     if (!m_database.commit()) {
         return fail(m_database.lastError().text());

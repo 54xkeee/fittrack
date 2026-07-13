@@ -74,14 +74,16 @@ bool DatabaseManager::createSchema(QString *errorMessage)
         QStringLiteral("CREATE TABLE IF NOT EXISTS plan_day (id TEXT PRIMARY KEY, plan_id TEXT NOT NULL REFERENCES training_plan(id) ON DELETE CASCADE, name TEXT NOT NULL, sort_order INTEGER NOT NULL)"),
         QStringLiteral("CREATE TABLE IF NOT EXISTS plan_section (id TEXT PRIMARY KEY, day_id TEXT NOT NULL REFERENCES plan_day(id) ON DELETE CASCADE, name TEXT NOT NULL, sort_order INTEGER NOT NULL)"),
         QStringLiteral("CREATE TABLE IF NOT EXISTS plan_exercise (id TEXT PRIMARY KEY, day_id TEXT NOT NULL REFERENCES plan_day(id) ON DELETE CASCADE, section_id TEXT REFERENCES plan_section(id) ON DELETE SET NULL, exercise_id TEXT NOT NULL REFERENCES exercise(id), sort_order INTEGER NOT NULL, default_sets INTEGER NOT NULL, default_reps TEXT NOT NULL, rest_seconds INTEGER NOT NULL, notes TEXT NOT NULL DEFAULT '')"),
+        QStringLiteral("CREATE TABLE IF NOT EXISTS plan_cardio (day_id TEXT PRIMARY KEY REFERENCES plan_day(id) ON DELETE CASCADE, cardio_type TEXT NOT NULL CHECK(cardio_type IN ('TreadmillIncline','StairClimber')), duration_seconds INTEGER NOT NULL CHECK(duration_seconds > 0), incline REAL, speed_kmh REAL, machine_level REAL, notes TEXT NOT NULL DEFAULT '')"),
         QStringLiteral("CREATE TABLE IF NOT EXISTS gym (id TEXT PRIMARY KEY, name TEXT NOT NULL UNIQUE, is_enabled INTEGER NOT NULL DEFAULT 1)"),
         QStringLiteral("CREATE TABLE IF NOT EXISTS equipment_instance (id TEXT PRIMARY KEY, gym_id TEXT NOT NULL REFERENCES gym(id) ON DELETE CASCADE, name TEXT NOT NULL, code TEXT, notes TEXT, is_enabled INTEGER NOT NULL DEFAULT 1)"),
         QStringLiteral("CREATE TABLE IF NOT EXISTS workout_session (id TEXT PRIMARY KEY, name TEXT NOT NULL, source_plan_id TEXT REFERENCES training_plan(id), gym_id TEXT REFERENCES gym(id), started_at TEXT NOT NULL, ended_at TEXT, status TEXT NOT NULL, notes TEXT NOT NULL DEFAULT '')"),
         QStringLiteral("CREATE TABLE IF NOT EXISTS workout_exercise (id TEXT PRIMARY KEY, session_id TEXT NOT NULL REFERENCES workout_session(id) ON DELETE CASCADE, exercise_id TEXT NOT NULL REFERENCES exercise(id), equipment_instance_id TEXT REFERENCES equipment_instance(id), sort_order INTEGER NOT NULL, notes TEXT NOT NULL DEFAULT '')"),
         QStringLiteral("CREATE TABLE IF NOT EXISTS set_record (id TEXT PRIMARY KEY, workout_exercise_id TEXT NOT NULL REFERENCES workout_exercise(id) ON DELETE CASCADE, set_order INTEGER NOT NULL, weight_kg REAL, target_reps INTEGER, actual_reps INTEGER, completed INTEGER NOT NULL DEFAULT 0, to_failure INTEGER NOT NULL DEFAULT 0, both_sides INTEGER NOT NULL DEFAULT 1, bodyweight_load_type TEXT NOT NULL DEFAULT 'Bodyweight', completed_at TEXT, notes TEXT NOT NULL DEFAULT '')"),
         QStringLiteral("CREATE TABLE IF NOT EXISTS append_set_record (id TEXT PRIMARY KEY, parent_set_id TEXT NOT NULL REFERENCES set_record(id) ON DELETE CASCADE, weight_kg REAL, reps INTEGER NOT NULL, rest_seconds INTEGER NOT NULL, to_failure INTEGER NOT NULL DEFAULT 0)"),
+        QStringLiteral("CREATE TABLE IF NOT EXISTS workout_cardio_target (session_id TEXT PRIMARY KEY REFERENCES workout_session(id) ON DELETE CASCADE, cardio_type TEXT NOT NULL CHECK(cardio_type IN ('TreadmillIncline','StairClimber')), duration_seconds INTEGER NOT NULL CHECK(duration_seconds > 0), incline REAL, speed_kmh REAL, machine_level REAL, notes TEXT NOT NULL DEFAULT '')"),
         QStringLiteral("CREATE TABLE IF NOT EXISTS cardio_record (id TEXT PRIMARY KEY, session_id TEXT REFERENCES workout_session(id) ON DELETE CASCADE, cardio_type TEXT NOT NULL, performed_at TEXT NOT NULL, duration_seconds INTEGER NOT NULL, incline REAL, speed_kmh REAL, distance_km REAL, machine_level REAL, floors INTEGER, steps INTEGER, average_heart_rate INTEGER, notes TEXT NOT NULL DEFAULT '')"),
-        QStringLiteral("INSERT OR IGNORE INTO app_meta(key, value) VALUES('schema_version', '3')"),
+        QStringLiteral("INSERT OR IGNORE INTO app_meta(key, value) VALUES('schema_version', '4')"),
     };
 
     auto db = database();
@@ -139,8 +141,8 @@ bool DatabaseManager::createSchema(QString *errorMessage)
         return false;
     }
     if (!execute(QStringLiteral(
-        "INSERT INTO app_meta(key,value) VALUES('schema_version','3') "
-        "ON CONFLICT(key) DO UPDATE SET value='3'"), errorMessage)) {
+        "INSERT INTO app_meta(key,value) VALUES('schema_version','4') "
+        "ON CONFLICT(key) DO UPDATE SET value='4'"), errorMessage)) {
         db.rollback();
         return false;
     }

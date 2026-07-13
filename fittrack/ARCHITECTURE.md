@@ -9,7 +9,7 @@ QML 页面与组件
         ↓ context properties / signals
 C++ Controller 与 Model
         ↓ QSqlDatabase
-SQLite v3
+SQLite v4
 ```
 
 `src/app/main.cpp` 负责初始化数据库、导入系统动作和计划种子，并把各控制器注入 QML。当前控制器直接使用同一个 SQLite 连接，没有额外 Repository 抽象；在现阶段这能保持实现简单。
@@ -17,7 +17,7 @@ SQLite v3
 主要模块：
 
 - `training/`：活动训练快照、正式组、短休追加组、未完成训练恢复。
-- `plans/`：系统计划和个人计划管理，包括训练日、动作分组、动作替换和排序。
+- `plans/`：系统计划和个人计划管理，包括训练日、动作分组、动作替换、排序和单段有氧目标。
 - `exercises/`：动作查询、组合筛选、收藏和自定义动作。
 - `analytics/`：容量、最高重量、e1RM、肌群和有氧汇总。
 - `history/`：已完成力量训练详情、已完成组修正和整次训练删除。
@@ -34,12 +34,13 @@ SQLite v3
 ```text
 系统/个人计划或自由训练
   → 创建 WorkoutSession 快照
+  → 计划有氧同时复制为可选 WorkoutCardioTarget
   → 调整动作、器械和顺序
   → 完成 SetRecord 并立即写库
   → 可选 AppendSetRecord
   → 完成训练
   → 展示训练完成总结
-  → 完成，或可选附加 CardioRecord
+  → 完成，或用快照预填并附加 CardioRecord
   → 历史与分析读取已完成记录
 ```
 
@@ -53,7 +54,7 @@ SQLite v3
 
 ### 备份恢复
 
-- JSON 导出包含受支持业务表的完整数据；恢复在单个事务中替换本地数据并执行外键检查。
+- JSON 导出包含受支持业务表的完整数据，包括计划有氧与训练快照；恢复在单个事务中替换本地数据并执行外键检查。旧版 JSON 缺少 v4 新表时按空表恢复，并在事务内把结构版本归一到 v4。
 - SQLite 导出通过 `VACUUM INTO` 生成一致快照。
 - 本地路径使用 `QSaveFile` 原子写入；Android `content://` URI 通过 Qt 文件接口直接读写。SQLite 导出先生成临时一致快照，再流式复制到文档 URI。
 - JSON 恢复拒绝超过 64MB 的输入，恢复成功后会清空旧的活动训练内存状态，并重新加载动作、计划、历史、分析、有氧和场馆数据。
@@ -72,20 +73,22 @@ SQLite v3
 - `scripts/build-android.ps1` 将 Debug 与 Release 构建目录分离，可生成 APK 或 AAB；签名时只从进程环境读取 keystore 路径、别名和密码，并显式重置未选择的签名模式，避免复用旧 CMake 缓存。
 - 当前配置为包名 `com.fittrack.app`、版本 `0.1.0`/1、min API 28、target/compile API 35。最终包不含 `INTERNET` 或 `ACCESS_NETWORK_STATE` 权限。直接分享前必须冻结包名并改用长期发布签名。
 
-## SQLite v3
+## SQLite v4
 
 数据库表按领域分组：
 
 - 系统：`app_meta`。
 - 动作：`muscle`、`exercise`、`exercise_muscle`、`exercise_media`、`exercise_alternative`、`favorite_exercise`。
-- 计划：`training_plan`、`plan_day`、`plan_section`、`plan_exercise`。
+- 计划：`training_plan`、`plan_day`、`plan_section`、`plan_exercise`、`plan_cardio`。
 - 场馆：`gym`、`equipment_instance`。
-- 力量训练：`workout_session`、`workout_exercise`、`set_record`、`append_set_record`。
+- 力量训练：`workout_session`、`workout_cardio_target`、`workout_exercise`、`set_record`、`append_set_record`。
 - 有氧：`cardio_record`。
+
+`plan_cardio` 每个训练日最多保存一个跑步机或爬楼机目标。`startPlanDay()` 在同一事务中把它复制到 `workout_cardio_target`，因此之后修改个人计划不会改变已经开始的训练；目标只用于训练后预填，真实完成值仍写入 `cardio_record`。
 
 外键在连接初始化时开启。`gym` 和 `equipment_instance` 通过 `is_enabled` 归档；`cardio_record.performed_at` 保存有氧发生时间。
 
-当前升级逻辑采用“建表 + 检查缺失列 + 写入 schema 版本 3”的幂等方式。它适合尚未公开发布的开发数据库；首次公开版本冻结后，必须改为逐版本、可测试的迁移链。
+当前升级逻辑采用“建表 + 检查缺失列 + 写入 schema 版本 4”的幂等方式，并有旧版数据库升级测试。它适合尚未公开发布的开发数据库；首次公开版本冻结后，必须改为逐版本、可测试的迁移链。
 
 ## QML 导航
 
@@ -102,6 +105,6 @@ cmake --build C:\FitTrackDev\fittrack\build -j 6
 ctest --test-dir C:\FitTrackDev\fittrack\build -j 4 --output-on-failure
 ```
 
-当前 14 项测试覆盖计算、数据库、种子导入、动作、计划、训练、历史、分析、有氧、场馆、备份、倒计时和 QML 导航。计划测试覆盖动作替换时保留参数、分组增删改和跨训练日校验；QML 测试在 360×800、420×920、480×1056 三档生成主页面、可编辑计划、训练进行中、训练完成总结、带真实数据的历史详情与非空分析截图。
+当前 14 项测试覆盖计算、数据库、种子导入、动作、计划、训练、历史、分析、有氧、场馆、备份、倒计时和 QML 导航。计划和训练测试覆盖逐组目标次数、训练日有氧增删改、计划复制与训练快照；备份测试覆盖 v4 完整恢复和旧版 JSON 兼容；QML 测试在 360×800、420×920、480×1056 三档生成主页面、带有氧目标的可编辑计划、训练日有氧弹层、训练进行中、目标次数弹层、训练完成总结、带真实数据的历史详情与非空分析截图。
 
 Android `arm64-v8a` Debug APK 与无签名 Release APK/AAB 已完成构建；Debug APK 通过零问题 Android Lint、API/ABI/包名/权限检查和 V2 调试签名校验，AAB 通过 bundletool 结构校验。一次性测试密钥验证了 Release APK 的 V3 签名链路，随后已恢复为无签名构建状态。Android 自动化尚未覆盖设备生命周期、系统通知策略、SAF 提供方差异和同签名覆盖升级，这些仍属于一加 Ace 5 Pro 真机验收范围。

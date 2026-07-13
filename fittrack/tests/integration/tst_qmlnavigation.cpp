@@ -90,10 +90,14 @@ void QmlNavigationTest::loadsAndSwitchesEveryPrimaryPage()
     QObject *stack = root->findChild<QObject *>(QStringLiteral("mainStack"));
     QObject *historyPage = root->findChild<QObject *>(QStringLiteral("historyPage"));
     QObject *insightsTabs = root->findChild<QObject *>(QStringLiteral("insightsTabs"));
+    QObject *cardioEditor = root->findChild<QObject *>(QStringLiteral("cardioEditor"));
+    QObject *targetRepsDialog = root->findChild<QObject *>(QStringLiteral("targetRepsDialog"));
     QVERIFY(navigation);
     QVERIFY(stack);
     QVERIFY(historyPage);
     QVERIFY(insightsTabs);
+    QVERIFY(cardioEditor);
+    QVERIFY(targetRepsDialog);
     const QString screenshotDirectory = QStringLiteral(FITTRACK_SCREENSHOT_DIR);
     QVERIFY(QDir().mkpath(screenshotDirectory));
     const QList<QSize> viewports{
@@ -147,15 +151,45 @@ void QmlNavigationTest::loadsAndSwitchesEveryPrimaryPage()
                                      .value(QStringLiteral("id")).toString();
     QVERIFY(!systemPlanId.isEmpty());
     QVERIFY(planManagement.copyPlan(systemPlanId, QStringLiteral("我的三分化")));
+    const QString personalDayId = planManagement.selectedPlan()
+                                      .value(QStringLiteral("days")).toList().first()
+                                      .toMap().value(QStringLiteral("id")).toString();
+    QVERIFY(planManagement.setCardio(personalDayId, QStringLiteral("TreadmillIncline"),
+                                     30, 9.0, 5.0, -1.0, QStringLiteral("力量后完成")));
     QVERIFY(navigation->setProperty("currentIndex", 1));
     for (const QSize &viewport : viewports)
         QVERIFY(capture(QStringLiteral("plans-editable"), viewport));
+    const QVariantMap personalDay = planManagement.selectedPlan()
+                                        .value(QStringLiteral("days")).toList().first().toMap();
+    for (const QSize &viewport : viewports) {
+        window->resize(viewport);
+        QVERIFY(QMetaObject::invokeMethod(cardioEditor, "openForDay",
+                                          Q_ARG(QVariant, QVariant(personalDay))));
+        QTest::qWait(100);
+        QVERIFY(cardioEditor->property("width").toReal() <= viewport.width());
+        QVERIFY(cardioEditor->property("height").toReal() <= viewport.height());
+        QVERIFY(capture(QStringLiteral("plan-cardio-dialog"), viewport));
+        QVERIFY(QMetaObject::invokeMethod(cardioEditor, "close"));
+    }
 
-    QVERIFY(workoutController.startSuggestedDay());
+    QVERIFY(workoutController.startPlanDay(personalDayId));
     restTimer.start(180);
     QVERIFY(navigation->setProperty("currentIndex", 2));
     for (const QSize &viewport : viewports)
         QVERIFY(capture(QStringLiteral("training-active"), viewport));
+    const QVariantMap firstExercise = workoutController.exercises().first().toMap();
+    const QVariantMap firstSet = firstExercise.value(QStringLiteral("sets")).toList().first().toMap();
+    for (const QSize &viewport : viewports) {
+        window->resize(viewport);
+        QVERIFY(QMetaObject::invokeMethod(targetRepsDialog, "openForSet",
+                                          Q_ARG(QVariant, firstExercise.value(QStringLiteral("id"))),
+                                          Q_ARG(QVariant, QVariant(firstSet))));
+        QTest::qWait(100);
+        QVERIFY(targetRepsDialog->property("width").toReal() <= viewport.width());
+        QVERIFY(targetRepsDialog->property("height").toReal() <= viewport.height());
+        QVERIFY(capture(QStringLiteral("training-target-dialog"), viewport));
+        QVERIFY(QMetaObject::invokeMethod(targetRepsDialog, "close"));
+    }
     restTimer.reset();
 
     QVERIFY(workoutController.completeSet(0, 0, 40.0, 10));
@@ -171,6 +205,8 @@ void QmlNavigationTest::loadsAndSwitchesEveryPrimaryPage()
     QVERIFY(QMetaObject::invokeMethod(historyPage, "continueToCardio"));
     QCOMPARE(insightsTabs->property("currentIndex").toInt(), 2);
     QVERIFY(!cardioController.pendingSessionId().isEmpty());
+    QCOMPARE(cardioController.pendingTarget().value(QStringLiteral("type")).toString(),
+             QStringLiteral("TreadmillIncline"));
     const QString completedSessionId = cardioController.pendingSessionId();
 
     QVariant reopenedSummary;

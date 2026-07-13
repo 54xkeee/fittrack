@@ -32,6 +32,9 @@ bool seedPlans(const QSqlDatabase &database, QString *errorMessage)
             "('source-pe1','source-push','source-chest','bench',0,3,'12,10,8',180,'正式组'),"
             "('source-pe2','source-push',NULL,'row',1,4,'10',90,''),"
             "('source-pe3','source-pull','source-back','row',0,4,'8-12',120,'保持稳定')"),
+        QStringLiteral(
+            "INSERT INTO plan_cardio(day_id,cardio_type,duration_seconds,incline,speed_kmh,notes) "
+            "VALUES('source-push','TreadmillIncline',1800,9,5,'力量后完成')"),
     };
 
     for (const QString &statement : statements) {
@@ -101,6 +104,22 @@ void PlanManagementControllerTest::protectsSystemPlansAndManagesPersonalPlans()
     QVERIFY(plans.renameDay(dayId, QStringLiteral("胸肩三头")));
     QCOMPARE(plans.selectedPlan().value(QStringLiteral("days")).toList().first()
                  .toMap().value(QStringLiteral("name")).toString(), QStringLiteral("胸肩三头"));
+    QVERIFY2(plans.setCardio(dayId, QStringLiteral("TreadmillIncline"), 30, 9, 5),
+             qPrintable(plans.errorMessage()));
+    auto cardio = plans.selectedPlan().value(QStringLiteral("days")).toList().first()
+                      .toMap().value(QStringLiteral("cardio")).toMap();
+    QCOMPARE(cardio.value(QStringLiteral("type")).toString(), QStringLiteral("TreadmillIncline"));
+    QCOMPARE(cardio.value(QStringLiteral("durationMinutes")).toInt(), 30);
+    QVERIFY(plans.setCardio(dayId, QStringLiteral("StairClimber"), 20, -1, -1, 8,
+                            QStringLiteral("收尾")));
+    cardio = plans.selectedPlan().value(QStringLiteral("days")).toList().first()
+                 .toMap().value(QStringLiteral("cardio")).toMap();
+    QCOMPARE(cardio.value(QStringLiteral("type")).toString(), QStringLiteral("StairClimber"));
+    QCOMPARE(cardio.value(QStringLiteral("machineLevel")).toDouble(), 8.0);
+    QVERIFY(!plans.setCardio(dayId, QStringLiteral("Unknown"), 20));
+    QVERIFY(plans.removeCardio(dayId));
+    QVERIFY(plans.selectedPlan().value(QStringLiteral("days")).toList().first()
+                .toMap().value(QStringLiteral("cardio")).toMap().isEmpty());
     QVERIFY(plans.addExercise(dayId, QStringLiteral("bench")));
     QVERIFY(plans.addExercise(dayId, QStringLiteral("row")));
     auto exercises = plans.selectedPlan().value(QStringLiteral("days")).toList().first()
@@ -175,6 +194,7 @@ void PlanManagementControllerTest::copiesCompletePlanIntoPersonalScope()
     QCOMPARE(scalar(manager.database(), QStringLiteral("SELECT COUNT(*) FROM plan_day")).toInt(), 4);
     QCOMPARE(scalar(manager.database(), QStringLiteral("SELECT COUNT(*) FROM plan_section")).toInt(), 4);
     QCOMPARE(scalar(manager.database(), QStringLiteral("SELECT COUNT(*) FROM plan_exercise")).toInt(), 6);
+    QCOMPARE(scalar(manager.database(), QStringLiteral("SELECT COUNT(*) FROM plan_cardio")).toInt(), 2);
     QCOMPARE(scalar(manager.database(),
                     QStringLiteral("SELECT COUNT(*) FROM plan_day WHERE plan_id=?"), copyId).toInt(), 2);
 
@@ -252,6 +272,9 @@ void PlanManagementControllerTest::copiesCompletePlanIntoPersonalScope()
     QCOMPARE(scalar(manager.database(), QStringLiteral(
         "SELECT COUNT(*) FROM plan_exercise pe JOIN plan_day d ON d.id=pe.day_id "
         "WHERE d.plan_id='system'" )).toInt(), 3);
+    QCOMPARE(scalar(manager.database(), QStringLiteral(
+        "SELECT COUNT(*) FROM plan_cardio pc JOIN plan_day d ON d.id=pc.day_id "
+        "WHERE d.plan_id=?"), copyId).toInt(), 1);
     QCOMPARE(scalar(manager.database(), QStringLiteral(
         "SELECT default_reps FROM plan_exercise WHERE id='source-pe1'" )).toString(),
         QStringLiteral("12,10,8"));

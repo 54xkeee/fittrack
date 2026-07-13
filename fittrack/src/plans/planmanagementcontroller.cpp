@@ -87,6 +87,24 @@ bool PlanManagementController::selectPlan(const QString &planId)
             });
         }
 
+        QVariantMap cardio;
+        QSqlQuery cardioQuery(m_database);
+        cardioQuery.prepare(QStringLiteral(
+            "SELECT cardio_type,duration_seconds,incline,speed_kmh,machine_level,notes "
+            "FROM plan_cardio WHERE day_id=?"));
+        cardioQuery.addBindValue(day.value(0));
+        if (!cardioQuery.exec()) return fail(cardioQuery.lastError().text());
+        if (cardioQuery.next()) {
+            cardio = QVariantMap{
+                {QStringLiteral("type"), cardioQuery.value(0)},
+                {QStringLiteral("durationMinutes"), cardioQuery.value(1).toInt() / 60},
+                {QStringLiteral("incline"), cardioQuery.value(2)},
+                {QStringLiteral("speedKmh"), cardioQuery.value(3)},
+                {QStringLiteral("machineLevel"), cardioQuery.value(4)},
+                {QStringLiteral("notes"), cardioQuery.value(5)},
+            };
+        }
+
         QVariantList exercises;
         QSqlQuery exercise(m_database);
         exercise.prepare(QStringLiteral(
@@ -116,6 +134,7 @@ bool PlanManagementController::selectPlan(const QString &planId)
             {QStringLiteral("exerciseCount"), day.value(3)},
             {QStringLiteral("sections"), sections},
             {QStringLiteral("exercises"), exercises},
+            {QStringLiteral("cardio"), cardio},
         });
     }
     m_selectedPlan = QVariantMap{
@@ -285,6 +304,17 @@ bool PlanManagementController::copyPlan(const QString &planId, const QString &ne
             insertExercise.addBindValue(sourceExercises.value(6));
             if (!insertExercise.exec()) return rollbackFailure(insertExercise.lastError().text());
         }
+
+
+        QSqlQuery copyCardio(m_database);
+        copyCardio.prepare(QStringLiteral(
+            "INSERT INTO plan_cardio(day_id,cardio_type,duration_seconds,incline,speed_kmh,"
+            "machine_level,notes) "
+            "SELECT ?,cardio_type,duration_seconds,incline,speed_kmh,machine_level,notes "
+            "FROM plan_cardio WHERE day_id=?"));
+        copyCardio.addBindValue(copiedDayId);
+        copyCardio.addBindValue(sourceDayId);
+        if (!copyCardio.exec()) return rollbackFailure(copyCardio.lastError().text());
     }
 
     if (!m_database.commit()) return rollbackFailure(m_database.lastError().text());
@@ -371,6 +401,57 @@ bool PlanManagementController::deleteDay(const QString &dayId)
     const QString planId = owner.value(0).toString();
     QSqlQuery remove(m_database);
     remove.prepare(QStringLiteral("DELETE FROM plan_day WHERE id=?"));
+    remove.addBindValue(dayId);
+    if (!remove.exec()) return fail(remove.lastError().text());
+    reload();
+    return selectPlan(planId);
+}
+
+bool PlanManagementController::setCardio(const QString &dayId, const QString &cardioType,
+                                         int durationMinutes, double incline,
+                                         double speedKmh, double machineLevel,
+                                         const QString &notes)
+{
+    clearError();
+    const QString planId = editableDayPlanId(dayId);
+    if (planId.isEmpty()) return fail(QStringLiteral("系统训练日不能修改"));
+    if (durationMinutes < 1 || durationMinutes > 600)
+        return fail(QStringLiteral("有氧时长无效"));
+    const bool treadmill = cardioType == QStringLiteral("TreadmillIncline");
+    const bool stair = cardioType == QStringLiteral("StairClimber");
+    if (!treadmill && !stair) return fail(QStringLiteral("有氧类型无效"));
+    if (treadmill && (incline < 0.0 || incline > 30.0 || speedKmh <= 0.0 || speedKmh > 30.0))
+        return fail(QStringLiteral("跑步机参数无效"));
+    if (stair && machineLevel > 100.0)
+        return fail(QStringLiteral("爬楼机等级无效"));
+
+    QSqlQuery upsert(m_database);
+    upsert.prepare(QStringLiteral(
+        "INSERT INTO plan_cardio(day_id,cardio_type,duration_seconds,incline,speed_kmh,"
+        "machine_level,notes) VALUES(?,?,?,?,?,?,?) "
+        "ON CONFLICT(day_id) DO UPDATE SET cardio_type=excluded.cardio_type,"
+        "duration_seconds=excluded.duration_seconds,incline=excluded.incline,"
+        "speed_kmh=excluded.speed_kmh,machine_level=excluded.machine_level,notes=excluded.notes"));
+    upsert.addBindValue(dayId);
+    upsert.addBindValue(cardioType);
+    upsert.addBindValue(durationMinutes * 60);
+    upsert.addBindValue(treadmill ? QVariant(incline) : QVariant{});
+    upsert.addBindValue(treadmill ? QVariant(speedKmh) : QVariant{});
+    upsert.addBindValue(stair && machineLevel >= 0.0 ? QVariant(machineLevel) : QVariant{});
+    const QString trimmedNotes = notes.trimmed();
+    upsert.addBindValue(trimmedNotes.isNull() ? QStringLiteral("") : trimmedNotes);
+    if (!upsert.exec()) return fail(upsert.lastError().text());
+    reload();
+    return selectPlan(planId);
+}
+
+bool PlanManagementController::removeCardio(const QString &dayId)
+{
+    clearError();
+    const QString planId = editableDayPlanId(dayId);
+    if (planId.isEmpty()) return fail(QStringLiteral("系统训练日不能修改"));
+    QSqlQuery remove(m_database);
+    remove.prepare(QStringLiteral("DELETE FROM plan_cardio WHERE day_id=?"));
     remove.addBindValue(dayId);
     if (!remove.exec()) return fail(remove.lastError().text());
     reload();

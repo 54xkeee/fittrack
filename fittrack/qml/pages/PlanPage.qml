@@ -71,6 +71,17 @@ AppPage {
         deleteDialog.open()
     }
 
+    function cardioSummary(cardio) {
+        if (!cardio || !cardio.type)
+            return qsTr("未设置有氧")
+        if (cardio.type === "TreadmillIncline")
+            return qsTr("跑步机爬坡 · %1 分钟 · 坡度 %2 · %3 km/h")
+                    .arg(cardio.durationMinutes).arg(cardio.incline).arg(cardio.speedKmh)
+        const level = cardio.machineLevel !== null && cardio.machineLevel !== undefined
+                ? qsTr(" · 等级 %1").arg(cardio.machineLevel) : ""
+        return qsTr("爬楼机 · %1 分钟%2").arg(cardio.durationMinutes).arg(level)
+    }
+
     Dialog {
         id: textDialog
 
@@ -202,6 +213,19 @@ AppPage {
                 planManagement.deleteSection(targetId)
             else
                 planManagement.removeExercise(targetId)
+        }
+    }
+
+    ConfirmDialog {
+        id: removeCardioDialog
+        property string dayId: ""
+        title: qsTr("移除这个有氧目标？")
+        message: qsTr("只会从个人训练日中移除目标，不影响已经完成或正在进行的训练。")
+        confirmText: qsTr("移除目标")
+        destructive: true
+        onAccepted: {
+            if (planManagement.removeCardio(dayId))
+                cardioEditor.close()
         }
     }
 
@@ -465,6 +489,156 @@ AppPage {
                                                           editReps.text,
                                                           editRest.value))
                             actionEditor.close()
+                    }
+                }
+            }
+        }
+    }
+
+    Dialog {
+        id: cardioEditor
+        objectName: "cardioEditor"
+
+        property string dayId: ""
+        property bool hasExisting: false
+        readonly property string cardioType: cardioTypeBox.currentIndex === 0
+                                                    ? "TreadmillIncline" : "StairClimber"
+
+        function openForDay(dayData) {
+            dayId = dayData.id
+            const cardio = dayData.cardio || {}
+            hasExisting = Boolean(cardio.type)
+            cardioTypeBox.currentIndex = cardio.type === "StairClimber" ? 1 : 0
+            cardioDuration.value = cardio.durationMinutes || (cardioTypeBox.currentIndex === 0 ? 30 : 20)
+            cardioIncline.text = cardio.incline !== null && cardio.incline !== undefined
+                    ? String(cardio.incline) : "9"
+            cardioSpeed.text = cardio.speedKmh !== null && cardio.speedKmh !== undefined
+                    ? String(cardio.speedKmh) : "5"
+            cardioLevel.text = cardio.machineLevel !== null && cardio.machineLevel !== undefined
+                    ? String(cardio.machineLevel) : ""
+            cardioNotes.text = String(cardio.notes || "")
+            open()
+        }
+
+        parent: Overlay.overlay
+        anchors.centerIn: Overlay.overlay
+        width: Math.min(392, Overlay.overlay ? Overlay.overlay.width - Design.Theme.space16 * 2 : 392)
+        modal: true
+        focus: true
+        padding: Design.Theme.space24
+        closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
+        title: qsTr("训练日有氧")
+
+        Overlay.modal: Rectangle { color: Design.Theme.scrim }
+        background: Rectangle {
+            color: Design.Theme.surface
+            radius: Design.Theme.radiusLarge
+            border.width: 1
+            border.color: Design.Theme.outline
+        }
+        header: Label {
+            text: cardioEditor.title
+            color: Design.Theme.surfaceText
+            font.pixelSize: Design.Theme.typeTitle
+            font.weight: Font.DemiBold
+            leftPadding: Design.Theme.space24
+            rightPadding: Design.Theme.space24
+            topPadding: Design.Theme.space24
+        }
+
+        contentItem: ColumnLayout {
+            spacing: Design.Theme.space12
+
+            Label {
+                text: qsTr("训练完成后只预填这些参数，由你确认后保存实际记录。")
+                color: Design.Theme.surfaceMuted
+                font.pixelSize: Design.Theme.typeLabel
+                wrapMode: Text.WordWrap
+                Layout.fillWidth: true
+            }
+            ComboBox {
+                id: cardioTypeBox
+                Layout.fillWidth: true
+                implicitHeight: Design.Theme.controlHeight
+                model: [qsTr("跑步机爬坡"), qsTr("爬楼机")]
+                onCurrentIndexChanged: cardioDuration.value = currentIndex === 0 ? 30 : 20
+            }
+            RowLayout {
+                Layout.fillWidth: true
+                Label { text: qsTr("目标时长（分钟）"); color: Design.Theme.surfaceMuted; Layout.fillWidth: true }
+                SpinBox { id: cardioDuration; from: 1; to: 600; value: 30; editable: true }
+            }
+            RowLayout {
+                visible: cardioEditor.cardioType === "TreadmillIncline"
+                Layout.fillWidth: true
+                spacing: Design.Theme.space8
+                NumberField { id: cardioIncline; Layout.fillWidth: true; label: qsTr("坡度"); from: 0; to: 30; decimals: 1 }
+                NumberField { id: cardioSpeed; Layout.fillWidth: true; label: qsTr("速度"); unit: "km/h"; from: 0.1; to: 30; decimals: 1 }
+            }
+            NumberField {
+                id: cardioLevel
+                visible: cardioEditor.cardioType === "StairClimber"
+                Layout.fillWidth: true
+                label: qsTr("机器等级（选填）")
+                from: 1
+                to: 100
+                decimals: 0
+                keyboardHints: Qt.ImhDigitsOnly
+            }
+            TextArea {
+                id: cardioNotes
+                Layout.fillWidth: true
+                Layout.preferredHeight: 72
+                placeholderText: qsTr("计划备注（选填）")
+                wrapMode: TextEdit.Wrap
+                color: Design.Theme.surfaceText
+                leftPadding: Design.Theme.space12
+                rightPadding: Design.Theme.space12
+                topPadding: Design.Theme.space12
+                bottomPadding: Design.Theme.space12
+                background: Rectangle {
+                    color: Design.Theme.surfaceElevated
+                    radius: Design.Theme.radiusSmall
+                    border.width: cardioNotes.activeFocus ? 2 : 1
+                    border.color: cardioNotes.activeFocus ? Design.Theme.primary : Design.Theme.outline
+                }
+            }
+            AppButton {
+                visible: cardioEditor.hasExisting
+                Layout.fillWidth: true
+                variant: "secondary"
+                text: qsTr("移除该有氧目标")
+                onClicked: {
+                    removeCardioDialog.dayId = cardioEditor.dayId
+                    removeCardioDialog.open()
+                }
+            }
+        }
+
+        footer: Item {
+            implicitHeight: Design.Theme.controlHeight + Design.Theme.space24
+            RowLayout {
+                anchors.fill: parent
+                anchors.leftMargin: Design.Theme.space24
+                anchors.rightMargin: Design.Theme.space24
+                anchors.bottomMargin: Design.Theme.space24
+                spacing: Design.Theme.space8
+                AppButton { Layout.fillWidth: true; variant: "secondary"; text: qsTr("取消"); onClicked: cardioEditor.close() }
+                AppButton {
+                    Layout.fillWidth: true
+                    text: qsTr("保存目标")
+                    enabled: cardioEditor.cardioType === "StairClimber"
+                             || (cardioIncline.acceptableInput && cardioSpeed.acceptableInput)
+                    onClicked: {
+                        const saved = planManagement.setCardio(
+                                    cardioEditor.dayId, cardioEditor.cardioType,
+                                    cardioDuration.value,
+                                    cardioEditor.cardioType === "TreadmillIncline" ? cardioIncline.numericValue : -1,
+                                    cardioEditor.cardioType === "TreadmillIncline" ? cardioSpeed.numericValue : -1,
+                                    cardioLevel.text.trim().length ? cardioLevel.numericValue : -1,
+                                    cardioNotes.text)
+                        if (saved)
+                            cardioEditor.close()
                     }
                 }
             }
@@ -822,6 +996,11 @@ AppPage {
                                                                          dayCard.modelData.id,
                                                                          dayCard.modelData.name)
                                     }
+                                    MenuItem {
+                                        text: dayCard.modelData.cardio && dayCard.modelData.cardio.type
+                                              ? qsTr("编辑有氧目标") : qsTr("设置有氧目标")
+                                        onTriggered: cardioEditor.openForDay(dayCard.modelData)
+                                    }
                                     Menu {
                                         title: qsTr("动作分组")
 
@@ -871,6 +1050,32 @@ AppPage {
                                 Layout.fillWidth: true
                                 implicitHeight: 1
                                 color: Design.Theme.outline
+                            }
+
+                            RowLayout {
+                                visible: dayCard.modelData.cardio && dayCard.modelData.cardio.type
+                                Layout.fillWidth: true
+                                spacing: Design.Theme.space8
+
+                                Label {
+                                    text: qsTr("有氧")
+                                    color: Design.Theme.primary
+                                    font.pixelSize: Design.Theme.typeCaption
+                                    font.weight: Font.DemiBold
+                                }
+                                Label {
+                                    Layout.fillWidth: true
+                                    text: page.cardioSummary(dayCard.modelData.cardio)
+                                    color: Design.Theme.surfaceMuted
+                                    font.pixelSize: Design.Theme.typeCaption
+                                    elide: Text.ElideRight
+                                }
+                                IconButton {
+                                    visible: !page.selectedPlanReadOnly
+                                    glyph: "›"
+                                    accessibleName: qsTr("编辑有氧目标")
+                                    onClicked: cardioEditor.openForDay(dayCard.modelData)
+                                }
                             }
 
                             Label {

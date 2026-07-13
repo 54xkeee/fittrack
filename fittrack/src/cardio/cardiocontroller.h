@@ -12,6 +12,7 @@ class CardioController final : public QObject
     Q_OBJECT
     Q_PROPERTY(QVariantList records READ records NOTIFY recordsChanged)
     Q_PROPERTY(QString pendingSessionId READ pendingSessionId NOTIFY pendingSessionChanged)
+    Q_PROPERTY(QVariantMap pendingTarget READ pendingTarget NOTIFY pendingSessionChanged)
     Q_PROPERTY(QString errorMessage READ errorMessage NOTIFY errorMessageChanged)
 
 public:
@@ -19,6 +20,7 @@ public:
 
     QVariantList records() const;
     QString pendingSessionId() const;
+    QVariantMap pendingTarget() const;
     QString errorMessage() const;
 
     Q_INVOKABLE void reload();
@@ -51,6 +53,7 @@ private:
     QSqlDatabase m_database;
     QVariantList m_records;
     QString m_pendingSessionId;
+    QVariantMap m_pendingTarget;
     QString m_errorMessage;
 };
 

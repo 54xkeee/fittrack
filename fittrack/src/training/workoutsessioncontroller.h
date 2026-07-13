@@ -46,6 +46,7 @@ public:
     Q_INVOKABLE bool setSessionNotes(const QString &notes);
     Q_INVOKABLE bool setExerciseNotes(int exerciseIndex, const QString &notes);
     Q_INVOKABLE bool setSetNotes(int exerciseIndex, int setIndex, const QString &notes);
+    Q_INVOKABLE bool setTargetReps(int exerciseIndex, int setIndex, int targetReps);
     Q_INVOKABLE bool saveCurrentAsPlan(
         const QString &planName, const QString &dayName, const QString &sectionName = {});
     Q_INVOKABLE bool addExercise(const QString &exerciseId, int setCount = 0, const QString &targetReps = {});

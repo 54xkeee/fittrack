@@ -20,11 +20,20 @@ void CardioControllerTest::recordsStandaloneAndAttachedCardioWithNullOptionals()
     QVERIFY(seed.exec(QStringLiteral(
         "INSERT INTO workout_session(id,name,started_at,ended_at,status) "
         "VALUES('strength','Push','2026-07-13T10:00:00Z','2026-07-13T11:00:00Z','completed')")));
+    QVERIFY(seed.exec(QStringLiteral(
+        "INSERT INTO workout_cardio_target(session_id,cardio_type,duration_seconds,incline,speed_kmh,notes) "
+        "VALUES('strength','TreadmillIncline',1800,9,5,'计划目标')")));
 
     fittrack::CardioController controller(manager.database());
     controller.setPendingSession(QStringLiteral("strength"));
+    QCOMPARE(controller.pendingTarget().value(QStringLiteral("type")).toString(),
+             QStringLiteral("TreadmillIncline"));
+    QCOMPARE(controller.pendingTarget().value(QStringLiteral("durationMinutes")).toInt(), 30);
+    QCOMPARE(controller.pendingTarget().value(QStringLiteral("notes")).toString(),
+             QStringLiteral("计划目标"));
     QVERIFY2(controller.addTreadmill(30), qPrintable(controller.errorMessage()));
     QCOMPARE(controller.pendingSessionId(), QString{});
+    QVERIFY(controller.pendingTarget().isEmpty());
     QCOMPARE(controller.records().size(), 1);
     const QVariantMap treadmill = controller.records().first().toMap();
     QCOMPARE(treadmill.value(QStringLiteral("type")).toString(), QStringLiteral("TreadmillIncline"));

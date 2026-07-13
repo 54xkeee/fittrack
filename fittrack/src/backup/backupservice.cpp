@@ -23,8 +23,10 @@ const QStringList &tables()
         QStringLiteral("exercise_muscle"), QStringLiteral("exercise_media"),
         QStringLiteral("exercise_alternative"), QStringLiteral("favorite_exercise"),
         QStringLiteral("training_plan"), QStringLiteral("plan_day"), QStringLiteral("plan_section"),
-        QStringLiteral("plan_exercise"), QStringLiteral("gym"), QStringLiteral("equipment_instance"),
-        QStringLiteral("workout_session"), QStringLiteral("workout_exercise"),
+        QStringLiteral("plan_exercise"), QStringLiteral("plan_cardio"),
+        QStringLiteral("gym"), QStringLiteral("equipment_instance"),
+        QStringLiteral("workout_session"), QStringLiteral("workout_cardio_target"),
+        QStringLiteral("workout_exercise"),
         QStringLiteral("set_record"), QStringLiteral("append_set_record"),
         QStringLiteral("cardio_record"),
     };
@@ -173,7 +175,9 @@ bool BackupService::restoreJson(const QString &filePath)
         return fail(QStringLiteral("不是受支持的FitTrack备份"));
     const QJsonObject tableData = root.value(QStringLiteral("tables")).toObject();
     for (const QString &table : tables()) {
-        if (!tableData.value(table).isArray())
+        const bool optionalLegacyTable = table == QStringLiteral("plan_cardio")
+                                         || table == QStringLiteral("workout_cardio_target");
+        if (!tableData.value(table).isArray() && !optionalLegacyTable)
             return fail(QStringLiteral("备份缺少数据表：%1").arg(table));
     }
 
@@ -206,6 +210,12 @@ bool BackupService::restoreJson(const QString &filePath)
             }
             if (!insert.exec()) return rollback(insert.lastError().text());
         }
+    }
+    QSqlQuery schemaVersion(m_database);
+    if (!schemaVersion.exec(QStringLiteral(
+            "INSERT INTO app_meta(key,value) VALUES('schema_version','4') "
+            "ON CONFLICT(key) DO UPDATE SET value='4'"))) {
+        return rollback(schemaVersion.lastError().text());
     }
     QSqlQuery check(m_database);
     if (!check.exec(QStringLiteral("PRAGMA foreign_key_check")) || check.next())

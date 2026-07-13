@@ -36,6 +36,9 @@ void WorkoutSessionControllerTest::createsPersistsAndResumesWorkout()
         "INSERT INTO plan_exercise(id,day_id,exercise_id,sort_order,default_sets,default_reps,rest_seconds,notes) "
         "VALUES('planned-bench','push','bench',0,3,'12,10,8',120,'正式组')")));
     QVERIFY(setup.exec(QStringLiteral(
+        "INSERT INTO plan_cardio(day_id,cardio_type,duration_seconds,incline,speed_kmh,notes) "
+        "VALUES('push','TreadmillIncline',1800,9,5,'力量后完成')")));
+    QVERIFY(setup.exec(QStringLiteral(
         "INSERT INTO gym(id,name) VALUES('school-gym','学校健身房')")));
     QVERIFY(setup.exec(QStringLiteral(
         "INSERT INTO equipment_instance(id,gym_id,name,code,notes) "
@@ -52,10 +55,23 @@ void WorkoutSessionControllerTest::createsPersistsAndResumesWorkout()
     QCOMPARE(controller.exercises().first().toMap().value(QStringLiteral("sets")).toList().size(), 3);
     QVERIFY(controller.setExerciseEquipment(0, QStringLiteral("bench-1")));
     QVERIFY(controller.configureExercise(0, 80.0, 8, 4));
+    QVERIFY(controller.setTargetReps(0, 1, 10));
+    QCOMPARE(controller.exercises().first().toMap().value(QStringLiteral("sets")).toList().at(1)
+                 .toMap().value(QStringLiteral("targetReps")).toInt(), 10);
+    QVERIFY(!controller.setTargetReps(0, 1, 0));
     QVERIFY(controller.setSessionNotes(QStringLiteral("状态良好")));
     QVERIFY(controller.setExerciseNotes(0, QStringLiteral("握距稍窄")));
     QVERIFY(controller.setSetNotes(0, 0, QStringLiteral("动作稳定")));
     QCOMPARE(controller.exercises().first().toMap().value(QStringLiteral("sets")).toList().size(), 4);
+    QSqlQuery cardioTarget(database);
+    QVERIFY(cardioTarget.exec(QStringLiteral(
+        "SELECT cardio_type,duration_seconds,incline,speed_kmh,notes FROM workout_cardio_target")));
+    QVERIFY(cardioTarget.next());
+    QCOMPARE(cardioTarget.value(0).toString(), QStringLiteral("TreadmillIncline"));
+    QCOMPARE(cardioTarget.value(1).toInt(), 1800);
+    QCOMPARE(cardioTarget.value(2).toDouble(), 9.0);
+    QCOMPARE(cardioTarget.value(3).toDouble(), 5.0);
+    QCOMPARE(cardioTarget.value(4).toString(), QStringLiteral("力量后完成"));
 
     QSignalSpy completedSpy(&controller, &fittrack::WorkoutSessionController::setCompleted);
     QVERIFY(controller.completeSet(0, 0, 80.0, 8));

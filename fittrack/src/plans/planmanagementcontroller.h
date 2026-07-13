@@ -30,6 +30,11 @@ public:
     Q_INVOKABLE bool addDay(const QString &planId, const QString &name);
     Q_INVOKABLE bool renameDay(const QString &dayId, const QString &name);
     Q_INVOKABLE bool deleteDay(const QString &dayId);
+    Q_INVOKABLE bool setCardio(const QString &dayId, const QString &cardioType,
+                              int durationMinutes, double incline = -1.0,
+                              double speedKmh = -1.0, double machineLevel = -1.0,
+                              const QString &notes = {});
+    Q_INVOKABLE bool removeCardio(const QString &dayId);
     Q_INVOKABLE bool addSection(const QString &dayId, const QString &name);
     Q_INVOKABLE bool renameSection(const QString &sectionId, const QString &name);
     Q_INVOKABLE bool deleteSection(const QString &sectionId);

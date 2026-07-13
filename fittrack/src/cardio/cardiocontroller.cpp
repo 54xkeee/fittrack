@@ -33,6 +33,7 @@ CardioController::CardioController(const QSqlDatabase &database, QObject *parent
 
 QVariantList CardioController::records() const { return m_records; }
 QString CardioController::pendingSessionId() const { return m_pendingSessionId; }
+QVariantMap CardioController::pendingTarget() const { return m_pendingTarget; }
 QString CardioController::errorMessage() const { return m_errorMessage; }
 
 void CardioController::reload()
@@ -136,6 +137,7 @@ bool CardioController::insertRecord(const QString &type, int durationMinutes, do
     query.addBindValue(notes.trimmed().isNull() ? QStringLiteral("") : notes.trimmed());
     if (!query.exec()) return fail(query.lastError().text());
     m_pendingSessionId.clear();
+    m_pendingTarget.clear();
     emit pendingSessionChanged();
     reload();
     emit recordSaved();
@@ -155,8 +157,27 @@ bool CardioController::removeRecord(const QString &recordId)
 
 void CardioController::setPendingSession(const QString &sessionId)
 {
-    if (m_pendingSessionId == sessionId) return;
+    QVariantMap target;
+    if (!sessionId.isEmpty()) {
+        QSqlQuery query(m_database);
+        query.prepare(QStringLiteral(
+            "SELECT cardio_type,duration_seconds,incline,speed_kmh,machine_level,notes "
+            "FROM workout_cardio_target WHERE session_id=?"));
+        query.addBindValue(sessionId);
+        if (query.exec() && query.next()) {
+            target = QVariantMap{
+                {QStringLiteral("type"), query.value(0)},
+                {QStringLiteral("durationMinutes"), query.value(1).toInt() / 60},
+                {QStringLiteral("incline"), query.value(2)},
+                {QStringLiteral("speedKmh"), query.value(3)},
+                {QStringLiteral("machineLevel"), query.value(4)},
+                {QStringLiteral("notes"), query.value(5)},
+            };
+        }
+    }
+    if (m_pendingSessionId == sessionId && m_pendingTarget == target) return;
     m_pendingSessionId = sessionId;
+    m_pendingTarget = target;
     emit pendingSessionChanged();
 }
 
