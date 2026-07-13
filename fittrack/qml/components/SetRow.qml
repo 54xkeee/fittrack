@@ -36,14 +36,25 @@ Control {
     contentItem: RowLayout {
         spacing: Design.Theme.space8
 
-        Label {
-            text: root.isCompleted ? "✓" : String(root.setNumber)
-            color: root.isCompleted ? Design.Theme.success :
-                   (root.isCurrent ? Design.Theme.primary : Design.Theme.surfaceMuted)
-            font.pixelSize: Design.Theme.typeBody
-            font.weight: Font.DemiBold
-            horizontalAlignment: Text.AlignHCenter
+        Item {
             Layout.preferredWidth: 32
+            Layout.preferredHeight: 32
+
+            AppIcon {
+                anchors.centerIn: parent
+                visible: root.isCompleted
+                name: "success"
+                color: Design.Theme.success
+            }
+
+            Label {
+                anchors.centerIn: parent
+                visible: !root.isCompleted
+                text: String(root.setNumber)
+                color: root.isCurrent ? Design.Theme.primary : Design.Theme.surfaceMuted
+                font.pixelSize: Design.Theme.typeBody
+                font.weight: Font.DemiBold
+            }
         }
 
         NumberField {
@@ -96,4 +107,3 @@ Control {
         }
     }
 }
-

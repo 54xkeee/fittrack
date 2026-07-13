@@ -411,11 +411,10 @@ AppPage {
                             border.width: 1
                             border.color: Design.Theme.outline
 
-                            Label {
+                            AppIcon {
                                 anchors.centerIn: parent
-                                text: qsTr("＋")
+                                name: "training"
                                 color: Design.Theme.primary
-                                font.pixelSize: Design.Theme.typeTitle
                             }
                         }
 

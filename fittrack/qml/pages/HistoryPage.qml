@@ -24,7 +24,7 @@ AppPage {
     function dateText(value) {
         const date = new Date(value)
         return isNaN(date.getTime()) ? String(value || "")
-                                     : Qt.formatDateTime(date, "yyyy-MM-dd  hh:mm")
+                                     : Qt.locale().toString(date, Locale.ShortFormat)
     }
 
     function muscleText(items) {
@@ -354,7 +354,7 @@ AppPage {
 
             IconButton {
                 visible: page.showDetails
-                glyph: "‹"
+                iconName: "back"
                 accessibleName: qsTr("返回训练历史")
                 onClicked: page.handleBack()
             }
@@ -461,10 +461,9 @@ AppPage {
                         }
                     }
 
-                    Label {
-                        text: "›"
+                    AppIcon {
+                        name: "forward"
                         color: Design.Theme.surfaceMuted
-                        font.pixelSize: Design.Theme.typeTitle
                     }
                 }
 
@@ -512,11 +511,12 @@ AppPage {
                         radius: 32
                         color: Design.Theme.surfaceElevated
 
-                        Label {
+                        AppIcon {
                             anchors.centerIn: parent
-                            text: "◷"
+                            width: 32
+                            height: 32
+                            name: "history"
                             color: Design.Theme.primary
-                            font.pixelSize: Design.Theme.typeDisplay
                         }
                     }
 
@@ -866,7 +866,7 @@ AppPage {
                                         }
 
                                         IconButton {
-                                            glyph: "✎"
+                                            iconName: "edit"
                                             accessibleName: qsTr("修正第 %1 组").arg(setRow.index + 1)
                                             onClicked: page.openSetEditor(setRow.modelData)
                                         }

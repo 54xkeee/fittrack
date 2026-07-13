@@ -47,42 +47,57 @@ Rectangle {
         anchors.bottomMargin: Design.Theme.space8
         spacing: Design.Theme.space12
 
-        RowLayout {
+        ColumnLayout {
             Layout.fillWidth: true
-            IconButton {
-                glyph: "‹"
-                accessibleName: qsTr("取消训练准备")
-                onClicked: page.requestCancel()
-            }
-            ColumnLayout {
+            spacing: Design.Theme.space4
+
+            RowLayout {
                 Layout.fillWidth: true
-                spacing: Design.Theme.space4
+                spacing: Design.Theme.space8
+
+                IconButton {
+                    iconName: "back"
+                    accessibleName: qsTr("取消训练准备")
+                    onClicked: page.requestCancel()
+                }
+
                 Label {
+                    objectName: "preparationTitle"
                     Layout.fillWidth: true
+                    Layout.minimumWidth: 0
                     text: workoutController.preparation.name || qsTr("训练准备")
                     color: Design.Theme.backgroundText
                     font.pixelSize: Design.Theme.typeTitle
                     font.weight: Font.Bold
-                    elide: Text.ElideRight
+                    wrapMode: Text.WordWrap
                 }
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                Layout.leftMargin: Design.Theme.touchTarget + Design.Theme.space8
+                spacing: Design.Theme.space8
+
                 Label {
                     Layout.fillWidth: true
+                    Layout.minimumWidth: 0
                     text: qsTr("%1 个动作 · 修改只影响本次训练")
                           .arg((workoutController.preparation.exercises || []).length)
                     color: Design.Theme.surfaceMuted
                     font.pixelSize: Design.Theme.typeCaption
-                    elide: Text.ElideRight
+                    wrapMode: Text.WordWrap
                 }
-            }
-            AppButton {
-                text: qsTr("保存计划")
-                variant: "secondary"
-                enabled: (workoutController.preparation.exercises || []).length > 0
-                onClicked: {
-                    savedPlanName.text = (workoutController.preparation.sourcePlanName || "")
-                            + qsTr(" 个人版")
-                    savedDayName.text = workoutController.preparation.name || ""
-                    savePreparationDialog.open()
+
+                AppButton {
+                    text: qsTr("保存计划")
+                    variant: "secondary"
+                    enabled: (workoutController.preparation.exercises || []).length > 0
+                    onClicked: {
+                        savedPlanName.text = (workoutController.preparation.sourcePlanName || "")
+                                + qsTr(" 个人版")
+                        savedDayName.text = workoutController.preparation.name || ""
+                        savePreparationDialog.open()
+                    }
                 }
             }
         }

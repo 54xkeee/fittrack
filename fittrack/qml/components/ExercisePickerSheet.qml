@@ -47,7 +47,7 @@ Dialog {
                 font.weight: Font.DemiBold
             }
             IconButton {
-                glyph: "×"
+                iconName: "close"
                 accessibleName: qsTr("关闭动作选择")
                 onClicked: root.close()
             }

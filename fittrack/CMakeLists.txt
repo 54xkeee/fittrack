@@ -107,6 +107,7 @@ qt_add_qml_module(fittrack
         qml/components/AppDialog.qml
         qml/components/AppPage.qml
         qml/components/ConfirmDialog.qml
+        qml/components/AppIcon.qml
         qml/components/IconButton.qml
         qml/components/InlineFeedback.qml
         qml/components/NumberField.qml

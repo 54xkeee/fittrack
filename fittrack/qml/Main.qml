@@ -299,11 +299,11 @@ ApplicationWindow {
         objectName: "navigation"
         property int currentIndex: 0
         property var items: [
-            {"label": qsTr("首页"), "glyph": "⌂"},
-            {"label": qsTr("计划"), "glyph": "▣"},
-            {"label": qsTr("训练"), "glyph": "+"},
-            {"label": qsTr("动作"), "glyph": "◎"},
-            {"label": qsTr("分析"), "glyph": "↗"}
+            {"label": qsTr("首页"), "icon": "home"},
+            {"label": qsTr("计划"), "icon": "plan"},
+            {"label": qsTr("训练"), "icon": "training"},
+            {"label": qsTr("动作"), "icon": "library"},
+            {"label": qsTr("分析"), "icon": "analysis"}
         ]
 
         implicitHeight: Math.max(68,
@@ -350,14 +350,11 @@ ApplicationWindow {
 
                     contentItem: ColumnLayout {
                         spacing: 0
-                        Label {
+                        AppIcon {
                             Layout.alignment: Qt.AlignHCenter
-                            text: navigationButton.modelData.glyph
+                            name: navigationButton.modelData.icon
                             color: navigation.currentIndex === navigationButton.index
                                    ? Design.Theme.primary : Design.Theme.surfaceMuted
-                            font.pixelSize: navigationButton.index === 2
-                                            ? Design.Theme.typeTitle : Design.Theme.typeBody
-                            font.weight: Font.DemiBold
                         }
                         Label {
                             Layout.alignment: Qt.AlignHCenter

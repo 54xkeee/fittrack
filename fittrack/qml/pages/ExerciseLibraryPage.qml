@@ -471,7 +471,7 @@ AppPage {
                 }
                 IconButton {
                     visible: !detailDialog.isSystem
-                    glyph: "⋮"
+                    iconName: "more"
                     accessibleName: qsTr("更多动作操作")
                     onClicked: detailMenu.popup()
 
@@ -495,7 +495,7 @@ AppPage {
                 }
                 IconButton {
                     id: closeDetailButton
-                    glyph: "×"
+                    iconName: "close"
                     accessibleName: qsTr("关闭动作详情")
                     onClicked: detailDialog.close()
                 }
@@ -556,11 +556,12 @@ AppPage {
                                  || detailImage.status === Image.Null
                                  || detailImage.status === Image.Error
 
-                        Label {
+                        AppIcon {
                             anchors.horizontalCenter: parent.horizontalCenter
-                            text: "◇"
+                            width: 48
+                            height: 48
+                            name: "image"
                             color: Design.Theme.surfaceMuted
-                            font.pixelSize: Design.Theme.typeDisplay
                         }
                         Label {
                             anchors.horizontalCenter: parent.horizontalCenter
@@ -576,7 +577,7 @@ AppPage {
                         anchors.leftMargin: Design.Theme.space8
                         anchors.verticalCenter: parent.verticalCenter
                         visible: detailDialog.mediaItems.length > 1
-                        glyph: "‹"
+                        iconName: "back"
                         accessibleName: qsTr("上一张动作图")
                         onClicked: detailDialog.mediaIndex = Math.max(0, detailDialog.mediaIndex - 1)
                     }
@@ -585,7 +586,7 @@ AppPage {
                         anchors.rightMargin: Design.Theme.space8
                         anchors.verticalCenter: parent.verticalCenter
                         visible: detailDialog.mediaItems.length > 1
-                        glyph: "›"
+                        iconName: "forward"
                         accessibleName: qsTr("下一张动作图")
                         onClicked: detailDialog.mediaIndex = Math.min(
                                        detailDialog.mediaItems.length - 1,
@@ -912,13 +913,11 @@ AppPage {
                             Layout.fillWidth: true
                             Layout.alignment: Qt.AlignTop
                             spacing: Design.Theme.space12
-                            Label {
-                                text: "!"
-                                color: Design.Theme.warning
-                                font.pixelSize: Design.Theme.typeBody
-                                font.weight: Font.Bold
+                            AppIcon {
                                 Layout.preferredWidth: 20
-                                horizontalAlignment: Text.AlignHCenter
+                                Layout.preferredHeight: 20
+                                name: "warning"
+                                color: Design.Theme.warning
                             }
                             Label {
                                 Layout.fillWidth: true
@@ -958,13 +957,11 @@ AppPage {
                             Layout.fillWidth: true
                             Layout.alignment: Qt.AlignTop
                             spacing: Design.Theme.space12
-                            Label {
-                                text: "×"
+                            AppIcon {
+                                name: "close"
                                 color: Design.Theme.error
-                                font.pixelSize: Design.Theme.typeBody
-                                font.weight: Font.Bold
                                 Layout.preferredWidth: 20
-                                horizontalAlignment: Text.AlignHCenter
+                                Layout.preferredHeight: 20
                             }
                             Label {
                                 Layout.fillWidth: true
@@ -1115,7 +1112,7 @@ AppPage {
                     font.weight: Font.Bold
                 }
                 IconButton {
-                    glyph: "×"
+                    iconName: "close"
                     accessibleName: qsTr("取消编辑")
                     onClicked: customDialog.close()
                 }
@@ -1335,7 +1332,7 @@ AppPage {
                 }
             }
             IconButton {
-                glyph: "⋮"
+                iconName: "more"
                 accessibleName: qsTr("动作库更多操作")
                 onClicked: pageMenu.popup()
             }
@@ -1510,11 +1507,19 @@ AppPage {
                         }
                         Label {
                             anchors.centerIn: parent
-                            visible: !thumbnail.visible
-                            text: exerciseDelegate.name.length > 0 ? exerciseDelegate.name.charAt(0) : "◇"
+                            visible: !thumbnail.visible && exerciseDelegate.name.length > 0
+                            text: exerciseDelegate.name.charAt(0)
                             color: Design.Theme.surfaceMuted
                             font.pixelSize: Design.Theme.typeTitle
                             font.weight: Font.Bold
+                        }
+                        AppIcon {
+                            anchors.centerIn: parent
+                            visible: !thumbnail.visible && exerciseDelegate.name.length === 0
+                            width: 24
+                            height: 24
+                            name: "image"
+                            color: Design.Theme.surfaceMuted
                         }
                     }
 
@@ -1533,11 +1538,14 @@ AppPage {
                                 font.weight: Font.DemiBold
                                 elide: Text.ElideRight
                             }
-                            Label {
+                            AppIcon {
                                 visible: exerciseDelegate.isFavorite
-                                text: "★"
+                                Layout.preferredWidth: 20
+                                Layout.preferredHeight: 20
+                                name: "favorite"
                                 color: Design.Theme.primary
-                                font.pixelSize: Design.Theme.typeBody
+                                Accessible.ignored: false
+                                Accessible.role: Accessible.StaticText
                                 Accessible.name: qsTr("已收藏")
                             }
                         }
@@ -1562,10 +1570,9 @@ AppPage {
                         }
                     }
 
-                    Label {
-                        text: "›"
+                    AppIcon {
+                        name: "forward"
                         color: Design.Theme.surfaceMuted
-                        font.pixelSize: Design.Theme.typeTitle
                     }
                 }
 
@@ -1578,11 +1585,12 @@ AppPage {
                 spacing: Design.Theme.space12
                 visible: exerciseList.count === 0
 
-                Label {
+                AppIcon {
                     Layout.alignment: Qt.AlignHCenter
-                    text: page.hasActiveQuery ? "⌕" : "◇"
+                    Layout.preferredWidth: 48
+                    Layout.preferredHeight: 48
+                    name: page.hasActiveQuery ? "search" : "image"
                     color: Design.Theme.surfaceMuted
-                    font.pixelSize: Design.Theme.typeDisplay
                 }
                 Label {
                     Layout.fillWidth: true

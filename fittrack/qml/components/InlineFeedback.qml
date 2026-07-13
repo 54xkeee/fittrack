@@ -22,9 +22,9 @@ Control {
     readonly property color contentColor: tone === "success" ? Design.Theme.successContainerText :
                                                    tone === "warning" ? Design.Theme.warningContainerText :
                                                    tone === "error" ? Design.Theme.errorContainerText : Design.Theme.infoContent
-    readonly property string statusGlyph: tone === "success" ? "✓" :
-                                                   tone === "warning" ? "!" :
-                                                   tone === "error" ? "×" : "i"
+    readonly property string statusIcon: tone === "success" ? "success" :
+                                                  tone === "warning" ? "warning" :
+                                                  tone === "error" ? "close" : "info"
 
     implicitHeight: Math.max(Design.Theme.controlHeight,
                              contentItem.implicitHeight + topPadding + bottomPadding)
@@ -45,13 +45,11 @@ Control {
             spacing: Design.Theme.space12
             Layout.fillWidth: true
 
-            Label {
-                text: root.statusGlyph
+            AppIcon {
+                name: root.statusIcon
                 color: root.toneColor
-                font.pixelSize: Design.Theme.typeBody
-                font.weight: Font.Bold
-                horizontalAlignment: Text.AlignHCenter
                 Layout.preferredWidth: 20
+                Layout.preferredHeight: 20
                 Layout.alignment: Qt.AlignTop
             }
 

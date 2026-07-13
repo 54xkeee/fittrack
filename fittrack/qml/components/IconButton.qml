@@ -5,8 +5,7 @@ import "../theme" as Design
 Button {
     id: root
 
-    property url source
-    property string glyph: ""
+    property string iconName: ""
     property string accessibleName: ""
     property bool destructive: false
     property bool selected: false
@@ -15,31 +14,17 @@ Button {
     implicitHeight: Design.Theme.touchTarget
     padding: Design.Theme.space12
 
-    Accessible.name: accessibleName.length > 0 ? accessibleName : glyph
+    Accessible.name: accessibleName
 
     contentItem: Item {
         implicitWidth: 24
         implicitHeight: 24
 
-        Image {
+        AppIcon {
             anchors.centerIn: parent
-            width: 24
-            height: 24
-            visible: String(root.source).length > 0
-            source: root.source
-            sourceSize.width: 24
-            sourceSize.height: 24
-            fillMode: Image.PreserveAspectFit
-        }
-
-        Label {
-            anchors.centerIn: parent
-            visible: String(root.source).length === 0
-            text: root.glyph
+            name: root.iconName
             color: root.destructive ? Design.Theme.error :
                    (root.selected ? Design.Theme.primaryForeground : Design.Theme.surfaceText)
-            font.pixelSize: Design.Theme.typeTitle
-            font.weight: Font.DemiBold
         }
     }
 
@@ -56,4 +41,3 @@ Button {
         }
     }
 }
-

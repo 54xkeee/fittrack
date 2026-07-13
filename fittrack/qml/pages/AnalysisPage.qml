@@ -181,11 +181,10 @@ AppPage {
                         radius: 26
                         color: Design.Theme.primaryContainer
 
-                        Label {
+                        AppIcon {
                             anchors.centerIn: parent
-                            text: "↗"
+                            name: "analysis"
                             color: Design.Theme.primary
-                            font.pixelSize: Design.Theme.typeTitle
                         }
                     }
                     Label {

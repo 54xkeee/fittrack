@@ -1,8 +1,12 @@
-# 学生成绩管理系统
+# 项目工作区
+
+> 当前持续开发目标是 [`fittrack/`](fittrack/) 中的 Android 健身训练伙伴“训迹 FitTrack”，不是成绩管理系统。根目录的学生成绩管理系统是保留的独立旧项目，两者不共享业务代码。
+
+## 学生成绩管理系统（保留项目）
 
 Qt 6 Widgets 大作业，使用 Qt Designer `.ui` 文件、qmake、MinGW 和 C++17 实现。界面根据 Stitch 生成的现代校园蓝方案使用 QSS 复刻。
 
-仓库中的 Android 健身训练子项目位于 [`fittrack/`](fittrack/)，其构建、测试和当前交付状态见 [`fittrack/README.md`](fittrack/README.md)。两个项目独立构建，FitTrack 不复用成绩管理系统业务代码。
+FitTrack 的构建、测试和当前交付状态见 [`fittrack/README.md`](fittrack/README.md)。
 
 后续开发建议见 [`docs/大作业开发流程与注意事项.md`](docs/大作业开发流程与注意事项.md)。
 

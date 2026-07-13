@@ -18,10 +18,10 @@ FitTrack 是一个面向 Android 的个人健身训练记录与分析应用，�
 - 数据管理支持 JSON 完整备份/事务恢复和 SQLite 快照导出；Android 支持通过系统文档选择器的 `content://` URI 导入导出。JSON 包含计划有氧与训练快照，仍兼容缺少这两张表的旧版备份；恢复会限制 64MB 输入、进行外键完整性检查，并刷新所有内存状态。
 - 动作库提供 58 个目标动作的简介、主要/次要肌群、步骤、注意事项和训练参数；其中 29 个核心动作额外提供发力要点和常见错误，其余为标准资料。每项展示 1 张经过动作对应性审核的本地图片，并在详情中显示素材标题、来源和许可证；42 张来自开放许可或公共领域，16 张为 FitTrack 原创 CC0。内置动作可收藏和恢复默认，用户可创建、编辑及删除自定义动作；应用不提供教学视频或媒体外链入口。
 - 底部导航固定为首页、计划、训练、动作和分析五个入口；历史、有氧和管理合并在分析入口内。
-- Graphite & Lime 设计系统已经提取为语义主题与通用组件，底部导航、首页、训练、计划、动作库、趋势、历史、有氧和管理页面均已纳入移动单列体系；可操作控件保持至少 48 logical px 触控区并提供完整空状态。
+- Graphite & Lime 设计系统已经提取为语义主题与通用组件，统一线性图标由 `AppIcon` 使用 `PathSvg` 绘制，不再依赖 Unicode 字符图标。底部导航、首页、训练、计划、动作库、趋势、历史、有氧和管理页面均已纳入移动单列体系；准备页与训练页长标题可响应换行，计划/训练动作预览保持至少 48 logical px，训练动作卡提供可见键盘焦点。
 - 应用不再内置字体，直接继承 Android、Windows 等平台的系统字体；Android 字体缩放会统一映射到设计令牌，训练主流程和弹层已自动化验证 1.0、1.3、1.5 和 2.0 倍字体。
 
-当前自动化测试共 15 项，覆盖统计规则、SQLite、种子导入、训练会话、历史、分析、计划管理、动作库管理、有氧、健身房/器械、备份恢复、性能 SQL 门禁、倒计时状态和真实 QML 页面加载。QML 回归额外覆盖训练准备零写入、动作详情、参数保存/恢复、稳定 ID 排序、TalkBack、48dp 触控区、360×800/2.0 倍字体和真实触摸输入。
+当前自动化测试共 15 项，覆盖统计规则、SQLite、种子导入、训练会话、历史、分析、计划管理、动作库管理、有氧、健身房/器械、备份恢复、性能 SQL 门禁、倒计时状态和真实 QML 页面加载。QML 回归额外覆盖训练准备零写入、动作详情真实打开、参数保存/恢复、稳定 ID 排序、字符图标门禁、TalkBack 语义、计划/训练动作预览 48dp、训练动作卡焦点、长标题不截断、1.0/1.3/1.5/2.0 四档字体和真实触摸输入。
 
 当前数据库结构版本为 SQLite v8。同版本启动使用版本快路径；旧库仍会幂等补列、建索引和触发器，既有用户数据会保留。
 
@@ -62,7 +62,7 @@ powershell -ExecutionPolicy Bypass -File C:\FitTrackDev\fittrack\scripts\build-a
 powershell -ExecutionPolicy Bypass -File C:\FitTrackDev\fittrack\scripts\build-android.ps1 -Configuration Release -Bundle
 ```
 
-脚本分别输出 Debug APK、无签名 Release APK 或无签名 Release AAB。当前包名为 `com.fittrack.app`，min API 28，target/compile API 35，仅包含 `arm64-v8a`；Debug APK 已通过 Android Lint（0 issue）、清单/ABI/最小权限检查、V2 调试签名验证和包内媒体白名单检查，可用于直接侧载分享。Release APK/AAB 的外部环境变量签名流程已用一次性测试密钥验证；若要保证跨版本覆盖升级，仍需创建并长期保管发布密钥。
+脚本分别输出 Debug APK、无签名 Release APK 或无签名 Release AAB。当前包名为 `com.fittrack.app`，min API 28，target/compile API 35，仅包含 `arm64-v8a`；当前源码的 Debug APK 已通过 Android Lint（0 issue）、清单/ABI/最小权限检查、V2 调试签名验证和包内媒体白名单检查。`dist` 中的旧产物不能代表当前提交，正式分享前必须从当前提交重新生成并核验哈希。Release APK/AAB 的外部环境变量签名流程已用一次性测试密钥验证；若要保证跨版本覆盖升级，仍需创建并长期保管发布密钥。
 
 完整工具链、Lint、APK 检查和真机命令见 [`../docs/fittrack-android-build.md`](../docs/fittrack-android-build.md)。
 

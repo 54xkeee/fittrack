@@ -452,11 +452,10 @@ AppPage {
                 ColumnLayout {
                     anchors.fill: parent
                     spacing: Design.Theme.space8
-                    Label {
+                    AppIcon {
                         Layout.alignment: Qt.AlignHCenter
-                        text: "↗"
+                        name: "analysis"
                         color: Design.Theme.primary
-                        font.pixelSize: Design.Theme.typeDisplay
                     }
                     Label {
                         Layout.fillWidth: true
@@ -517,7 +516,7 @@ AppPage {
                         }
 
                         IconButton {
-                            glyph: "×"
+                            iconName: "close"
                             destructive: true
                             accessibleName: qsTr("删除这条有氧记录")
                             onClicked: {

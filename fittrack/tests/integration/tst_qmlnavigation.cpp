@@ -14,6 +14,7 @@
 #include <QAccessible>
 #include <QFile>
 #include <QDir>
+#include <QDirIterator>
 #include <QFont>
 #include <QFontDatabase>
 #include <QGuiApplication>
@@ -142,6 +143,17 @@ bool isDescendantOf(QObject *object, QObject *ancestor)
     return false;
 }
 
+QQuickItem *findQuickItemByObjectName(QQuickItem *root, const QString &objectName)
+{
+    if (!root) return nullptr;
+    if (root->objectName() == objectName) return root;
+    for (QQuickItem *child : root->childItems()) {
+        if (QQuickItem *match = findQuickItemByObjectName(child, objectName))
+            return match;
+    }
+    return nullptr;
+}
+
 QAccessibleInterface *findAccessibleByObjectName(
     QAccessibleInterface *root, const QString &objectName,
     QSet<QAccessibleInterface *> *visited = nullptr)
@@ -231,6 +243,30 @@ void QmlNavigationTest::loadsAndSwitchesEveryPrimaryPage()
     QVERIFY2(!mainSource.contains("addApplicationFont")
                  && !mainSource.contains("setFont("),
              "应用不得覆盖 Android 或桌面系统字体");
+    QDirIterator qmlFiles(QStringLiteral(FITTRACK_SOURCE_DIR "/qml"),
+                          {QStringLiteral("*.qml")}, QDir::Files,
+                          QDirIterator::Subdirectories);
+    const QString forbiddenIcons = QString::fromUtf8(
+        "⌂▣◎↗↕↑↓⋮⋯‹›✎＋✓◇★◷⌕");
+    const QList<QByteArray> scalarIconBindings{
+        QByteArrayLiteral("text: \"!\""), QByteArrayLiteral("text: \"+\""),
+        QByteArrayLiteral("text: \"×\"")};
+    while (qmlFiles.hasNext()) {
+        const QString path = qmlFiles.next();
+        const QByteArray source = readFile(path);
+        QVERIFY2(!source.contains("glyph:"),
+                 qPrintable(QStringLiteral("不得重新使用字符图标：%1").arg(path)));
+        for (const QChar icon : forbiddenIcons) {
+            QVERIFY2(!source.contains(QString(icon).toUtf8()),
+                     qPrintable(QStringLiteral("不得重新使用字符图标：%1 (%2)")
+                                    .arg(path).arg(icon)));
+        }
+        for (const QByteArray &binding : scalarIconBindings) {
+            QVERIFY2(!source.contains(binding),
+                     qPrintable(QStringLiteral("不得重新使用字符图标绑定：%1 (%2)")
+                                    .arg(path, QString::fromUtf8(binding))));
+        }
+    }
     window->resize(360, 800);
     window->update();
     QTest::qWait(200);
@@ -294,6 +330,21 @@ void QmlNavigationTest::loadsAndSwitchesEveryPrimaryPage()
     QVERIFY(commitRect.width() >= 48 && commitRect.height() >= 48);
     QVERIFY(commitRect.left() >= -0.5 && commitRect.right() <= window->width() + 0.5);
     QVERIFY(commitRect.top() >= -0.5 && commitRect.bottom() <= window->height() + 0.5);
+    QObject *preparationTitle = root->findChild<QObject *>(
+        QStringLiteral("preparationTitle"));
+    QVERIFY(preparationTitle);
+    QVERIFY2(!preparationTitle->property("truncated").toBool(),
+             "200% 字体下训练准备标题不得被截断");
+    auto *preparationTitleItem = qobject_cast<QQuickItem *>(preparationTitle);
+    QVERIFY(preparationTitleItem);
+    const QRectF preparationTitleRect = preparationTitleItem->mapRectToScene(
+        preparationTitleItem->boundingRect());
+    QVERIFY(preparationTitleRect.left() >= -0.5
+            && preparationTitleRect.right() <= window->width() + 0.5);
+    QVERIFY(preparationTitleRect.top() >= -0.5
+            && preparationTitleRect.bottom() <= window->height() + 0.5);
+    QVERIFY(preparationTitleItem->height() + 0.5
+            >= preparationTitle->property("paintedHeight").toReal());
     QVERIFY(window->grabWindow().save(QDir(preparationScreenshotDirectory).filePath(
         QStringLiteral("workout-preparation-font-200-360x800.png"))));
     QVERIFY(root->setProperty("fontScale", 1.0));
@@ -664,6 +715,20 @@ void QmlNavigationTest::loadsAndSwitchesEveryPrimaryPage()
             QVERIFY(capture(names.at(index), viewport));
         }
     }
+    QVERIFY(navigation->setProperty("currentIndex", 1));
+    window->update();
+    const QVariantList previewDays = planManagement.selectedPlan()
+                                         .value(QStringLiteral("days")).toList();
+    QVERIFY(!previewDays.isEmpty());
+    const QVariantList previewExercises = previewDays.first().toMap()
+                                              .value(QStringLiteral("exercises")).toList();
+    QVERIFY(!previewExercises.isEmpty());
+    const QString previewName = previewExercises.first().toMap()
+                                    .value(QStringLiteral("name")).toString();
+    QAccessibleInterface *planPreview = nullptr;
+    QTRY_VERIFY((planPreview = findAccessibleByName(
+                     accessibleRoot, previewName, QAccessible::Button)) != nullptr);
+    QVERIFY(isTouchTargetAtLeast(planPreview, window, 48));
 
     exerciseModel.setSearchText(QStringLiteral("杠铃卧推"));
     QVERIFY(navigation->setProperty("currentIndex", 3));
@@ -854,8 +919,50 @@ void QmlNavigationTest::loadsAndSwitchesEveryPrimaryPage()
     QVERIFY(repsControl->width() >= 48 && repsControl->height() >= 48);
     QVERIFY(isTouchTargetAtLeast(completeSet, window, 48));
     QVERIFY(isTouchTargetAtLeast(openTimer, window, 48));
-
     const QVariantMap firstExercise = workoutController.exercises().first().toMap();
+    QAccessibleInterface *currentExercisePreview = findAccessibleByObjectName(
+        accessibleRoot, QStringLiteral("currentExercisePreviewButton"));
+    QVERIFY2(currentExercisePreview, "当前动作名称必须可以打开动作详情");
+    QVERIFY(isTouchTargetAtLeast(currentExercisePreview, window, 48));
+    QVERIFY(currentExercisePreview->actionInterface());
+    currentExercisePreview->actionInterface()->doAction(
+        QAccessibleActionInterface::pressAction());
+    QObject *trainingExerciseDetail = root->findChild<QObject *>(
+        QStringLiteral("trainingExerciseDetailSheet"));
+    QVERIFY(trainingExerciseDetail);
+    QTRY_VERIFY(trainingExerciseDetail->property("visible").toBool());
+    QVERIFY(QMetaObject::invokeMethod(trainingExerciseDetail, "close"));
+    QTRY_VERIFY(!trainingExerciseDetail->property("visible").toBool());
+
+    QQuickItem *trainingPreview = nullptr;
+    QTRY_VERIFY((trainingPreview = findQuickItemByObjectName(
+                     window->contentItem(),
+                     QStringLiteral("trainingExercisePreviewButton_0"))) != nullptr);
+    QVERIFY(trainingPreview->height() >= 48.0);
+    QQuickItem *trainingExerciseRow = findQuickItemByObjectName(
+        window->contentItem(), QStringLiteral("trainingExerciseRow_1"));
+    QVERIFY(trainingExerciseRow);
+    QQuickItem *previousFocusItem = trainingExerciseRow->nextItemInFocusChain(false);
+    QVERIFY(previousFocusItem);
+    QVERIFY(previousFocusItem != trainingExerciseRow);
+    previousFocusItem->forceActiveFocus();
+    QTRY_VERIFY(previousFocusItem->hasActiveFocus());
+    QTest::keyClick(window, Qt::Key_Tab);
+    QTRY_VERIFY(trainingExerciseRow->hasActiveFocus());
+    QObject *trainingPage = root->findChild<QObject *>(QStringLiteral("trainingPage"));
+    QVERIFY(trainingPage);
+    const QString secondExerciseId = workoutController.exercises().at(1).toMap()
+                                         .value(QStringLiteral("id")).toString();
+    QVERIFY(!secondExerciseId.isEmpty());
+    QTest::keyClick(window, Qt::Key_Space);
+    QTRY_COMPARE(trainingPage->property("selectedExerciseId").toString(),
+                 secondExerciseId);
+    QVERIFY(QMetaObject::invokeMethod(
+        trainingPage, "selectExercise",
+        Q_ARG(QVariant, firstExercise.value(QStringLiteral("id")))));
+    QTRY_COMPARE(trainingPage->property("selectedExerciseId").toString(),
+                 firstExercise.value(QStringLiteral("id")).toString());
+
     const QVariantMap firstSet = firstExercise.value(QStringLiteral("sets")).toList().first().toMap();
 
     qputenv("FITTRACK_FONT_SCALE", "1.3");
@@ -886,6 +993,21 @@ void QmlNavigationTest::loadsAndSwitchesEveryPrimaryPage()
     window->update();
     QTest::qWait(160);
     QVERIFY(capture(QStringLiteral("training-large-font-150"), QSize(360, 640)));
+    QObject *trainingSessionTitle = root->findChild<QObject *>(
+        QStringLiteral("trainingSessionTitle"));
+    QVERIFY(trainingSessionTitle);
+    QVERIFY2(!trainingSessionTitle->property("truncated").toBool(),
+             "大字体下训练标题不得被截断");
+    auto *trainingSessionTitleItem = qobject_cast<QQuickItem *>(trainingSessionTitle);
+    QVERIFY(trainingSessionTitleItem);
+    const QRectF trainingSessionTitleRect = trainingSessionTitleItem->mapRectToScene(
+        trainingSessionTitleItem->boundingRect());
+    QVERIFY(trainingSessionTitleRect.left() >= -0.5
+            && trainingSessionTitleRect.right() <= window->width() + 0.5);
+    QVERIFY(trainingSessionTitleRect.top() >= -0.5
+            && trainingSessionTitleRect.bottom() <= window->height() + 0.5);
+    QVERIFY(trainingSessionTitleItem->height() + 0.5
+            >= trainingSessionTitle->property("paintedHeight").toReal());
     for (const QString &objectName : coreObjectNames) {
         auto *item = qobject_cast<QQuickItem *>(root->findChild<QObject *>(objectName));
         QVERIFY2(item, qPrintable(QStringLiteral("找不到 1.5 倍字体核心控件：%1")

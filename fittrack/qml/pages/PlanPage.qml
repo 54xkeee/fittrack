@@ -271,7 +271,7 @@ AppPage {
                 }
 
                 IconButton {
-                    glyph: "×"
+                    iconName: "close"
                     accessibleName: qsTr("关闭动作选择")
                     onClicked: actionPicker.close()
                 }
@@ -353,14 +353,15 @@ AppPage {
                         }
 
                         Label {
-                            text: "+"
+                            text: actionPicker.replacePlanExerciseId.length > 0
+                                  ? qsTr("替换") : qsTr("添加")
                             color: Design.Theme.primary
-                            font.pixelSize: Design.Theme.typeTitle
+                            font.pixelSize: Design.Theme.typeLabel
                             font.weight: Font.DemiBold
                         }
 
                         IconButton {
-                            glyph: "›"
+                            iconName: "forward"
                             accessibleName: qsTr("预览 %1").arg(name)
                             onClicked: sharedExerciseDetail.openExercise(
                                            planExerciseModel.exerciseById(exerciseId))
@@ -704,10 +705,9 @@ AppPage {
                     }
                 }
 
-                IconButton {
-                    glyph: "+"
-                    accessibleName: qsTr("新建个人计划")
-                    selected: true
+                AppButton {
+                    text: qsTr("新建")
+                    Layout.preferredWidth: 84
                     onClicked: page.openTextDialog("createPlan", "", "")
                 }
             }
@@ -728,6 +728,7 @@ AppPage {
                     model: planManagement.plans
 
                     delegate: ItemDelegate {
+                        id: planOption
                         required property var modelData
 
                         Layout.fillWidth: true
@@ -740,8 +741,9 @@ AppPage {
                         background: Rectangle {
                             color: highlighted ? Design.Theme.primaryContainer : Design.Theme.surface
                             radius: Design.Theme.radiusMedium
-                            border.width: highlighted ? 2 : 1
-                            border.color: highlighted ? Design.Theme.primary : Design.Theme.outline
+                            border.width: planOption.activeFocus || highlighted ? 2 : 1
+                            border.color: planOption.activeFocus || highlighted
+                                          ? Design.Theme.primary : Design.Theme.outline
                         }
 
                         contentItem: RowLayout {
@@ -790,10 +792,9 @@ AppPage {
                                 }
                             }
 
-                            Label {
-                                text: "›"
+                            AppIcon {
+                                name: "forward"
                                 color: highlighted ? Design.Theme.primary : Design.Theme.surfaceMuted
-                                font.pixelSize: Design.Theme.typeTitle
                             }
                         }
                     }
@@ -812,7 +813,7 @@ AppPage {
                         anchors.centerIn: parent
                         spacing: Design.Theme.space4
                         Label { text: qsTr("还没有训练计划"); color: Design.Theme.surfaceText; font.weight: Font.DemiBold }
-                        Label { text: qsTr("点击右上角 + 创建个人计划"); color: Design.Theme.surfaceMuted }
+                        Label { text: qsTr("点击右上角“新建”创建个人计划"); color: Design.Theme.surfaceMuted }
                     }
                 }
             }
@@ -864,7 +865,7 @@ AppPage {
 
                         IconButton {
                             visible: !page.selectedPlanReadOnly
-                            glyph: "⋮"
+                            iconName: "more"
                             accessibleName: qsTr("计划更多操作")
                             onClicked: planMenu.popup()
                         }
@@ -997,7 +998,7 @@ AppPage {
 
                                 IconButton {
                                     visible: !page.selectedPlanReadOnly
-                                    glyph: "⋮"
+                                    iconName: "more"
                                     accessibleName: qsTr("训练日更多操作")
                                     onClicked: dayMenu.popup()
                                 }
@@ -1102,7 +1103,7 @@ AppPage {
                                 }
                                 IconButton {
                                     visible: !page.selectedPlanReadOnly
-                                    glyph: "›"
+                                    iconName: "forward"
                                     accessibleName: qsTr("编辑有氧目标")
                                     onClicked: cardioEditor.openForDay(dayCard.modelData)
                                 }
@@ -1133,14 +1134,20 @@ AppPage {
                                     property string dayId: dayCard.modelData.id
 
                                     Layout.fillWidth: true
-                                    implicitHeight: 68
+                                    implicitHeight: Math.max(
+                                                        80,
+                                                        exerciseRowLayout.implicitHeight
+                                                        + Design.Theme.space8)
                                     color: "transparent"
                                     radius: Design.Theme.radiusSmall
                                     border.width: 0
                                     border.color: Design.Theme.primary
 
                                     RowLayout {
-                                        anchors.fill: parent
+                                        id: exerciseRowLayout
+                                        anchors.left: parent.left
+                                        anchors.right: parent.right
+                                        anchors.verticalCenter: parent.verticalCenter
                                         spacing: Design.Theme.space8
 
                                         Rectangle {
@@ -1166,8 +1173,13 @@ AppPage {
                                             spacing: Design.Theme.space4
 
                                             Button {
+                                                id: planExercisePreview
+                                                objectName: "planExercisePreviewButton_" + exerciseRow.index
                                                 Layout.fillWidth: true
-                                                implicitHeight: 32
+                                                implicitHeight: Math.max(
+                                                                    Design.Theme.touchTarget,
+                                                                    planExerciseName.implicitHeight
+                                                                    + Design.Theme.space8)
                                                 padding: 0
                                                 flat: true
                                                 Accessible.name: exerciseRow.modelData.name
@@ -1176,11 +1188,18 @@ AppPage {
                                                                exerciseModel.exerciseById(
                                                                    exerciseRow.modelData.exerciseId))
                                                 contentItem: Label {
+                                                    id: planExerciseName
                                                     text: exerciseRow.modelData.name
                                                     color: Design.Theme.surfaceText
                                                     font.pixelSize: Design.Theme.typeLabel
                                                     font.weight: Font.DemiBold
-                                                    elide: Text.ElideRight
+                                                    wrapMode: Text.WordWrap
+                                                }
+                                                background: Rectangle {
+                                                    color: "transparent"
+                                                    radius: Design.Theme.radiusSmall
+                                                    border.width: planExercisePreview.activeFocus ? 2 : 0
+                                                    border.color: Design.Theme.primary
                                                 }
                                             }
 
@@ -1193,14 +1212,14 @@ AppPage {
                                                       .arg(exerciseRow.modelData.restSeconds)
                                                 color: Design.Theme.surfaceMuted
                                                 font.pixelSize: Design.Theme.typeCaption
-                                                elide: Text.ElideRight
+                                                wrapMode: Text.WordWrap
                                                 Layout.fillWidth: true
                                             }
                                         }
 
                                         IconButton {
                                             visible: !page.selectedPlanReadOnly
-                                            glyph: "⋮"
+                                            iconName: "more"
                                             accessibleName: qsTr("动作更多操作")
                                             onClicked: exerciseMenu.popup()
                                         }

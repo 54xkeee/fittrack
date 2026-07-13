@@ -6,6 +6,7 @@ import "../theme" as Design
 
 AppPage {
     id: page
+    objectName: "trainingPage"
 
     implicitWidth: 0
     implicitHeight: 0
@@ -14,7 +15,10 @@ AppPage {
     property string selectedExerciseId: ""
     property bool submittingSet: false
 
-    ExerciseDetailSheet { id: sharedExerciseDetail }
+    ExerciseDetailSheet {
+        id: sharedExerciseDetail
+        objectName: "trainingExerciseDetailSheet"
+    }
 
     ExerciseOrderSheet {
         id: workoutOrderSheet
@@ -471,7 +475,7 @@ AppPage {
                         anchors.right: parent.right
                         anchors.rightMargin: Design.Theme.space8
                         anchors.verticalCenter: parent.verticalCenter
-                        glyph: "›"
+                        iconName: "forward"
                         accessibleName: qsTr("预览 %1").arg(name)
                         onClicked: sharedExerciseDetail.openExercise(
                                        exerciseModel.exerciseById(exerciseId))
@@ -1288,12 +1292,14 @@ AppPage {
                     Layout.fillWidth: true
                     spacing: 0
                     Label {
+                        objectName: "trainingSessionTitle"
                         text: workoutController.active ? workoutController.sessionName : qsTr("训练")
                         color: Design.Theme.backgroundText
                         font.pixelSize: Design.Theme.typeTitle
                         font.weight: Font.DemiBold
                         Layout.fillWidth: true
-                        elide: Text.ElideRight
+                        Layout.minimumWidth: 0
+                        wrapMode: Text.WordWrap
                     }
                     Label {
                         visible: workoutController.active
@@ -1309,7 +1315,7 @@ AppPage {
 
                 IconButton {
                     visible: workoutController.active
-                    glyph: "⋯"
+                    iconName: "more"
                     accessibleName: qsTr("训练更多操作")
                     onClicked: sessionMenu.open()
                 }
@@ -1443,11 +1449,16 @@ AppPage {
                         RowLayout {
                             Layout.fillWidth: true
                             Button {
+                                objectName: "currentExercisePreviewButton"
                                 Layout.fillWidth: true
                                 implicitHeight: Design.Theme.controlHeight
                                 flat: true
                                 padding: 0
                                 text: page.currentExercise ? page.currentExercise.name : ""
+                                Accessible.name: page.currentExercise
+                                                 ? qsTr("查看%1动作做法").arg(
+                                                       page.currentExercise.name)
+                                                 : qsTr("查看当前动作做法")
                                 Accessible.description: qsTr("查看动作做法")
                                 onClicked: if (page.currentExercise)
                                                sharedExerciseDetail.openExercise(
@@ -1476,7 +1487,7 @@ AppPage {
                                 }
                             }
                             IconButton {
-                                glyph: "⋯"
+                                iconName: "more"
                                 accessibleName: page.currentExercise
                                                 ? qsTr("%1更多操作").arg(page.currentExercise.name)
                                                 : qsTr("当前动作更多操作")
@@ -1590,14 +1601,14 @@ AppPage {
                                         elide: Text.ElideRight
                                     }
                                     IconButton {
-                                        glyph: "＋"
+                                        iconName: "add"
                                         accessibleName: qsTr("第 %1 组，添加短休追加组")
                                                         .arg(modelData.number)
                                         onClicked: appendSetDialog.openForSet(
                                                        page.selectedExerciseId, modelData)
                                     }
                                     IconButton {
-                                        glyph: "✎"
+                                        iconName: "edit"
                                         accessibleName: qsTr("第 %1 组，修正已完成数据")
                                                         .arg(modelData.number)
                                         onClicked: editSetDialog.openForSet(
@@ -1668,18 +1679,22 @@ AppPage {
                     model: workoutController.exercises
                     delegate: Rectangle {
                         id: exerciseRow
+                        objectName: "trainingExerciseRow_" + index
                         required property var modelData
                         required property int index
                         property int exerciseIndex: index
 
                         visible: workoutController.exercises.length > 1
                         Layout.fillWidth: true
-                        implicitHeight: 60
+                        implicitHeight: Math.max(
+                                            72,
+                                            trainingExerciseRowLayout.implicitHeight
+                                            + Design.Theme.space8)
                         radius: Design.Theme.radiusSmall
                         color: page.selectedExerciseId === modelData.id
                                ? Design.Theme.primaryContainer : Design.Theme.surface
-                        border.width: 1
-                        border.color: page.selectedExerciseId === modelData.id
+                        border.width: activeFocus ? 2 : 1
+                        border.color: activeFocus || page.selectedExerciseId === modelData.id
                                       ? Design.Theme.primary : Design.Theme.outline
                         activeFocusOnTab: true
                         Accessible.role: Accessible.Button
@@ -1692,7 +1707,10 @@ AppPage {
                         Accessible.selected: page.selectedExerciseId === modelData.id
                         Accessible.onPressAction: page.selectExercise(modelData.id)
                         RowLayout {
-                            anchors.fill: parent
+                            id: trainingExerciseRowLayout
+                            anchors.left: parent.left
+                            anchors.right: parent.right
+                            anchors.verticalCenter: parent.verticalCenter
                             anchors.leftMargin: Design.Theme.space12
                             anchors.rightMargin: Design.Theme.space4
                             spacing: Design.Theme.space8
@@ -1701,20 +1719,33 @@ AppPage {
                                 Layout.fillWidth: true
                                 spacing: 0
                                 Button {
+                                    id: trainingExercisePreview
+                                    objectName: "trainingExercisePreviewButton_" + exerciseRow.index
                                     Layout.fillWidth: true
-                                    implicitHeight: 36
+                                    implicitHeight: Math.max(
+                                                        Design.Theme.touchTarget,
+                                                        trainingExerciseName.implicitHeight
+                                                        + Design.Theme.space8)
                                     flat: true
                                     padding: 0
                                     text: modelData.name
+                                    Accessible.name: qsTr("查看%1动作做法").arg(modelData.name)
                                     Accessible.description: qsTr("查看动作做法")
                                     onClicked: sharedExerciseDetail.openExercise(
                                                    exerciseModel.exerciseById(modelData.exerciseId))
                                     contentItem: Label {
-                                        text: parent.text
+                                        id: trainingExerciseName
+                                        text: trainingExercisePreview.text
                                         color: Design.Theme.surfaceText
                                         font.pixelSize: Design.Theme.typeBody
                                         font.weight: Font.DemiBold
-                                        elide: Text.ElideRight
+                                        wrapMode: Text.WordWrap
+                                    }
+                                    background: Rectangle {
+                                        color: "transparent"
+                                        radius: Design.Theme.radiusSmall
+                                        border.width: trainingExercisePreview.activeFocus ? 2 : 0
+                                        border.color: Design.Theme.primary
                                     }
                                 }
                                 Label {
@@ -1727,7 +1758,7 @@ AppPage {
                                 }
                             }
                             IconButton {
-                                glyph: "⋯"
+                                iconName: "more"
                                 accessibleName: qsTr("%1更多操作").arg(modelData.name)
                                 onClicked: {
                                     page.selectExercise(modelData.id)

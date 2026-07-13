@@ -71,7 +71,7 @@ Control {
 
         IconButton {
             visible: root.allowStop
-            glyph: "×"
+            iconName: "close"
             destructive: true
             accessibleName: qsTr("结束计时")
             onClicked: root.stopRequested()

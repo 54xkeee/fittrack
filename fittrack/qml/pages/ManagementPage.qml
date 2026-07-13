@@ -365,7 +365,7 @@ AppPage {
                             }
                         }
                         IconButton {
-                            glyph: "✎"
+                            iconName: "edit"
                             accessibleName: qsTr("编辑器械")
                             onClicked: {
                                 page.editId = modelData.id
@@ -376,7 +376,7 @@ AppPage {
                             }
                         }
                         IconButton {
-                            glyph: "×"
+                            iconName: "close"
                             destructive: true
                             accessibleName: qsTr("删除器械")
                             onClicked: {

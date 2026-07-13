@@ -141,13 +141,12 @@ AppDialog {
                         Accessible.role: Accessible.Button
                         Accessible.name: qsTr("拖动%1调整顺序").arg(orderRow.modelData.name)
 
-                        Label {
+                        AppIcon {
                             anchors.centerIn: parent
-                            text: "↕"
+                            width: 24
+                            height: 24
+                            name: "reorder"
                             color: Design.Theme.surfaceText
-                            font.pixelSize: Design.Theme.typeTitle
-                            font.weight: Font.DemiBold
-                            Accessible.ignored: true
                         }
 
                         DragHandler {
@@ -187,7 +186,7 @@ AppDialog {
                         IconButton {
                             Layout.minimumWidth: Design.Theme.touchTarget
                             Layout.minimumHeight: Design.Theme.touchTarget
-                            glyph: "↑"
+                            iconName: "up"
                             accessibleName: qsTr("上移%1").arg(orderRow.modelData.name)
                             enabled: orderRow.index > 0
                             onClicked: root.moveDraft(orderRow.index, orderRow.index - 1)
@@ -195,7 +194,7 @@ AppDialog {
                         IconButton {
                             Layout.minimumWidth: Design.Theme.touchTarget
                             Layout.minimumHeight: Design.Theme.touchTarget
-                            glyph: "↓"
+                            iconName: "down"
                             accessibleName: qsTr("下移%1").arg(orderRow.modelData.name)
                             enabled: orderRow.index + 1 < root.draftItems.length
                             onClicked: root.moveDraft(orderRow.index, orderRow.index + 1)

@@ -59,16 +59,18 @@ Dialog {
             anchors.bottomMargin: Design.Theme.space8
 
             Label {
+                objectName: "sharedExerciseDetailTitle"
                 Layout.fillWidth: true
+                Layout.minimumWidth: 0
                 text: root.exercise.name || qsTr("动作详情")
                 color: Design.Theme.surfaceText
                 font.pixelSize: Design.Theme.typeTitle
                 font.weight: Font.Bold
-                elide: Text.ElideRight
+                wrapMode: Text.WordWrap
                 Accessible.name: text
             }
             IconButton {
-                glyph: "×"
+                iconName: "close"
                 accessibleName: qsTr("关闭动作详情")
                 onClicked: root.close()
             }
@@ -120,7 +122,7 @@ Dialog {
                     anchors.margins: Design.Theme.space8
                     visible: root.mediaItems.length > 1
                     IconButton {
-                        glyph: "‹"
+                        iconName: "back"
                         accessibleName: qsTr("上一张动作图")
                         enabled: root.mediaIndex > 0
                         onClicked: root.mediaIndex--
@@ -136,7 +138,7 @@ Dialog {
                     }
                     Item { Layout.fillWidth: true }
                     IconButton {
-                        glyph: "›"
+                        iconName: "forward"
                         accessibleName: qsTr("下一张动作图")
                         enabled: root.mediaIndex + 1 < root.mediaItems.length
                         onClicked: root.mediaIndex++
