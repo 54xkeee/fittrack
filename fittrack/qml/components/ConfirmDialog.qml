@@ -14,6 +14,9 @@ Dialog {
     parent: Overlay.overlay
     anchors.centerIn: Overlay.overlay
     width: Math.min(360, Overlay.overlay ? Overlay.overlay.width - Design.Theme.space16 * 2 : 360)
+    height: Math.min(Overlay.overlay ? Overlay.overlay.height - Design.Theme.space16 * 2 : 320,
+                     header.implicitHeight + contentItem.implicitHeight + footer.implicitHeight
+                     + topPadding + bottomPadding)
     modal: true
     focus: true
     padding: Design.Theme.space24
@@ -79,4 +82,3 @@ Dialog {
 
     onOpened: cancelButton.forceActiveFocus()
 }
-

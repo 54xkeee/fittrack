@@ -88,8 +88,12 @@ void QmlNavigationTest::loadsAndSwitchesEveryPrimaryPage()
     QVERIFY(window);
     QObject *navigation = root->findChild<QObject *>(QStringLiteral("navigation"));
     QObject *stack = root->findChild<QObject *>(QStringLiteral("mainStack"));
+    QObject *historyPage = root->findChild<QObject *>(QStringLiteral("historyPage"));
+    QObject *insightsTabs = root->findChild<QObject *>(QStringLiteral("insightsTabs"));
     QVERIFY(navigation);
     QVERIFY(stack);
+    QVERIFY(historyPage);
+    QVERIFY(insightsTabs);
     const QString screenshotDirectory = QStringLiteral(FITTRACK_SCREENSHOT_DIR);
     QVERIFY(QDir().mkpath(screenshotDirectory));
     const QList<QSize> viewports{
@@ -139,6 +143,14 @@ void QmlNavigationTest::loadsAndSwitchesEveryPrimaryPage()
         QVERIFY(capture(QStringLiteral("exercise-media"), viewport));
     exerciseModel.setSearchText({});
 
+    const QString systemPlanId = planManagement.selectedPlan()
+                                     .value(QStringLiteral("id")).toString();
+    QVERIFY(!systemPlanId.isEmpty());
+    QVERIFY(planManagement.copyPlan(systemPlanId, QStringLiteral("我的三分化")));
+    QVERIFY(navigation->setProperty("currentIndex", 1));
+    for (const QSize &viewport : viewports)
+        QVERIFY(capture(QStringLiteral("plans-editable"), viewport));
+
     QVERIFY(workoutController.startSuggestedDay());
     restTimer.start(180);
     QVERIFY(navigation->setProperty("currentIndex", 2));
@@ -149,17 +161,34 @@ void QmlNavigationTest::loadsAndSwitchesEveryPrimaryPage()
     QVERIFY(workoutController.completeSet(0, 0, 40.0, 10));
     restTimer.reset();
     QVERIFY(workoutController.finishWorkout());
+    QCOMPARE(navigation->property("currentIndex").toInt(), 4);
+    QCOMPARE(insightsTabs->property("currentIndex").toInt(), 1);
+    QVERIFY(historyPage->property("showDetails").toBool());
+    QVERIFY(historyPage->property("completionMode").toBool());
+    for (const QSize &viewport : viewports)
+        QVERIFY(capture(QStringLiteral("workout-complete"), viewport));
+
+    QVERIFY(QMetaObject::invokeMethod(historyPage, "continueToCardio"));
+    QCOMPARE(insightsTabs->property("currentIndex").toInt(), 2);
+    QVERIFY(!cardioController.pendingSessionId().isEmpty());
+    const QString completedSessionId = cardioController.pendingSessionId();
+
+    QVariant reopenedSummary;
+    QVERIFY(QMetaObject::invokeMethod(historyPage, "openCompletion",
+                                     Q_RETURN_ARG(QVariant, reopenedSummary),
+                                     Q_ARG(QVariant, completedSessionId)));
+    QVERIFY(reopenedSummary.toBool());
+    QVERIFY(QMetaObject::invokeMethod(historyPage, "dismissCompletion"));
+    QCOMPARE(navigation->property("currentIndex").toInt(), 0);
+    QVERIFY(cardioController.pendingSessionId().isEmpty());
+
     workoutHistory.reload();
     analyticsDashboard.reload();
     QVERIFY(!workoutHistory.sessions().isEmpty());
     QVERIFY(workoutHistory.selectSession(
         workoutHistory.sessions().first().toMap().value(QStringLiteral("id")).toString()));
-    QObject *historyPage = root->findChild<QObject *>(QStringLiteral("historyPage"));
-    QVERIFY(historyPage);
     QVERIFY(historyPage->setProperty("showDetails", true));
 
-    QObject *insightsTabs = root->findChild<QObject *>(QStringLiteral("insightsTabs"));
-    QVERIFY(insightsTabs);
     QVERIFY(navigation->setProperty("currentIndex", 4));
     QVERIFY(insightsTabs->setProperty("currentIndex", 0));
     for (const QSize &viewport : viewports)

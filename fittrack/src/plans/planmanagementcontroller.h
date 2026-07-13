@@ -30,9 +30,14 @@ public:
     Q_INVOKABLE bool addDay(const QString &planId, const QString &name);
     Q_INVOKABLE bool renameDay(const QString &dayId, const QString &name);
     Q_INVOKABLE bool deleteDay(const QString &dayId);
+    Q_INVOKABLE bool addSection(const QString &dayId, const QString &name);
+    Q_INVOKABLE bool renameSection(const QString &sectionId, const QString &name);
+    Q_INVOKABLE bool deleteSection(const QString &sectionId);
     Q_INVOKABLE bool addExercise(const QString &dayId, const QString &exerciseId);
     Q_INVOKABLE bool updateExercise(const QString &planExerciseId, int sets,
                                     const QString &reps, int restSeconds);
+    Q_INVOKABLE bool replaceExercise(const QString &planExerciseId, const QString &exerciseId);
+    Q_INVOKABLE bool setExerciseSection(const QString &planExerciseId, const QString &sectionId);
     Q_INVOKABLE bool removeExercise(const QString &planExerciseId);
     Q_INVOKABLE bool moveExercise(const QString &dayId, int fromIndex, int toIndex);
 
@@ -44,6 +49,7 @@ signals:
 private:
     bool editablePlan(const QString &planId) const;
     QString editableDayPlanId(const QString &dayId) const;
+    QString editableSectionPlanId(const QString &sectionId) const;
     QString editableExercisePlanId(const QString &planExerciseId) const;
     bool fail(const QString &message);
     void clearError();

@@ -8,7 +8,13 @@ Page {
     implicitWidth: 0
     background: Rectangle { color: Design.Theme.background }
 
+    signal workoutSummaryDone()
+
     function openCardio() { tabs.currentIndex = 2 }
+    function openWorkoutSummary(sessionId) {
+        tabs.currentIndex = 1
+        return historyPage.openCompletion(sessionId)
+    }
     function handleBack() {
         if (tabs.currentIndex === 1 && historyPage.handleBack())
             return true
@@ -103,7 +109,16 @@ Page {
             currentIndex: tabs.currentIndex
 
             AnalysisPage { Layout.fillWidth: true; Layout.fillHeight: true }
-            HistoryPage { id: historyPage; Layout.fillWidth: true; Layout.fillHeight: true }
+            HistoryPage {
+                id: historyPage
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                onCompletionDismissed: {
+                    cardioController.clearPendingSession()
+                    page.workoutSummaryDone()
+                }
+                onAddCardioRequested: page.openCardio()
+            }
             CardioPage { Layout.fillWidth: true; Layout.fillHeight: true }
             ManagementPage { Layout.fillWidth: true; Layout.fillHeight: true }
         }

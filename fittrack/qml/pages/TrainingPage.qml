@@ -403,6 +403,7 @@ AppPage {
             editReps.text = setData.actualReps !== null && setData.actualReps !== undefined
                     ? String(setData.actualReps) : ""
             editFailure.checked = setData.toFailure
+            editNotes.text = String(setData.notes || "")
             editBodyweightMode.visible = loadMode === "Bodyweight"
             editBodyweightMode.currentIndex = setData.bodyweightLoadType === "Added" ? 1
                     : setData.bodyweightLoadType === "Assisted" ? 2 : 0
@@ -419,7 +420,7 @@ AppPage {
             const exerciseIndex = page.exerciseIndexById(targetExerciseId)
             const setIndex = page.setIndexById(exerciseIndex, targetSetId)
             if (exerciseIndex >= 0 && setIndex >= 0) {
-                workoutController.updateCompletedSet(
+                const updated = workoutController.updateCompletedSet(
                             exerciseIndex,
                             setIndex,
                             Number.isFinite(editWeight.numericValue) ? editWeight.numericValue : 0,
@@ -428,6 +429,8 @@ AppPage {
                             editBodyweightMode.visible
                                 ? editBodyweightMode.model[editBodyweightMode.currentIndex].value
                                 : "Bodyweight")
+                if (updated)
+                    workoutController.setSetNotes(exerciseIndex, setIndex, editNotes.text)
             }
         }
 
@@ -447,6 +450,21 @@ AppPage {
                 ]
             }
             CheckBox { id: editFailure; text: qsTr("本组力竭") }
+            TextArea {
+                id: editNotes
+                Layout.fillWidth: true
+                Layout.preferredHeight: 84
+                placeholderText: qsTr("本组备注（可选）")
+                wrapMode: TextEdit.Wrap
+                color: Design.Theme.surfaceText
+                background: Rectangle {
+                    color: Design.Theme.surfaceElevated
+                    radius: Design.Theme.radiusSmall
+                    border.width: editNotes.activeFocus ? 2 : 1
+                    border.color: editNotes.activeFocus
+                                  ? Design.Theme.primary : Design.Theme.outline
+                }
+            }
         }
     }
 
@@ -1108,7 +1126,18 @@ AppPage {
                                     anchors.top: completedSetRow.bottom
                                     anchors.leftMargin: Design.Theme.space12
                                     anchors.rightMargin: Design.Theme.space12
-                                    visible: modelData.appendSets.length > 0
+                                    visible: String(modelData.notes || "").length > 0
+                                             || modelData.appendSets.length > 0
+
+                                    Label {
+                                        visible: String(modelData.notes || "").length > 0
+                                        Layout.fillWidth: true
+                                        text: qsTr("备注：%1").arg(modelData.notes)
+                                        color: Design.Theme.surfaceMuted
+                                        font.pixelSize: Design.Theme.typeCaption
+                                        wrapMode: Text.WordWrap
+                                    }
+
                                     Repeater {
                                         model: modelData.appendSets
                                         delegate: Label {

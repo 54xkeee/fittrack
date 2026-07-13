@@ -490,7 +490,7 @@ AppPage {
                         implicitWidth: movementTag.implicitWidth + Design.Theme.space16
                         implicitHeight: 32
                         radius: Design.Theme.radiusSmall
-                        color: exerciseDelegate.mediaUrl.length > 0
+                        color: detailDialog.mediaUrl.length > 0
                                ? Design.Theme.mediaBackdrop : Design.Theme.surfaceElevated
                         Label {
                             id: movementTag

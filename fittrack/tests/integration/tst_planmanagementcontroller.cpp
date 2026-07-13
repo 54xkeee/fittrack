@@ -76,7 +76,8 @@ void PlanManagementControllerTest::protectsSystemPlansAndManagesPersonalPlans()
     QVERIFY(setup.exec(QStringLiteral(
         "INSERT INTO exercise(id,name_zh,body_part,movement,load_mode,recommended_sets,recommended_reps,rest_seconds) VALUES"
         "('bench','杠铃卧推','胸部','水平推','Standard',3,'8-12',120),"
-        "('row','坐姿划船','背部','水平拉','Standard',4,'10',90)")));
+        "('row','坐姿划船','背部','水平拉','Standard',4,'10',90),"
+        "('squat','杠铃深蹲','臀腿','深蹲','Standard',4,'8-12',180)")));
     QVERIFY(setup.exec(QStringLiteral(
         "INSERT INTO training_plan(id,name,is_system,is_read_only) VALUES('system','原版',1,1)")));
     QVERIFY(setup.exec(QStringLiteral(
@@ -110,6 +111,31 @@ void PlanManagementControllerTest::protectsSystemPlansAndManagesPersonalPlans()
     exercises = plans.selectedPlan().value(QStringLiteral("days")).toList().first()
                     .toMap().value(QStringLiteral("exercises")).toList();
     QCOMPARE(exercises.first().toMap().value(QStringLiteral("sets")).toInt(), 5);
+    QVERIFY(plans.replaceExercise(benchPlanExerciseId, QStringLiteral("squat")));
+    exercises = plans.selectedPlan().value(QStringLiteral("days")).toList().first()
+                    .toMap().value(QStringLiteral("exercises")).toList();
+    QCOMPARE(exercises.first().toMap().value(QStringLiteral("id")).toString(), benchPlanExerciseId);
+    QCOMPARE(exercises.first().toMap().value(QStringLiteral("name")).toString(), QStringLiteral("杠铃深蹲"));
+    QCOMPARE(exercises.first().toMap().value(QStringLiteral("sets")).toInt(), 5);
+    QCOMPARE(exercises.first().toMap().value(QStringLiteral("reps")).toString(), QStringLiteral("6-8"));
+    QCOMPARE(exercises.first().toMap().value(QStringLiteral("restSeconds")).toInt(), 180);
+    QVERIFY(!plans.replaceExercise(QStringLiteral("missing"), QStringLiteral("bench")));
+    QVERIFY(plans.addSection(dayId, QStringLiteral("主要动作")));
+    auto sections = plans.selectedPlan().value(QStringLiteral("days")).toList().first()
+                        .toMap().value(QStringLiteral("sections")).toList();
+    QCOMPARE(sections.size(), 1);
+    const QString sectionId = sections.first().toMap().value(QStringLiteral("id")).toString();
+    QVERIFY(plans.renameSection(sectionId, QStringLiteral("复合动作")));
+    QVERIFY(plans.setExerciseSection(benchPlanExerciseId, sectionId));
+    exercises = plans.selectedPlan().value(QStringLiteral("days")).toList().first()
+                    .toMap().value(QStringLiteral("exercises")).toList();
+    QCOMPARE(exercises.first().toMap().value(QStringLiteral("sectionName")).toString(),
+             QStringLiteral("复合动作"));
+    QVERIFY(!plans.setExerciseSection(benchPlanExerciseId, QStringLiteral("missing")));
+    QVERIFY(plans.deleteSection(sectionId));
+    exercises = plans.selectedPlan().value(QStringLiteral("days")).toList().first()
+                    .toMap().value(QStringLiteral("exercises")).toList();
+    QVERIFY(exercises.first().toMap().value(QStringLiteral("sectionId")).toString().isEmpty());
     QVERIFY(plans.moveExercise(dayId, 1, 0));
     exercises = plans.selectedPlan().value(QStringLiteral("days")).toList().first()
                     .toMap().value(QStringLiteral("exercises")).toList();

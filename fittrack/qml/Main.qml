@@ -70,6 +70,7 @@ ApplicationWindow {
             Layout.fillWidth: true
             Layout.fillHeight: true
             Layout.minimumWidth: 0
+            onWorkoutSummaryDone: navigation.currentIndex = 0
         }
     }
 
@@ -77,8 +78,10 @@ ApplicationWindow {
         target: workoutController
         function onWorkoutFinished(sessionId) {
             cardioController.setPendingSession(sessionId)
-            insightsPage.openCardio()
+            workoutHistory.reload()
             navigation.currentIndex = 4
+            if (!insightsPage.openWorkoutSummary(sessionId))
+                insightsPage.openCardio()
         }
     }
 

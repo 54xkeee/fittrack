@@ -74,11 +74,26 @@ bool PlanManagementController::selectPlan(const QString &planId)
     day.addBindValue(planId);
     if (!day.exec()) return fail(day.lastError().text());
     while (day.next()) {
+        QVariantList sections;
+        QSqlQuery section(m_database);
+        section.prepare(QStringLiteral(
+            "SELECT id,name FROM plan_section WHERE day_id=? ORDER BY sort_order,id"));
+        section.addBindValue(day.value(0));
+        if (!section.exec()) return fail(section.lastError().text());
+        while (section.next()) {
+            sections.append(QVariantMap{
+                {QStringLiteral("id"), section.value(0)},
+                {QStringLiteral("name"), section.value(1)},
+            });
+        }
+
         QVariantList exercises;
         QSqlQuery exercise(m_database);
         exercise.prepare(QStringLiteral(
-            "SELECT e.name_zh,pe.default_sets,pe.default_reps,pe.notes,pe.id,pe.rest_seconds "
+            "SELECT e.name_zh,pe.default_sets,pe.default_reps,pe.notes,pe.id,pe.rest_seconds,"
+            "pe.section_id,COALESCE(s.name,'') "
             "FROM plan_exercise pe JOIN exercise e ON e.id=pe.exercise_id "
+            "LEFT JOIN plan_section s ON s.id=pe.section_id "
             "WHERE pe.day_id=? ORDER BY pe.sort_order"));
         exercise.addBindValue(day.value(0));
         if (exercise.exec()) {
@@ -90,6 +105,8 @@ bool PlanManagementController::selectPlan(const QString &planId)
                     {QStringLiteral("notes"), exercise.value(3)},
                     {QStringLiteral("id"), exercise.value(4)},
                     {QStringLiteral("restSeconds"), exercise.value(5)},
+                    {QStringLiteral("sectionId"), exercise.value(6)},
+                    {QStringLiteral("sectionName"), exercise.value(7)},
                 });
             }
         }
@@ -97,6 +114,7 @@ bool PlanManagementController::selectPlan(const QString &planId)
             {QStringLiteral("id"), day.value(0)},
             {QStringLiteral("name"), day.value(1)},
             {QStringLiteral("exerciseCount"), day.value(3)},
+            {QStringLiteral("sections"), sections},
             {QStringLiteral("exercises"), exercises},
         });
     }
@@ -137,6 +155,17 @@ QString PlanManagementController::editableExercisePlanId(const QString &planExer
         "SELECT p.id FROM plan_exercise pe JOIN plan_day d ON d.id=pe.day_id "
         "JOIN training_plan p ON p.id=d.plan_id WHERE pe.id=? AND p.is_system=0 AND p.is_read_only=0"));
     query.addBindValue(planExerciseId);
+    return query.exec() && query.next() ? query.value(0).toString() : QString{};
+}
+
+QString PlanManagementController::editableSectionPlanId(const QString &sectionId) const
+{
+    QSqlQuery query(m_database);
+    query.prepare(QStringLiteral(
+        "SELECT p.id FROM plan_section s JOIN plan_day d ON d.id=s.day_id "
+        "JOIN training_plan p ON p.id=d.plan_id "
+        "WHERE s.id=? AND p.is_system=0 AND p.is_read_only=0"));
+    query.addBindValue(sectionId);
     return query.exec() && query.next() ? query.value(0).toString() : QString{};
 }
 
@@ -348,6 +377,55 @@ bool PlanManagementController::deleteDay(const QString &dayId)
     return selectPlan(planId);
 }
 
+bool PlanManagementController::addSection(const QString &dayId, const QString &name)
+{
+    clearError();
+    const QString planId = editableDayPlanId(dayId);
+    const QString trimmed = name.trimmed();
+    if (planId.isEmpty()) return fail(QStringLiteral("系统训练日不能修改"));
+    if (trimmed.isEmpty()) return fail(QStringLiteral("分组名称不能为空"));
+    QSqlQuery insert(m_database);
+    insert.prepare(QStringLiteral(
+        "INSERT INTO plan_section(id,day_id,name,sort_order) "
+        "VALUES(?,?,?,(SELECT COUNT(*) FROM plan_section WHERE day_id=?))"));
+    insert.addBindValue(newId());
+    insert.addBindValue(dayId);
+    insert.addBindValue(trimmed);
+    insert.addBindValue(dayId);
+    if (!insert.exec()) return fail(insert.lastError().text());
+    reload();
+    return selectPlan(planId);
+}
+
+bool PlanManagementController::renameSection(const QString &sectionId, const QString &name)
+{
+    clearError();
+    const QString planId = editableSectionPlanId(sectionId);
+    const QString trimmed = name.trimmed();
+    if (planId.isEmpty()) return fail(QStringLiteral("系统计划分组不能修改"));
+    if (trimmed.isEmpty()) return fail(QStringLiteral("分组名称不能为空"));
+    QSqlQuery update(m_database);
+    update.prepare(QStringLiteral("UPDATE plan_section SET name=? WHERE id=?"));
+    update.addBindValue(trimmed);
+    update.addBindValue(sectionId);
+    if (!update.exec()) return fail(update.lastError().text());
+    reload();
+    return selectPlan(planId);
+}
+
+bool PlanManagementController::deleteSection(const QString &sectionId)
+{
+    clearError();
+    const QString planId = editableSectionPlanId(sectionId);
+    if (planId.isEmpty()) return fail(QStringLiteral("系统计划分组不能删除"));
+    QSqlQuery remove(m_database);
+    remove.prepare(QStringLiteral("DELETE FROM plan_section WHERE id=?"));
+    remove.addBindValue(sectionId);
+    if (!remove.exec()) return fail(remove.lastError().text());
+    reload();
+    return selectPlan(planId);
+}
+
 bool PlanManagementController::addExercise(const QString &dayId, const QString &exerciseId)
 {
     clearError();
@@ -389,6 +467,57 @@ bool PlanManagementController::updateExercise(
     update.addBindValue(sets);
     update.addBindValue(reps.trimmed());
     update.addBindValue(restSeconds);
+    update.addBindValue(planExerciseId);
+    if (!update.exec()) return fail(update.lastError().text());
+    reload();
+    return selectPlan(planId);
+}
+
+bool PlanManagementController::replaceExercise(const QString &planExerciseId,
+                                                const QString &exerciseId)
+{
+    clearError();
+    const QString planId = editableExercisePlanId(planExerciseId);
+    if (planId.isEmpty()) return fail(QStringLiteral("系统计划动作不能替换"));
+
+    QSqlQuery exercise(m_database);
+    exercise.prepare(QStringLiteral("SELECT 1 FROM exercise WHERE id=? AND is_enabled=1"));
+    exercise.addBindValue(exerciseId);
+    if (!exercise.exec()) return fail(exercise.lastError().text());
+    if (!exercise.next()) return fail(QStringLiteral("找不到可用动作"));
+
+    QSqlQuery update(m_database);
+    update.prepare(QStringLiteral("UPDATE plan_exercise SET exercise_id=? WHERE id=?"));
+    update.addBindValue(exerciseId);
+    update.addBindValue(planExerciseId);
+    if (!update.exec()) return fail(update.lastError().text());
+    reload();
+    return selectPlan(planId);
+}
+
+bool PlanManagementController::setExerciseSection(const QString &planExerciseId,
+                                                   const QString &sectionId)
+{
+    clearError();
+    const QString planId = editableExercisePlanId(planExerciseId);
+    if (planId.isEmpty()) return fail(QStringLiteral("系统计划动作不能修改"));
+
+    QVariant sectionValue;
+    if (!sectionId.isEmpty()) {
+        QSqlQuery owner(m_database);
+        owner.prepare(QStringLiteral(
+            "SELECT 1 FROM plan_exercise pe JOIN plan_section s ON s.day_id=pe.day_id "
+            "WHERE pe.id=? AND s.id=?"));
+        owner.addBindValue(planExerciseId);
+        owner.addBindValue(sectionId);
+        if (!owner.exec()) return fail(owner.lastError().text());
+        if (!owner.next()) return fail(QStringLiteral("分组不属于当前训练日"));
+        sectionValue = sectionId;
+    }
+
+    QSqlQuery update(m_database);
+    update.prepare(QStringLiteral("UPDATE plan_exercise SET section_id=? WHERE id=?"));
+    update.addBindValue(sectionValue);
     update.addBindValue(planExerciseId);
     if (!update.exec()) return fail(update.lastError().text());
     reload();

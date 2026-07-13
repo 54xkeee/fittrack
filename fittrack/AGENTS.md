@@ -32,7 +32,7 @@ powershell -ExecutionPolicy Bypass -File C:\FitTrackDev\fittrack\scripts\build-a
 powershell -ExecutionPolicy Bypass -File C:\FitTrackDev\fittrack\scripts\build-android.ps1 -Configuration Release -Bundle
 ```
 
-当前测试基线为 14 项。视觉验收使用 `tst_qmlnavigation` 在 360×800、420×920、480×1056 生成 `build/visual/*.png`，并额外检查训练进行中、带真实数据的历史详情和非空分析页面。
+当前测试基线为 14 项。视觉验收使用 `tst_qmlnavigation` 在 360×800、420×920、480×1056 生成 `build/visual/*.png`，并额外检查可编辑个人计划、训练进行中、训练完成总结、带真实数据的历史详情和非空分析页面。
 
 Android 当前基线为包名 `com.fittrack.app`、min API 28、target/compile API 35、仅 `arm64-v8a`。Debug APK 必须通过 Android Lint、`aapt` 清单检查和 `apksigner` 校验；Release 签名只从四个 `QT_ANDROID_KEYSTORE_*` 环境变量读取，不提交密钥或密码。直接分享前必须冻结包名、使用长期密钥签名，并在一加 Ace 5 Pro 验收后台计时、通知拒绝、SAF、返回键、ColorOS 电池策略和同签名覆盖升级。构建与排障见 [`../docs/fittrack-android-build.md`](../docs/fittrack-android-build.md)。
 

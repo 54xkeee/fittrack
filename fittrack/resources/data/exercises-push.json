@@ -211,7 +211,7 @@
     "media": [
       {
         "type": "image",
-        "localPath": "qrc:/images/exercises/push/flat-dumbbell-fly.svg",
+        "localPath": "qrc:/images/exercises/push/flat-dumbbell-fly.png",
         "url": "https://commons.wikimedia.org/wiki/File:Dumbbell_flys_2.svg",
         "title": "哑铃飞鸟动作示意图",
         "source": "Wikimedia Commons / Everkinetic",
@@ -261,7 +261,7 @@
     "media": [
       {
         "type": "image",
-        "localPath": "qrc:/images/exercises/push/seated-shoulder-press.svg",
+        "localPath": "qrc:/images/exercises/push/seated-shoulder-press.png",
         "url": "https://commons.wikimedia.org/wiki/File:Dumbbell_shoulder_press_2.svg",
         "title": "哑铃推肩动作示意图",
         "source": "Wikimedia Commons / Everkinetic",

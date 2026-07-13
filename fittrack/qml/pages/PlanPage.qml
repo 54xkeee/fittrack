@@ -14,6 +14,26 @@ AppPage {
                                              && String(planManagement.selectedPlan.id).length > 0
     readonly property bool selectedPlanReadOnly: hasSelectedPlan
                                                    && Boolean(planManagement.selectedPlan.isReadOnly)
+    property string draggedDayId: ""
+    property int draggedFromIndex: -1
+    property int draggedToIndex: -1
+
+    function beginExerciseDrag(dayId, index) {
+        draggedDayId = dayId
+        draggedFromIndex = index
+        draggedToIndex = index
+    }
+
+    function finishExerciseDrag() {
+        const dayId = draggedDayId
+        const fromIndex = draggedFromIndex
+        const toIndex = draggedToIndex
+        draggedDayId = ""
+        draggedFromIndex = -1
+        draggedToIndex = -1
+        if (dayId.length > 0 && fromIndex >= 0 && toIndex >= 0 && fromIndex !== toIndex)
+            planManagement.moveExercise(dayId, fromIndex, toIndex)
+    }
 
     function openTextDialog(mode, targetId, currentValue) {
         textDialog.mode = mode
@@ -33,8 +53,12 @@ AppPage {
             succeeded = planManagement.renamePlan(textDialog.targetId, value)
         else if (textDialog.mode === "addDay")
             succeeded = planManagement.addDay(textDialog.targetId, value)
-        else
+        else if (textDialog.mode === "renameDay")
             succeeded = planManagement.renameDay(textDialog.targetId, value)
+        else if (textDialog.mode === "addSection")
+            succeeded = planManagement.addSection(textDialog.targetId, value)
+        else
+            succeeded = planManagement.renameSection(textDialog.targetId, value)
 
         if (succeeded)
             textDialog.close()
@@ -63,7 +87,9 @@ AppPage {
         title: mode === "createPlan" ? qsTr("新建计划")
              : mode === "copyPlan" ? qsTr("复制为个人版")
              : mode === "renamePlan" ? qsTr("重命名计划")
-             : mode === "addDay" ? qsTr("添加训练日") : qsTr("重命名训练日")
+             : mode === "addDay" ? qsTr("添加训练日")
+             : mode === "renameDay" ? qsTr("重命名训练日")
+             : mode === "addSection" ? qsTr("新建动作分组") : qsTr("重命名动作分组")
 
         Overlay.modal: Rectangle { color: Design.Theme.scrim }
 
@@ -155,11 +181,14 @@ AppPage {
         property string displayName: ""
 
         title: kind === "plan" ? qsTr("删除个人计划？")
-             : kind === "day" ? qsTr("删除训练日？") : qsTr("删除动作？")
+             : kind === "day" ? qsTr("删除训练日？")
+             : kind === "section" ? qsTr("删除动作分组？") : qsTr("删除动作？")
         message: kind === "plan"
                  ? qsTr("“%1”及其中全部训练日都会被删除，历史训练记录不受影响。").arg(displayName)
                  : kind === "day"
                    ? qsTr("“%1”及其中全部动作都会从该计划移除。").arg(displayName)
+                   : kind === "section"
+                     ? qsTr("“%1”会被删除，组内动作将保留为未分组。").arg(displayName)
                    : qsTr("“%1”会从当前训练日移除。").arg(displayName)
         confirmText: qsTr("删除")
         cancelText: qsTr("取消")
@@ -169,6 +198,8 @@ AppPage {
                 planManagement.deletePlan(targetId)
             else if (kind === "day")
                 planManagement.deleteDay(targetId)
+            else if (kind === "section")
+                planManagement.deleteSection(targetId)
             else
                 planManagement.removeExercise(targetId)
         }
@@ -178,6 +209,7 @@ AppPage {
         id: actionPicker
 
         property string dayId: ""
+        property string replacePlanExerciseId: ""
 
         parent: Overlay.overlay
         anchors.centerIn: Overlay.overlay
@@ -209,7 +241,8 @@ AppPage {
                 spacing: Design.Theme.space8
 
                 Label {
-                    text: qsTr("添加动作")
+                    text: actionPicker.replacePlanExerciseId.length > 0
+                          ? qsTr("替换动作") : qsTr("添加动作")
                     color: Design.Theme.surfaceText
                     font.pixelSize: Design.Theme.typeTitle
                     font.weight: Font.DemiBold
@@ -266,7 +299,11 @@ AppPage {
                     leftPadding: Design.Theme.space16
                     rightPadding: Design.Theme.space16
                     onClicked: {
-                        if (planManagement.addExercise(actionPicker.dayId, exerciseId))
+                        const succeeded = actionPicker.replacePlanExerciseId.length > 0
+                                ? planManagement.replaceExercise(actionPicker.replacePlanExerciseId,
+                                                                 exerciseId)
+                                : planManagement.addExercise(actionPicker.dayId, exerciseId)
+                        if (succeeded)
                             actionPicker.close()
                     }
                     contentItem: RowLayout {
@@ -316,6 +353,7 @@ AppPage {
         onClosed: {
             exerciseSearch.text = ""
             planExerciseModel.searchText = ""
+            replacePlanExerciseId = ""
         }
     }
 
@@ -774,6 +812,7 @@ AppPage {
                                         text: qsTr("添加动作")
                                         onTriggered: {
                                             actionPicker.dayId = dayCard.modelData.id
+                                            actionPicker.replacePlanExerciseId = ""
                                             actionPicker.open()
                                         }
                                     }
@@ -782,6 +821,41 @@ AppPage {
                                         onTriggered: page.openTextDialog("renameDay",
                                                                          dayCard.modelData.id,
                                                                          dayCard.modelData.name)
+                                    }
+                                    Menu {
+                                        title: qsTr("动作分组")
+
+                                        MenuItem {
+                                            text: qsTr("新建分组")
+                                            onTriggered: page.openTextDialog("addSection",
+                                                                             dayCard.modelData.id,
+                                                                             "")
+                                        }
+
+                                        MenuSeparator { visible: dayCard.modelData.sections.length > 0 }
+
+                                        Repeater {
+                                            model: dayCard.modelData.sections
+
+                                            delegate: Menu {
+                                                id: sectionMenu
+                                                required property var modelData
+                                                title: modelData.name
+
+                                                MenuItem {
+                                                    text: qsTr("重命名")
+                                                    onTriggered: page.openTextDialog("renameSection",
+                                                                                     sectionMenu.modelData.id,
+                                                                                     sectionMenu.modelData.name)
+                                                }
+                                                MenuItem {
+                                                    text: qsTr("删除")
+                                                    onTriggered: page.requestDelete("section",
+                                                                                   sectionMenu.modelData.id,
+                                                                                   sectionMenu.modelData.name)
+                                                }
+                                            }
+                                        }
                                     }
                                     MenuSeparator { }
                                     MenuItem {
@@ -820,14 +894,57 @@ AppPage {
 
                                     required property var modelData
                                     required property int index
+                                    property int exerciseIndex: index
+                                    property string dayId: dayCard.modelData.id
 
                                     Layout.fillWidth: true
                                     implicitHeight: 68
-                                    color: "transparent"
+                                    color: page.draggedDayId === dayId
+                                           && page.draggedToIndex === exerciseIndex
+                                           && page.draggedFromIndex !== exerciseIndex
+                                           ? Design.Theme.primaryContainer : "transparent"
+                                    radius: Design.Theme.radiusSmall
+                                    border.width: page.draggedDayId === dayId
+                                                  && page.draggedToIndex === exerciseIndex
+                                                  && page.draggedFromIndex !== exerciseIndex ? 1 : 0
+                                    border.color: Design.Theme.primary
+                                    Drag.active: planReorderDrag.active
+                                    Drag.source: exerciseRow
+                                    Drag.keys: ["fittrack-plan-exercise"]
+                                    Drag.hotSpot.x: width / 2
+                                    Drag.hotSpot.y: height / 2
+                                    z: Drag.active ? 10 : 0
+
+                                    DropArea {
+                                        anchors.fill: parent
+                                        keys: ["fittrack-plan-exercise"]
+                                        onEntered: function(drag) {
+                                            if (drag.source && drag.source.dayId === exerciseRow.dayId)
+                                                page.draggedToIndex = exerciseRow.exerciseIndex
+                                        }
+                                    }
 
                                     RowLayout {
                                         anchors.fill: parent
-                                        spacing: Design.Theme.space12
+                                        spacing: Design.Theme.space8
+
+                                        IconButton {
+                                            visible: !page.selectedPlanReadOnly
+                                            glyph: "↕"
+                                            accessibleName: qsTr("拖动调整动作顺序")
+
+                                            DragHandler {
+                                                id: planReorderDrag
+                                                target: null
+                                                onActiveChanged: {
+                                                    if (active)
+                                                        page.beginExerciseDrag(exerciseRow.dayId,
+                                                                               exerciseRow.exerciseIndex)
+                                                    else
+                                                        page.finishExerciseDrag()
+                                                }
+                                            }
+                                        }
 
                                         Rectangle {
                                             Layout.preferredWidth: 32
@@ -861,7 +978,9 @@ AppPage {
                                             }
 
                                             Label {
-                                                text: qsTr("%1 组 · %2 次 · 休息 %3 秒")
+                                                text: (String(exerciseRow.modelData.sectionName || "").length > 0
+                                                       ? qsTr("%1 · ").arg(exerciseRow.modelData.sectionName) : "")
+                                                      + qsTr("%1 组 · %2 次 · 休息 %3 秒")
                                                       .arg(exerciseRow.modelData.sets)
                                                       .arg(exerciseRow.modelData.reps)
                                                       .arg(exerciseRow.modelData.restSeconds)
@@ -889,6 +1008,41 @@ AppPage {
                                                     editReps.text = exerciseRow.modelData.reps
                                                     editRest.value = exerciseRow.modelData.restSeconds
                                                     actionEditor.open()
+                                                }
+                                            }
+                                            MenuItem {
+                                                text: qsTr("替换动作")
+                                                onTriggered: {
+                                                    actionPicker.dayId = dayCard.modelData.id
+                                                    actionPicker.replacePlanExerciseId = exerciseRow.modelData.id
+                                                    actionPicker.open()
+                                                }
+                                            }
+                                            Menu {
+                                                title: qsTr("移动到动作分组")
+
+                                                MenuItem {
+                                                    text: qsTr("未分组")
+                                                    checkable: true
+                                                    checked: String(exerciseRow.modelData.sectionId || "").length === 0
+                                                    onTriggered: planManagement.setExerciseSection(
+                                                                     exerciseRow.modelData.id, "")
+                                                }
+
+                                                Repeater {
+                                                    model: dayCard.modelData.sections
+
+                                                    delegate: MenuItem {
+                                                        id: sectionChoice
+                                                        required property var modelData
+                                                        text: modelData.name
+                                                        checkable: true
+                                                        checked: String(exerciseRow.modelData.sectionId)
+                                                                 === String(modelData.id)
+                                                        onTriggered: planManagement.setExerciseSection(
+                                                                         exerciseRow.modelData.id,
+                                                                         sectionChoice.modelData.id)
+                                                    }
                                                 }
                                             }
                                             MenuItem {

@@ -8,8 +8,12 @@ AppPage {
     id: page
     objectName: "historyPage"
 
+    signal completionDismissed()
+    signal addCardioRequested()
+
     implicitWidth: 0
     property bool showDetails: false
+    property bool completionMode: false
 
     readonly property var selectedSession: workoutHistory.selectedSession || ({})
     readonly property bool hasSelectedSession: selectedSession.id !== undefined
@@ -73,13 +77,46 @@ AppPage {
     }
 
     function openSession(sessionId) {
-        if (workoutHistory.selectSession(sessionId))
+        completionMode = false
+        if (workoutHistory.selectSession(sessionId)) {
             showDetails = true
+            detailScroll.contentItem.contentY = 0
+        }
+    }
+
+    function openCompletion(sessionId) {
+        completionMode = true
+        if (!workoutHistory.selectSession(sessionId)) {
+            completionMode = false
+            return false
+        }
+        showDetails = true
+        detailScroll.contentItem.contentY = 0
+        return true
+    }
+
+    function dismissCompletion() {
+        if (!completionMode)
+            return
+        completionMode = false
+        showDetails = false
+        completionDismissed()
+    }
+
+    function continueToCardio() {
+        if (!completionMode)
+            return
+        completionMode = false
+        addCardioRequested()
     }
 
     function handleBack() {
         if (!showDetails)
             return false
+        if (completionMode) {
+            dismissCompletion()
+            return true
+        }
         showDetails = false
         return true
     }
@@ -316,7 +353,7 @@ AppPage {
                 visible: page.showDetails
                 glyph: "‹"
                 accessibleName: qsTr("返回训练历史")
-                onClicked: page.showDetails = false
+                onClicked: page.handleBack()
             }
 
             ColumnLayout {
@@ -496,6 +533,57 @@ AppPage {
             ColumnLayout {
                 width: detailScroll.availableWidth
                 spacing: Design.Theme.space12
+
+                AppCard {
+                    visible: page.completionMode
+                    Layout.fillWidth: true
+
+                    background: Rectangle {
+                        color: Design.Theme.primaryContainer
+                        radius: Design.Theme.radiusMedium
+                        border.width: 1
+                        border.color: Design.Theme.primary
+                    }
+
+                    ColumnLayout {
+                        anchors.fill: parent
+                        spacing: Design.Theme.space12
+
+                        Label {
+                            Layout.fillWidth: true
+                            text: qsTr("训练已保存")
+                            color: Design.Theme.primaryContainerText
+                            font.pixelSize: Design.Theme.typeTitle
+                            font.weight: Font.Bold
+                        }
+
+                        Label {
+                            Layout.fillWidth: true
+                            text: qsTr("本次训练数据已经保存。你可以查看总结，或继续记录有氧。")
+                            color: Design.Theme.primaryContainerText
+                            font.pixelSize: Design.Theme.typeLabel
+                            wrapMode: Text.WordWrap
+                        }
+
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: Design.Theme.space8
+
+                            AppButton {
+                                Layout.fillWidth: true
+                                text: qsTr("完成")
+                                variant: "secondary"
+                                onClicked: page.dismissCompletion()
+                            }
+
+                            AppButton {
+                                Layout.fillWidth: true
+                                text: qsTr("添加有氧")
+                                onClicked: page.continueToCardio()
+                            }
+                        }
+                    }
+                }
 
                 AppCard {
                     Layout.fillWidth: true
