@@ -18,6 +18,8 @@ AppPage {
     property int draggedFromIndex: -1
     property int draggedToIndex: -1
 
+    ExerciseDetailSheet { id: sharedExerciseDetail }
+
     function beginExerciseDrag(dayId, index) {
         draggedDayId = dayId
         draggedFromIndex = index
@@ -361,6 +363,13 @@ AppPage {
                             font.pixelSize: Design.Theme.typeTitle
                             font.weight: Font.DemiBold
                         }
+
+                        IconButton {
+                            glyph: "›"
+                            accessibleName: qsTr("预览 %1").arg(name)
+                            onClicked: sharedExerciseDetail.openExercise(
+                                           planExerciseModel.exerciseById(exerciseId))
+                        }
                     }
                 }
 
@@ -385,6 +394,16 @@ AppPage {
         id: actionEditor
 
         property string planExerciseId: ""
+        property var exerciseData: ({})
+
+        function openForExercise(data) {
+            exerciseData = data
+            planExerciseId = data.id
+            editSets.value = data.sets
+            editReps.text = data.reps
+            editRest.value = data.restSeconds
+            open()
+        }
 
         parent: Overlay.overlay
         anchors.centerIn: Overlay.overlay
@@ -426,6 +445,17 @@ AppPage {
                     editable: true
                     Layout.fillWidth: true
                     implicitHeight: Design.Theme.controlHeight
+                }
+            }
+
+            AppButton {
+                Layout.fillWidth: true
+                text: qsTr("恢复动作推荐值")
+                variant: "secondary"
+                onClicked: {
+                    editSets.value = Math.max(1, Number(actionEditor.exerciseData.recommendedSets || 1))
+                    editReps.text = String(actionEditor.exerciseData.recommendedReps || "8-12")
+                    editRest.value = Number(actionEditor.exerciseData.recommendedRestSeconds || 0)
                 }
             }
 
@@ -1050,7 +1080,8 @@ AppPage {
                             }
 
                             RowLayout {
-                                visible: dayCard.modelData.cardio && dayCard.modelData.cardio.type
+                                visible: Boolean(dayCard.modelData.cardio
+                                                 && dayCard.modelData.cardio.type)
                                 Layout.fillWidth: true
                                 spacing: Design.Theme.space8
 
@@ -1170,13 +1201,23 @@ AppPage {
                                             Layout.minimumWidth: 0
                                             spacing: Design.Theme.space4
 
-                                            Label {
-                                                text: exerciseRow.modelData.name
-                                                color: Design.Theme.surfaceText
-                                                font.pixelSize: Design.Theme.typeLabel
-                                                font.weight: Font.DemiBold
-                                                elide: Text.ElideRight
+                                            Button {
                                                 Layout.fillWidth: true
+                                                implicitHeight: 32
+                                                padding: 0
+                                                flat: true
+                                                Accessible.name: exerciseRow.modelData.name
+                                                Accessible.description: qsTr("查看动作做法")
+                                                onClicked: sharedExerciseDetail.openExercise(
+                                                               exerciseModel.exerciseById(
+                                                                   exerciseRow.modelData.exerciseId))
+                                                contentItem: Label {
+                                                    text: exerciseRow.modelData.name
+                                                    color: Design.Theme.surfaceText
+                                                    font.pixelSize: Design.Theme.typeLabel
+                                                    font.weight: Font.DemiBold
+                                                    elide: Text.ElideRight
+                                                }
                                             }
 
                                             Label {
@@ -1204,13 +1245,8 @@ AppPage {
                                             id: exerciseMenu
                                             MenuItem {
                                                 text: qsTr("编辑参数")
-                                                onTriggered: {
-                                                    actionEditor.planExerciseId = exerciseRow.modelData.id
-                                                    editSets.value = exerciseRow.modelData.sets
-                                                    editReps.text = exerciseRow.modelData.reps
-                                                    editRest.value = exerciseRow.modelData.restSeconds
-                                                    actionEditor.open()
-                                                }
+                                                onTriggered: actionEditor.openForExercise(
+                                                                 exerciseRow.modelData)
                                             }
                                             MenuItem {
                                                 text: qsTr("替换动作")

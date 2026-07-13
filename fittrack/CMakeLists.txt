@@ -116,6 +116,9 @@ qt_add_qml_module(fittrack
         qml/components/TrendChart.qml
         qml/components/WorkoutStartConflictDialog.qml
         qml/components/WorkoutRecoveryDialog.qml
+        qml/components/ExerciseDetailSheet.qml
+        qml/components/ExerciseParameterSheet.qml
+        qml/components/ExercisePickerSheet.qml
         qml/components/MuscleBars.qml
         qml/pages/HomePage.qml
         qml/pages/ExerciseLibraryPage.qml
@@ -126,6 +129,7 @@ qt_add_qml_module(fittrack
         qml/pages/InsightsPage.qml
         qml/pages/CardioPage.qml
         qml/pages/ManagementPage.qml
+        qml/pages/WorkoutPreparationPage.qml
     RESOURCES
         qml/theme/qmldir
 )

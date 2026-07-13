@@ -22,6 +22,6 @@ AppDialog {
         font.pixelSize: Design.Theme.typeBody
         lineHeight: 1.4
         wrapMode: Text.WordWrap
-        Accessible.name: root.title + ". " + root.message
+        Accessible.name: root.message
     }
 }

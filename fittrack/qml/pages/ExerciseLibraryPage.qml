@@ -160,6 +160,10 @@ AppPage {
     }
 
     function openExerciseDetail(data) {
+        if (data.isSystem) {
+            sharedExerciseDetail.openExercise(exerciseModel.exerciseById(data.exerciseId))
+            return
+        }
         detailDialog.exerciseId = data.exerciseId
         detailDialog.isSystem = data.isSystem
         detailDialog.isFavorite = data.isFavorite
@@ -186,6 +190,11 @@ AppPage {
         detailDialog.recommendedReps = data.recommendedReps
         detailDialog.restSeconds = data.restSeconds
         detailDialog.open()
+    }
+
+    ExerciseDetailSheet {
+        id: sharedExerciseDetail
+        objectName: "libraryExerciseDetailSheet"
     }
 
     Timer {
@@ -404,6 +413,7 @@ AppPage {
         property int recommendedSets: 3
         property string recommendedReps: "8-12"
         property int restSeconds: 90
+        readonly property Item accessibleItem: detailSurface
 
         parent: Overlay.overlay
         anchors.centerIn: Overlay.overlay
@@ -413,14 +423,22 @@ AppPage {
         focus: true
         padding: 0
         closePolicy: Popup.CloseOnEscape
+        title: exerciseName.length > 0
+               ? qsTr("%1动作详情").arg(exerciseName)
+               : qsTr("动作详情")
 
         Overlay.modal: Rectangle { color: Design.Theme.scrim }
 
         background: Rectangle {
+            id: detailSurface
+            objectName: "exerciseDetailDialogSurface"
             color: Design.Theme.background
             radius: Design.Theme.radiusLarge
             border.width: 1
             border.color: Design.Theme.outline
+            Accessible.role: Accessible.Dialog
+            Accessible.name: detailDialog.title
+            Accessible.description: detailDialog.introduction
         }
 
         header: Item {
@@ -476,6 +494,7 @@ AppPage {
                     }
                 }
                 IconButton {
+                    id: closeDetailButton
                     glyph: "×"
                     accessibleName: qsTr("关闭动作详情")
                     onClicked: detailDialog.close()
@@ -506,6 +525,7 @@ AppPage {
 
                     Image {
                         id: detailImage
+                        objectName: "exerciseDetailImage"
                         anchors.fill: parent
                         anchors.margins: Design.Theme.space8
                         source: detailDialog.currentMedia.url || ""
@@ -514,6 +534,12 @@ AppPage {
                         fillMode: Image.PreserveAspectFit
                         asynchronous: true
                         visible: source.toString().length > 0 && status === Image.Ready
+                        Accessible.role: Accessible.Graphic
+                        Accessible.name: (detailDialog.currentMedia.title || "").length > 0
+                                         ? detailDialog.currentMedia.title
+                                         : qsTr("%1动作图").arg(detailDialog.exerciseName)
+                        Accessible.description: qsTr("用于识别%1动作")
+                                                .arg(detailDialog.exerciseName)
                     }
 
                     BusyIndicator {
@@ -655,12 +681,13 @@ AppPage {
                         }
                     }
                     Rectangle {
+                        id: movementTagContainer
+                        objectName: "exerciseMovementTag"
                         visible: detailDialog.movement.length > 0
                         implicitWidth: movementTag.implicitWidth + Design.Theme.space16
                         implicitHeight: 32
                         radius: Design.Theme.radiusSmall
-                        color: detailDialog.mediaUrl.length > 0
-                               ? Design.Theme.mediaBackdrop : Design.Theme.surfaceElevated
+                        color: Design.Theme.surfaceElevated
                         Label {
                             id: movementTag
                             anchors.centerIn: parent
@@ -1042,6 +1069,10 @@ AppPage {
                 }
             }
         }
+
+        onOpened: Qt.callLater(function() {
+            closeDetailButton.forceActiveFocus()
+        })
     }
 
     Dialog {

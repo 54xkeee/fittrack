@@ -102,8 +102,9 @@ Dialog {
         rightPadding: Design.Theme.space24
         topPadding: Design.Theme.space24
         wrapMode: Text.WordWrap
-        Accessible.name: root.title
-        Accessible.description: root.errorText
+        // The dialog surface already exposes the title. Hiding this duplicate
+        // heading prevents TalkBack from announcing the same title twice.
+        Accessible.ignored: true
     }
 
     footer: Item {

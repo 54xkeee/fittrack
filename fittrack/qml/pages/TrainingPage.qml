@@ -13,6 +13,8 @@ AppPage {
     property string selectedExerciseId: ""
     property bool submittingSet: false
 
+    ExerciseDetailSheet { id: sharedExerciseDetail }
+
     function exerciseIndexById(exerciseId) {
         for (let i = 0; i < workoutController.exercises.length; ++i) {
             if (workoutController.exercises[i].id === exerciseId)
@@ -418,6 +420,7 @@ AppPage {
 
                     width: ListView.view.width
                     implicitHeight: 56
+                    rightPadding: 64
                     text: name + "  ·  " + bodyPart
                     Accessible.name: qsTr("选择%1，%2").arg(name).arg(bodyPart)
                     onClicked: {
@@ -437,6 +440,15 @@ AppPage {
                                         ? workoutController.errorMessage
                                         : qsTr("动作更新失败，请重试。"))
                     }
+                    IconButton {
+                        anchors.right: parent.right
+                        anchors.rightMargin: Design.Theme.space8
+                        anchors.verticalCenter: parent.verticalCenter
+                        glyph: "›"
+                        accessibleName: qsTr("预览 %1").arg(name)
+                        onClicked: sharedExerciseDetail.openExercise(
+                                       exerciseModel.exerciseById(exerciseId))
+                    }
                 }
             }
         }
@@ -446,6 +458,7 @@ AppPage {
         id: configureDialog
         objectName: "configureExerciseDialog"
         property string targetExerciseId: ""
+        property var defaultParameters: ({})
 
         function openForExercise(exerciseId) {
             targetExerciseId = exerciseId
@@ -453,10 +466,18 @@ AppPage {
             if (index < 0)
                 return
             const exercise = workoutController.exercises[index]
+            defaultParameters = exerciseModel.exerciseById(exercise.exerciseId)
             quickWeight.text = ""
-            quickReps.text = exercise.sets.length > 0 && exercise.sets[0].targetReps !== null
-                    ? String(exercise.sets[0].targetReps) : ""
+            const targets = []
+            for (let setIndex = 0; setIndex < exercise.sets.length; ++setIndex) {
+                if (exercise.sets[setIndex].targetReps !== null
+                        && exercise.sets[setIndex].targetReps !== undefined)
+                    targets.push(String(exercise.sets[setIndex].targetReps))
+            }
+            quickReps.text = targets.length > 0 ? targets.join(",")
+                                                : String(exercise.recommendedReps || "")
             quickSets.value = Math.max(1, exercise.sets.length)
+            quickRest.value = Number(exercise.restSeconds || 0)
             open()
         }
 
@@ -467,11 +488,12 @@ AppPage {
         initialFocusItem: quickWeight.editorItem
         onPrimaryRequested: {
             const index = page.exerciseIndexById(targetExerciseId)
-            const succeeded = index >= 0 && workoutController.configureExercise(
+            const succeeded = index >= 0 && workoutController.configureExerciseParameters(
                                   index,
                                   Number.isFinite(quickWeight.numericValue) ? quickWeight.numericValue : 0,
-                                  Number.isFinite(quickReps.numericValue) ? quickReps.numericValue : 0,
-                                  quickSets.value)
+                                  quickReps.text,
+                                  quickSets.value,
+                                  quickRest.value)
             if (succeeded)
                 accept()
             else
@@ -501,7 +523,13 @@ AppPage {
                     Layout.fillWidth: true
                 }
                 NumberField { id: quickWeight; Layout.fillWidth: true; label: qsTr("重量"); unit: "kg"; decimals: 2 }
-                NumberField { id: quickReps; Layout.fillWidth: true; label: qsTr("目标次数"); decimals: 0; keyboardHints: Qt.ImhDigitsOnly }
+                TextField {
+                    id: quickReps
+                    Layout.fillWidth: true
+                    implicitHeight: Design.Theme.controlHeight
+                    placeholderText: qsTr("目标次数，例如 8-12 或 12,10,8")
+                    Accessible.name: qsTr("目标次数")
+                }
                 RowLayout {
                     Layout.fillWidth: true
                     Label { text: qsTr("组数"); color: Design.Theme.surfaceMuted }
@@ -514,6 +542,30 @@ AppPage {
                         editable: true
                         implicitHeight: Design.Theme.controlHeight
                         Accessible.name: qsTr("组数")
+                    }
+                }
+                RowLayout {
+                    Layout.fillWidth: true
+                    Label { text: qsTr("休息秒数"); color: Design.Theme.surfaceMuted }
+                    Item { Layout.fillWidth: true }
+                    SpinBox {
+                        id: quickRest
+                        from: 0
+                        to: 600
+                        stepSize: 15
+                        editable: true
+                        implicitHeight: Design.Theme.controlHeight
+                        Accessible.name: qsTr("休息秒数")
+                    }
+                }
+                AppButton {
+                    Layout.fillWidth: true
+                    text: qsTr("恢复动作推荐值")
+                    variant: "secondary"
+                    onClicked: {
+                        quickSets.value = Math.max(1, Number(configureDialog.defaultParameters.recommendedSets || 1))
+                        quickReps.text = String(configureDialog.defaultParameters.recommendedReps || "8-12")
+                        quickRest.value = Number(configureDialog.defaultParameters.restSeconds || 0)
                     }
                 }
             }
@@ -1363,13 +1415,24 @@ AppPage {
 
                         RowLayout {
                             Layout.fillWidth: true
-                            Label {
+                            Button {
                                 Layout.fillWidth: true
+                                implicitHeight: Design.Theme.controlHeight
+                                flat: true
+                                padding: 0
                                 text: page.currentExercise ? page.currentExercise.name : ""
-                                color: Design.Theme.surfaceText
-                                font.pixelSize: Design.Theme.typeTitle
-                                font.weight: Font.DemiBold
-                                elide: Text.ElideRight
+                                Accessible.description: qsTr("查看动作做法")
+                                onClicked: if (page.currentExercise)
+                                               sharedExerciseDetail.openExercise(
+                                                   exerciseModel.exerciseById(
+                                                       page.currentExercise.exerciseId))
+                                contentItem: Label {
+                                    text: parent.text
+                                    color: Design.Theme.surfaceText
+                                    font.pixelSize: Design.Theme.typeTitle
+                                    font.weight: Font.DemiBold
+                                    elide: Text.ElideRight
+                                }
                             }
                             Rectangle {
                                 implicitWidth: currentBadge.implicitWidth + Design.Theme.space16
@@ -1631,13 +1694,22 @@ AppPage {
                             ColumnLayout {
                                 Layout.fillWidth: true
                                 spacing: 0
-                                Label {
+                                Button {
                                     Layout.fillWidth: true
+                                    implicitHeight: 36
+                                    flat: true
+                                    padding: 0
                                     text: modelData.name
-                                    color: Design.Theme.surfaceText
-                                    font.pixelSize: Design.Theme.typeBody
-                                    font.weight: Font.DemiBold
-                                    elide: Text.ElideRight
+                                    Accessible.description: qsTr("查看动作做法")
+                                    onClicked: sharedExerciseDetail.openExercise(
+                                                   exerciseModel.exerciseById(modelData.exerciseId))
+                                    contentItem: Label {
+                                        text: parent.text
+                                        color: Design.Theme.surfaceText
+                                        font.pixelSize: Design.Theme.typeBody
+                                        font.weight: Font.DemiBold
+                                        elide: Text.ElideRight
+                                    }
                                 }
                                 Label {
                                     text: qsTr("%1 / %2 组")

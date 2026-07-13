@@ -40,6 +40,8 @@ QVariantList WorkoutSessionController::gyms() const { return m_gyms; }
 QVariantList WorkoutSessionController::equipment() const { return m_equipment; }
 QVariantList WorkoutSessionController::exercises() const { return m_exercises; }
 QVariantList WorkoutSessionController::activeSessions() const { return m_activeSessions; }
+QVariantMap WorkoutSessionController::preparation() const { return m_preparation; }
+bool WorkoutSessionController::preparing() const { return !m_preparation.isEmpty(); }
 QString WorkoutSessionController::selectedGymId() const { return m_selectedGymId; }
 QString WorkoutSessionController::sessionId() const { return m_sessionId; }
 QString WorkoutSessionController::sessionName() const { return m_sessionName; }
@@ -558,6 +560,437 @@ QVariantMap WorkoutSessionController::requestStartFreeWorkout(const QString &nam
     return requestStart(QStringLiteral("free"), QString{}, displayName);
 }
 
+QVariantMap WorkoutSessionController::requestPrepare(
+    const QString &kind, const QString &targetId, const QString &displayName)
+{
+    clearError();
+    const int count = activeSessionCount();
+    refreshUnfinished();
+    if (count > 0) {
+        QVariantMap result = activeSessionSummary();
+        result.insert(QStringLiteral("status"),
+                      count > 1 ? QStringLiteral("recoveryRequired")
+                                : QStringLiteral("conflict"));
+        result.insert(QStringLiteral("activeSessionCount"), count);
+        result.insert(QStringLiteral("requestedKind"), kind);
+        result.insert(QStringLiteral("requestedTargetId"), targetId);
+        result.insert(QStringLiteral("requestedName"), displayName);
+        result.insert(QStringLiteral("prepareAfterResolve"), true);
+        return result;
+    }
+
+    const bool prepared = kind == QStringLiteral("plan")
+        ? preparePlanDay(targetId)
+        : prepareFreeWorkout(displayName);
+    return QVariantMap{
+        {QStringLiteral("status"), prepared ? QStringLiteral("prepared")
+                                             : QStringLiteral("error")},
+        {QStringLiteral("message"), m_errorMessage},
+    };
+}
+
+QVariantMap WorkoutSessionController::requestPreparePlanDay(const QString &dayId)
+{
+    QSqlQuery day(m_database);
+    day.prepare(QStringLiteral("SELECT name FROM plan_day WHERE id=?"));
+    day.addBindValue(dayId);
+    if (!day.exec() || !day.next()) {
+        fail(QStringLiteral("找不到训练日"));
+        return QVariantMap{{QStringLiteral("status"), QStringLiteral("error")},
+                           {QStringLiteral("message"), m_errorMessage}};
+    }
+    return requestPrepare(QStringLiteral("plan"), dayId, day.value(0).toString());
+}
+
+QVariantMap WorkoutSessionController::requestPrepareSuggestedDay()
+{
+    const QString dayId = m_suggestedDay.value(QStringLiteral("dayId")).toString();
+    if (dayId.isEmpty()) {
+        fail(QStringLiteral("没有可开始的推荐训练"));
+        return QVariantMap{{QStringLiteral("status"), QStringLiteral("error")},
+                           {QStringLiteral("message"), m_errorMessage}};
+    }
+    return requestPreparePlanDay(dayId);
+}
+
+QVariantMap WorkoutSessionController::requestPrepareFreeWorkout(const QString &name)
+{
+    const QString displayName = name.trimmed().isEmpty() ? QStringLiteral("自由训练")
+                                                         : name.trimmed();
+    return requestPrepare(QStringLiteral("free"), QString{}, displayName);
+}
+
+QVariantMap WorkoutSessionController::exerciseDefaults(const QString &exerciseId) const
+{
+    QSqlQuery query(m_database);
+    query.prepare(QStringLiteral(
+        "SELECT id,name_zh,recommended_sets,recommended_reps,rest_seconds "
+        "FROM exercise WHERE id=? AND is_enabled=1"));
+    query.addBindValue(exerciseId);
+    if (!query.exec() || !query.next()) return {};
+    return QVariantMap{
+        {QStringLiteral("exerciseId"), query.value(0)},
+        {QStringLiteral("name"), query.value(1)},
+        {QStringLiteral("sets"), qMax(1, query.value(2).toInt())},
+        {QStringLiteral("reps"), query.value(3).toString().trimmed().isEmpty()
+                                     ? QStringLiteral("8-12") : query.value(3)},
+        {QStringLiteral("restSeconds"), qBound(0, query.value(4).toInt(), 600)},
+    };
+}
+
+bool WorkoutSessionController::preparePlanDay(const QString &dayId)
+{
+    QSqlQuery day(m_database);
+    day.prepare(QStringLiteral(
+        "SELECT d.name,d.plan_id,p.name,p.is_read_only FROM plan_day d "
+        "JOIN training_plan p ON p.id=d.plan_id WHERE d.id=?"));
+    day.addBindValue(dayId);
+    if (!day.exec() || !day.next()) return fail(QStringLiteral("找不到训练日"));
+
+    QVariantList exercises;
+    QSqlQuery planned(m_database);
+    planned.prepare(QStringLiteral(
+        "SELECT pe.id,pe.exercise_id,e.name_zh,pe.default_sets,pe.default_reps,"
+        "pe.rest_seconds,pe.notes FROM plan_exercise pe "
+        "JOIN exercise e ON e.id=pe.exercise_id WHERE pe.day_id=? "
+        "ORDER BY pe.sort_order,pe.id"));
+    planned.addBindValue(dayId);
+    if (!planned.exec()) return fail(planned.lastError().text());
+    while (planned.next()) {
+        const int sets = qBound(1, planned.value(3).toInt(), 20);
+        const QString reps = planned.value(4).toString();
+        const int restSeconds = qBound(0, planned.value(5).toInt(), 600);
+        exercises.append(QVariantMap{
+            {QStringLiteral("draftId"), newId()},
+            {QStringLiteral("sourcePlanExerciseId"), planned.value(0)},
+            {QStringLiteral("exerciseId"), planned.value(1)},
+            {QStringLiteral("name"), planned.value(2)},
+            {QStringLiteral("sets"), sets},
+            {QStringLiteral("reps"), reps},
+            {QStringLiteral("restSeconds"), restSeconds},
+            {QStringLiteral("defaultSets"), sets},
+            {QStringLiteral("defaultReps"), reps},
+            {QStringLiteral("defaultRestSeconds"), restSeconds},
+            {QStringLiteral("notes"), planned.value(6)},
+            {QStringLiteral("modified"), false},
+        });
+    }
+
+    QVariantMap cardio;
+    QSqlQuery cardioQuery(m_database);
+    cardioQuery.prepare(QStringLiteral(
+        "SELECT cardio_type,duration_seconds,incline,speed_kmh,machine_level,notes "
+        "FROM plan_cardio WHERE day_id=?"));
+    cardioQuery.addBindValue(dayId);
+    if (!cardioQuery.exec()) return fail(cardioQuery.lastError().text());
+    if (cardioQuery.next()) {
+        cardio = QVariantMap{
+            {QStringLiteral("type"), cardioQuery.value(0)},
+            {QStringLiteral("durationSeconds"), cardioQuery.value(1)},
+            {QStringLiteral("incline"), cardioQuery.value(2)},
+            {QStringLiteral("speedKmh"), cardioQuery.value(3)},
+            {QStringLiteral("machineLevel"), cardioQuery.value(4)},
+            {QStringLiteral("notes"), cardioQuery.value(5)},
+        };
+    }
+
+    m_preparation = QVariantMap{
+        {QStringLiteral("kind"), QStringLiteral("plan")},
+        {QStringLiteral("name"), day.value(0)},
+        {QStringLiteral("sourceDayId"), dayId},
+        {QStringLiteral("sourcePlanId"), day.value(1)},
+        {QStringLiteral("sourcePlanName"), day.value(2)},
+        {QStringLiteral("sourcePlanReadOnly"), day.value(3).toBool()},
+        {QStringLiteral("exercises"), exercises},
+        {QStringLiteral("cardio"), cardio},
+    };
+    emit preparationChanged();
+    return true;
+}
+
+bool WorkoutSessionController::prepareFreeWorkout(const QString &name)
+{
+    m_preparation = QVariantMap{
+        {QStringLiteral("kind"), QStringLiteral("free")},
+        {QStringLiteral("name"), name.trimmed().isEmpty() ? QStringLiteral("自由训练")
+                                                            : name.trimmed()},
+        {QStringLiteral("sourceDayId"), QString{}},
+        {QStringLiteral("sourcePlanId"), QString{}},
+        {QStringLiteral("sourcePlanName"), QString{}},
+        {QStringLiteral("sourcePlanReadOnly"), false},
+        {QStringLiteral("exercises"), QVariantList{}},
+        {QStringLiteral("cardio"), QVariantMap{}},
+    };
+    emit preparationChanged();
+    return true;
+}
+
+int WorkoutSessionController::preparedExerciseIndex(const QString &draftExerciseId) const
+{
+    const QVariantList exercises = m_preparation.value(QStringLiteral("exercises")).toList();
+    for (int index = 0; index < exercises.size(); ++index) {
+        if (exercises.at(index).toMap().value(QStringLiteral("draftId")).toString()
+            == draftExerciseId) return index;
+    }
+    return -1;
+}
+
+bool WorkoutSessionController::updatePreparedExercise(
+    const QString &draftExerciseId, int sets, const QString &reps, int restSeconds)
+{
+    clearError();
+    const int index = preparedExerciseIndex(draftExerciseId);
+    const QString trimmedReps = reps.trimmed();
+    if (index < 0) return fail(QStringLiteral("找不到准备中的动作"));
+    if (sets < 1 || sets > 20 || trimmedReps.isEmpty()
+        || restSeconds < 0 || restSeconds > 600) {
+        return fail(QStringLiteral("动作参数无效"));
+    }
+    QVariantList exercises = m_preparation.value(QStringLiteral("exercises")).toList();
+    QVariantMap exercise = exercises.at(index).toMap();
+    exercise.insert(QStringLiteral("sets"), sets);
+    exercise.insert(QStringLiteral("reps"), trimmedReps);
+    exercise.insert(QStringLiteral("restSeconds"), restSeconds);
+    exercise.insert(QStringLiteral("modified"),
+                    sets != exercise.value(QStringLiteral("defaultSets")).toInt()
+                    || trimmedReps != exercise.value(QStringLiteral("defaultReps")).toString()
+                    || restSeconds != exercise.value(QStringLiteral("defaultRestSeconds")).toInt());
+    exercises[index] = exercise;
+    m_preparation.insert(QStringLiteral("exercises"), exercises);
+    emit preparationChanged();
+    return true;
+}
+
+bool WorkoutSessionController::restorePreparedExerciseDefaults(const QString &draftExerciseId)
+{
+    const int index = preparedExerciseIndex(draftExerciseId);
+    if (index < 0) return fail(QStringLiteral("找不到准备中的动作"));
+    QVariantList exercises = m_preparation.value(QStringLiteral("exercises")).toList();
+    QVariantMap exercise = exercises.at(index).toMap();
+    exercise.insert(QStringLiteral("sets"), exercise.value(QStringLiteral("defaultSets")));
+    exercise.insert(QStringLiteral("reps"), exercise.value(QStringLiteral("defaultReps")));
+    exercise.insert(QStringLiteral("restSeconds"), exercise.value(QStringLiteral("defaultRestSeconds")));
+    exercise.insert(QStringLiteral("modified"), false);
+    exercises[index] = exercise;
+    m_preparation.insert(QStringLiteral("exercises"), exercises);
+    emit preparationChanged();
+    return true;
+}
+
+bool WorkoutSessionController::addPreparedExercise(const QString &exerciseId)
+{
+    clearError();
+    if (!preparing()) return fail(QStringLiteral("没有训练准备草稿"));
+    QVariantMap exercise = exerciseDefaults(exerciseId);
+    if (exercise.isEmpty()) return fail(QStringLiteral("找不到动作"));
+    exercise.insert(QStringLiteral("draftId"), newId());
+    exercise.insert(QStringLiteral("sourcePlanExerciseId"), QString{});
+    exercise.insert(QStringLiteral("defaultSets"), exercise.value(QStringLiteral("sets")));
+    exercise.insert(QStringLiteral("defaultReps"), exercise.value(QStringLiteral("reps")));
+    exercise.insert(QStringLiteral("defaultRestSeconds"), exercise.value(QStringLiteral("restSeconds")));
+    exercise.insert(QStringLiteral("notes"), QString{});
+    exercise.insert(QStringLiteral("modified"), false);
+    QVariantList exercises = m_preparation.value(QStringLiteral("exercises")).toList();
+    exercises.append(exercise);
+    m_preparation.insert(QStringLiteral("exercises"), exercises);
+    emit preparationChanged();
+    return true;
+}
+
+bool WorkoutSessionController::replacePreparedExercise(
+    const QString &draftExerciseId, const QString &exerciseId)
+{
+    clearError();
+    const int index = preparedExerciseIndex(draftExerciseId);
+    QVariantMap replacement = exerciseDefaults(exerciseId);
+    if (index < 0) return fail(QStringLiteral("找不到准备中的动作"));
+    if (replacement.isEmpty()) return fail(QStringLiteral("找不到替换动作"));
+    replacement.insert(QStringLiteral("draftId"), draftExerciseId);
+    replacement.insert(QStringLiteral("sourcePlanExerciseId"), QString{});
+    replacement.insert(QStringLiteral("defaultSets"), replacement.value(QStringLiteral("sets")));
+    replacement.insert(QStringLiteral("defaultReps"), replacement.value(QStringLiteral("reps")));
+    replacement.insert(QStringLiteral("defaultRestSeconds"), replacement.value(QStringLiteral("restSeconds")));
+    replacement.insert(QStringLiteral("notes"), QString{});
+    replacement.insert(QStringLiteral("modified"), true);
+    QVariantList exercises = m_preparation.value(QStringLiteral("exercises")).toList();
+    exercises[index] = replacement;
+    m_preparation.insert(QStringLiteral("exercises"), exercises);
+    emit preparationChanged();
+    return true;
+}
+
+bool WorkoutSessionController::movePreparedExercise(const QString &draftExerciseId, int toIndex)
+{
+    clearError();
+    QVariantList exercises = m_preparation.value(QStringLiteral("exercises")).toList();
+    const int fromIndex = preparedExerciseIndex(draftExerciseId);
+    if (fromIndex < 0 || toIndex < 0 || toIndex >= exercises.size())
+        return fail(QStringLiteral("动作序号无效"));
+    exercises.move(fromIndex, toIndex);
+    m_preparation.insert(QStringLiteral("exercises"), exercises);
+    emit preparationChanged();
+    return true;
+}
+
+bool WorkoutSessionController::removePreparedExercise(const QString &draftExerciseId)
+{
+    clearError();
+    const int index = preparedExerciseIndex(draftExerciseId);
+    if (index < 0) return fail(QStringLiteral("找不到准备中的动作"));
+    QVariantList exercises = m_preparation.value(QStringLiteral("exercises")).toList();
+    exercises.removeAt(index);
+    m_preparation.insert(QStringLiteral("exercises"), exercises);
+    emit preparationChanged();
+    return true;
+}
+
+bool WorkoutSessionController::savePreparationAsPlan(
+    const QString &planName, const QString &dayName)
+{
+    clearError();
+    const QString trimmedPlan = planName.trimmed();
+    const QString trimmedDay = dayName.trimmed();
+    const QVariantList exercises = m_preparation.value(QStringLiteral("exercises")).toList();
+    if (!preparing() || trimmedPlan.isEmpty() || trimmedDay.isEmpty() || exercises.isEmpty())
+        return fail(QStringLiteral("个人计划信息不完整"));
+    if (!m_database.transaction()) return fail(m_database.lastError().text());
+    const auto rollback = [this](const QString &message) {
+        m_database.rollback();
+        return fail(message);
+    };
+    const QString planId = newId();
+    const QString dayId = newId();
+    QSqlQuery plan(m_database);
+    plan.prepare(QStringLiteral(
+        "INSERT INTO training_plan(id,name,source_plan_id,is_system,is_read_only) VALUES(?,?,?,0,0)"));
+    plan.addBindValue(planId);
+    plan.addBindValue(trimmedPlan);
+    const QString sourcePlanId = m_preparation.value(QStringLiteral("sourcePlanId")).toString();
+    plan.addBindValue(sourcePlanId.isEmpty() ? QVariant{} : QVariant(sourcePlanId));
+    if (!plan.exec()) return rollback(plan.lastError().text());
+    QSqlQuery day(m_database);
+    day.prepare(QStringLiteral("INSERT INTO plan_day(id,plan_id,name,sort_order) VALUES(?,?,?,0)"));
+    day.addBindValue(dayId);
+    day.addBindValue(planId);
+    day.addBindValue(trimmedDay);
+    if (!day.exec()) return rollback(day.lastError().text());
+    for (int index = 0; index < exercises.size(); ++index) {
+        const QVariantMap exercise = exercises.at(index).toMap();
+        QSqlQuery insert(m_database);
+        insert.prepare(QStringLiteral(
+            "INSERT INTO plan_exercise(id,day_id,exercise_id,sort_order,default_sets,"
+            "default_reps,rest_seconds,notes) VALUES(?,?,?,?,?,?,?,?)"));
+        insert.addBindValue(newId());
+        insert.addBindValue(dayId);
+        insert.addBindValue(exercise.value(QStringLiteral("exerciseId")));
+        insert.addBindValue(index);
+        insert.addBindValue(exercise.value(QStringLiteral("sets")));
+        insert.addBindValue(exercise.value(QStringLiteral("reps")));
+        insert.addBindValue(exercise.value(QStringLiteral("restSeconds")));
+        insert.addBindValue(exercise.value(QStringLiteral("notes")));
+        if (!insert.exec()) return rollback(insert.lastError().text());
+    }
+    const QVariantMap cardio = m_preparation.value(QStringLiteral("cardio")).toMap();
+    if (!cardio.isEmpty()) {
+        QSqlQuery insertCardio(m_database);
+        insertCardio.prepare(QStringLiteral(
+            "INSERT INTO plan_cardio(day_id,cardio_type,duration_seconds,incline,speed_kmh,"
+            "machine_level,notes) VALUES(?,?,?,?,?,?,?)"));
+        insertCardio.addBindValue(dayId);
+        insertCardio.addBindValue(cardio.value(QStringLiteral("type")));
+        insertCardio.addBindValue(cardio.value(QStringLiteral("durationSeconds")));
+        insertCardio.addBindValue(cardio.value(QStringLiteral("incline")));
+        insertCardio.addBindValue(cardio.value(QStringLiteral("speedKmh")));
+        insertCardio.addBindValue(cardio.value(QStringLiteral("machineLevel")));
+        insertCardio.addBindValue(cardio.value(QStringLiteral("notes")));
+        if (!insertCardio.exec()) return rollback(insertCardio.lastError().text());
+    }
+    if (!m_database.commit()) return fail(m_database.lastError().text());
+    loadPlanDays();
+    return true;
+}
+
+bool WorkoutSessionController::commitPreparation()
+{
+    clearError();
+    if (!preparing()) return fail(QStringLiteral("没有训练准备草稿"));
+    if (activeSessionCount() > 0) return fail(QStringLiteral("已有进行中的训练"));
+    const QVariantList exercises = m_preparation.value(QStringLiteral("exercises")).toList();
+    if (exercises.isEmpty()) return fail(QStringLiteral("请至少添加一个动作"));
+    if (!m_database.transaction()) return fail(m_database.lastError().text());
+    const auto rollback = [this](const QString &message) {
+        m_database.rollback();
+        return fail(message);
+    };
+    const QString sessionId = newId();
+    QSqlQuery session(m_database);
+    session.prepare(QStringLiteral(
+        "INSERT INTO workout_session(id,name,source_plan_id,gym_id,started_at,status) "
+        "VALUES(?,?,?,?,?,'active')"));
+    session.addBindValue(sessionId);
+    session.addBindValue(m_preparation.value(QStringLiteral("name")));
+    const QString sourcePlanId = m_preparation.value(QStringLiteral("sourcePlanId")).toString();
+    session.addBindValue(sourcePlanId.isEmpty() ? QVariant{} : QVariant(sourcePlanId));
+    session.addBindValue(m_selectedGymId.isEmpty() ? QVariant{} : QVariant(m_selectedGymId));
+    session.addBindValue(QDateTime::currentDateTimeUtc().toString(Qt::ISODate));
+    if (!session.exec()) return rollback(session.lastError().text());
+    for (int index = 0; index < exercises.size(); ++index) {
+        const QVariantMap exercise = exercises.at(index).toMap();
+        const QString workoutExerciseId = newId();
+        QSqlQuery insertExercise(m_database);
+        insertExercise.prepare(QStringLiteral(
+            "INSERT INTO workout_exercise(id,session_id,exercise_id,sort_order,rest_seconds,notes) "
+            "VALUES(?,?,?,?,?,?)"));
+        insertExercise.addBindValue(workoutExerciseId);
+        insertExercise.addBindValue(sessionId);
+        insertExercise.addBindValue(exercise.value(QStringLiteral("exerciseId")));
+        insertExercise.addBindValue(index);
+        insertExercise.addBindValue(exercise.value(QStringLiteral("restSeconds")));
+        insertExercise.addBindValue(exercise.value(QStringLiteral("notes")));
+        if (!insertExercise.exec()) return rollback(insertExercise.lastError().text());
+        const int setCount = exercise.value(QStringLiteral("sets")).toInt();
+        const QString reps = exercise.value(QStringLiteral("reps")).toString();
+        for (int setIndex = 0; setIndex < setCount; ++setIndex) {
+            QSqlQuery insertSet(m_database);
+            insertSet.prepare(QStringLiteral(
+                "INSERT INTO set_record(id,workout_exercise_id,set_order,target_reps) "
+                "VALUES(?,?,?,?)"));
+            insertSet.addBindValue(newId());
+            insertSet.addBindValue(workoutExerciseId);
+            insertSet.addBindValue(setIndex);
+            const int target = targetForSet(reps, setIndex);
+            insertSet.addBindValue(target > 0 ? QVariant(target) : QVariant{});
+            if (!insertSet.exec()) return rollback(insertSet.lastError().text());
+        }
+    }
+    const QVariantMap cardio = m_preparation.value(QStringLiteral("cardio")).toMap();
+    if (!cardio.isEmpty()) {
+        QSqlQuery cardioTarget(m_database);
+        cardioTarget.prepare(QStringLiteral(
+            "INSERT INTO workout_cardio_target(session_id,cardio_type,duration_seconds,incline,"
+            "speed_kmh,machine_level,notes) VALUES(?,?,?,?,?,?,?)"));
+        cardioTarget.addBindValue(sessionId);
+        cardioTarget.addBindValue(cardio.value(QStringLiteral("type")));
+        cardioTarget.addBindValue(cardio.value(QStringLiteral("durationSeconds")));
+        cardioTarget.addBindValue(cardio.value(QStringLiteral("incline")));
+        cardioTarget.addBindValue(cardio.value(QStringLiteral("speedKmh")));
+        cardioTarget.addBindValue(cardio.value(QStringLiteral("machineLevel")));
+        cardioTarget.addBindValue(cardio.value(QStringLiteral("notes")));
+        if (!cardioTarget.exec()) return rollback(cardioTarget.lastError().text());
+    }
+    if (!m_database.commit()) return fail(m_database.lastError().text());
+    m_preparation.clear();
+    emit preparationChanged();
+    return loadSession(sessionId);
+}
+
+void WorkoutSessionController::cancelPreparation()
+{
+    if (m_preparation.isEmpty()) return;
+    m_preparation.clear();
+    emit preparationChanged();
+}
+
 bool WorkoutSessionController::continueExistingWorkout()
 {
     clearError();
@@ -566,6 +999,34 @@ bool WorkoutSessionController::continueExistingWorkout()
     if (count == 0) return fail(QStringLiteral("没有未完成训练"));
     if (active()) return true;
     return resumeUnfinished();
+}
+
+bool WorkoutSessionController::resolveCurrentWorkout(bool discardCurrent)
+{
+    clearError();
+    if (activeSessionCount() != 1)
+        return fail(QStringLiteral("无法确定要结束的训练"));
+    QSqlQuery query(m_database);
+    if (discardCurrent) {
+        query.prepare(QStringLiteral(
+            "DELETE FROM workout_session WHERE status='active'"));
+    } else {
+        query.prepare(QStringLiteral(
+            "UPDATE workout_session SET status='completed',ended_at=? WHERE status='active'"));
+        query.addBindValue(QDateTime::currentDateTimeUtc().toString(Qt::ISODate));
+    }
+    if (!query.exec() || query.numRowsAffected() != 1)
+        return fail(query.lastError().text().isEmpty()
+                        ? QStringLiteral("无法结束当前训练") : query.lastError().text());
+    m_sessionId.clear();
+    m_sessionName.clear();
+    m_sessionNotes.clear();
+    m_exercises.clear();
+    emit exercisesChanged();
+    emit sessionChanged();
+    refreshUnfinished();
+    loadSuggestedDay();
+    return true;
 }
 
 bool WorkoutSessionController::recoverActiveSessions(
@@ -644,11 +1105,13 @@ bool WorkoutSessionController::insertPlanDaySession(const QString &dayId, QStrin
         const QString workoutExerciseId = newId();
         QSqlQuery exercise(m_database);
         exercise.prepare(QStringLiteral(
-            "INSERT INTO workout_exercise(id,session_id,exercise_id,sort_order,notes) VALUES(?,?,?,?,?)"));
+            "INSERT INTO workout_exercise(id,session_id,exercise_id,sort_order,rest_seconds,notes) "
+            "VALUES(?,?,?,?,?,?)"));
         exercise.addBindValue(workoutExerciseId);
         exercise.addBindValue(*sessionId);
         exercise.addBindValue(planned.value(0));
         exercise.addBindValue(planned.value(1));
+        exercise.addBindValue(planned.value(4));
         exercise.addBindValue(planned.value(5));
         if (!exercise.exec()) {
             return fail(exercise.lastError().text());
@@ -812,7 +1275,8 @@ bool WorkoutSessionController::addExercise(const QString &exerciseId, int setCou
         return fail(QStringLiteral("请先开始训练"));
     }
     QSqlQuery info(m_database);
-    info.prepare(QStringLiteral("SELECT recommended_sets,recommended_reps FROM exercise WHERE id=?"));
+    info.prepare(QStringLiteral(
+        "SELECT recommended_sets,recommended_reps,rest_seconds FROM exercise WHERE id=?"));
     info.addBindValue(exerciseId);
     if (!info.exec() || !info.next()) {
         return fail(QStringLiteral("找不到动作"));
@@ -826,12 +1290,14 @@ bool WorkoutSessionController::addExercise(const QString &exerciseId, int setCou
     const QString workoutExerciseId = newId();
     QSqlQuery exercise(m_database);
     exercise.prepare(QStringLiteral(
-        "INSERT INTO workout_exercise(id,session_id,exercise_id,sort_order) "
-        "VALUES(?,?,?,(SELECT COUNT(*) FROM workout_exercise WHERE session_id=?))"));
+        "INSERT INTO workout_exercise(id,session_id,exercise_id,sort_order,rest_seconds) "
+        "VALUES(?,?,?,(SELECT COALESCE(MAX(sort_order),-1)+1 FROM workout_exercise "
+        "WHERE session_id=?),?)"));
     exercise.addBindValue(workoutExerciseId);
     exercise.addBindValue(m_sessionId);
     exercise.addBindValue(exerciseId);
     exercise.addBindValue(m_sessionId);
+    exercise.addBindValue(qBound(0, info.value(2).toInt(), 600));
     if (!exercise.exec()) {
         m_database.rollback();
         return fail(exercise.lastError().text());
@@ -866,7 +1332,8 @@ bool WorkoutSessionController::replaceExercise(int exerciseIndex, const QString 
                                           .value(QStringLiteral("id")).toString();
     QSqlQuery info(m_database);
     info.prepare(QStringLiteral(
-        "SELECT recommended_sets,recommended_reps FROM exercise WHERE id=? AND is_enabled=1"));
+        "SELECT recommended_sets,recommended_reps,rest_seconds FROM exercise "
+        "WHERE id=? AND is_enabled=1"));
     info.addBindValue(exerciseId);
     if (!info.exec() || !info.next()) {
         return fail(QStringLiteral("找不到替换动作"));
@@ -887,8 +1354,9 @@ bool WorkoutSessionController::replaceExercise(int exerciseIndex, const QString 
     }
     QSqlQuery update(m_database);
     update.prepare(QStringLiteral(
-        "UPDATE workout_exercise SET exercise_id=?,notes='' WHERE id=?"));
+        "UPDATE workout_exercise SET exercise_id=?,rest_seconds=?,notes='' WHERE id=?"));
     update.addBindValue(exerciseId);
+    update.addBindValue(qBound(0, info.value(2).toInt(), 600));
     update.addBindValue(workoutExerciseId);
     if (!update.exec()) {
         m_database.rollback();
@@ -1117,6 +1585,84 @@ bool WorkoutSessionController::configureExercise(
     return loadSession(m_sessionId);
 }
 
+bool WorkoutSessionController::configureExerciseParameters(
+    int exerciseIndex, double weightKg, const QString &targetReps,
+    int setCount, int restSeconds)
+{
+    clearError();
+    const QString reps = targetReps.trimmed();
+    if (exerciseIndex < 0 || exerciseIndex >= m_exercises.size() || weightKg < 0
+        || reps.isEmpty() || setCount < 1 || setCount > 20
+        || restSeconds < 0 || restSeconds > 600) {
+        return fail(QStringLiteral("训练组参数无效"));
+    }
+    const QString workoutExerciseId = m_exercises.at(exerciseIndex).toMap()
+                                          .value(QStringLiteral("id")).toString();
+    QSqlQuery protectedSets(m_database);
+    protectedSets.prepare(QStringLiteral(
+        "SELECT COUNT(*) FROM set_record WHERE workout_exercise_id=? "
+        "AND completed=1 AND set_order>=?"));
+    protectedSets.addBindValue(workoutExerciseId);
+    protectedSets.addBindValue(setCount);
+    if (!protectedSets.exec() || !protectedSets.next())
+        return fail(protectedSets.lastError().text());
+    if (protectedSets.value(0).toInt() > 0)
+        return fail(QStringLiteral("不能删除已经完成的训练组"));
+
+    if (!m_database.transaction()) return fail(m_database.lastError().text());
+    const auto rollback = [this](const QString &message) {
+        m_database.rollback();
+        return fail(message);
+    };
+    QSqlQuery updateRest(m_database);
+    updateRest.prepare(QStringLiteral(
+        "UPDATE workout_exercise SET rest_seconds=? WHERE id=?"));
+    updateRest.addBindValue(restSeconds);
+    updateRest.addBindValue(workoutExerciseId);
+    if (!updateRest.exec()) return rollback(updateRest.lastError().text());
+
+    QSqlQuery removeTrailing(m_database);
+    removeTrailing.prepare(QStringLiteral(
+        "DELETE FROM set_record WHERE workout_exercise_id=? AND set_order>=? AND completed=0"));
+    removeTrailing.addBindValue(workoutExerciseId);
+    removeTrailing.addBindValue(setCount);
+    if (!removeTrailing.exec()) return rollback(removeTrailing.lastError().text());
+
+    for (int index = 0; index < setCount; ++index) {
+        const int target = targetForSet(reps, index);
+        QSqlQuery existing(m_database);
+        existing.prepare(QStringLiteral(
+            "SELECT id,completed FROM set_record WHERE workout_exercise_id=? AND set_order=?"));
+        existing.addBindValue(workoutExerciseId);
+        existing.addBindValue(index);
+        if (!existing.exec()) return rollback(existing.lastError().text());
+        if (existing.next()) {
+            if (!existing.value(1).toBool()) {
+                QSqlQuery update(m_database);
+                update.prepare(QStringLiteral(
+                    "UPDATE set_record SET weight_kg=?,target_reps=? WHERE id=?"));
+                update.addBindValue(weightKg);
+                update.addBindValue(target > 0 ? QVariant(target) : QVariant{});
+                update.addBindValue(existing.value(0));
+                if (!update.exec()) return rollback(update.lastError().text());
+            }
+        } else {
+            QSqlQuery insert(m_database);
+            insert.prepare(QStringLiteral(
+                "INSERT INTO set_record(id,workout_exercise_id,set_order,weight_kg,target_reps) "
+                "VALUES(?,?,?,?,?)"));
+            insert.addBindValue(newId());
+            insert.addBindValue(workoutExerciseId);
+            insert.addBindValue(index);
+            insert.addBindValue(weightKg);
+            insert.addBindValue(target > 0 ? QVariant(target) : QVariant{});
+            if (!insert.exec()) return rollback(insert.lastError().text());
+        }
+    }
+    if (!m_database.commit()) return fail(m_database.lastError().text());
+    return loadSession(m_sessionId);
+}
+
 bool WorkoutSessionController::addAppendSet(
     int exerciseIndex, int setIndex, double weightKg, int reps, int restSeconds, bool toFailure)
 {
@@ -1271,7 +1817,8 @@ bool WorkoutSessionController::loadSession(const QString &sessionId)
     QVariantList exercises;
     QSqlQuery exercise(m_database);
     exercise.prepare(QStringLiteral(
-        "SELECT we.id,e.name_zh,e.load_mode,e.recommended_reps,e.rest_seconds,we.notes,"
+        "SELECT we.id,e.name_zh,e.load_mode,e.recommended_reps,"
+        "COALESCE(we.rest_seconds,e.rest_seconds),we.notes,"
         "e.id,we.equipment_instance_id,COALESCE(eq.name || CASE WHEN eq.code IS NULL OR eq.code='' THEN '' ELSE ' · ' || eq.code END,'') "
         "FROM workout_exercise we JOIN exercise e ON e.id=we.exercise_id "
         "LEFT JOIN equipment_instance eq ON eq.id=we.equipment_instance_id "

@@ -54,7 +54,7 @@ void DatabaseManagerTest::initializeCreatesCompleteSchema()
     QSqlQuery query(manager.database());
     QVERIFY(query.exec(QStringLiteral("SELECT value FROM app_meta WHERE key='schema_version'")));
     QVERIFY(query.next());
-    QCOMPARE(query.value(0).toString(), QStringLiteral("6"));
+    QCOMPARE(query.value(0).toString(), QStringLiteral("7"));
     QVERIFY(query.exec(QStringLiteral("PRAGMA table_info(exercise)")));
     QStringList exerciseColumns;
     while (query.next())
@@ -74,6 +74,15 @@ void DatabaseManagerTest::initializeCreatesCompleteSchema()
         }
     }
     QVERIFY(hasBodyweightLoadType);
+    QVERIFY(query.exec(QStringLiteral("PRAGMA table_info(workout_exercise)")));
+    bool hasRestSeconds = false;
+    while (query.next()) {
+        if (query.value(1).toString() == QStringLiteral("rest_seconds")) {
+            hasRestSeconds = true;
+            break;
+        }
+    }
+    QVERIFY(hasRestSeconds);
 }
 
 void DatabaseManagerTest::initializeIsIdempotent()
@@ -126,7 +135,7 @@ void DatabaseManagerTest::migratesVersionOneBodyweightRecords()
     QCOMPARE(migrated.value(0).toString(), QStringLiteral("Bodyweight"));
     QVERIFY(migrated.exec(QStringLiteral("SELECT value FROM app_meta WHERE key='schema_version'")));
     QVERIFY(migrated.next());
-    QCOMPARE(migrated.value(0).toString(), QStringLiteral("6"));
+    QCOMPARE(migrated.value(0).toString(), QStringLiteral("7"));
 }
 
 void DatabaseManagerTest::preventsMultipleActiveWorkouts()

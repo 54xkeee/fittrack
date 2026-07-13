@@ -74,7 +74,7 @@ qreal platformFontScale()
     bool overrideOk = false;
     const qreal overrideScale = qEnvironmentVariable("FITTRACK_FONT_SCALE").toDouble(&overrideOk);
     if (overrideOk) {
-        return qBound<qreal>(0.85, overrideScale, 1.5);
+        return qBound<qreal>(0.85, overrideScale, 2.0);
     }
 
 #ifdef Q_OS_ANDROID
@@ -92,7 +92,7 @@ qreal platformFontScale()
     if (configuration.isValid()) {
         return qBound<qreal>(0.85,
                              static_cast<qreal>(configuration.getField<jfloat>("fontScale")),
-                             1.5);
+                             2.0);
     }
 #endif
     return 1.0;

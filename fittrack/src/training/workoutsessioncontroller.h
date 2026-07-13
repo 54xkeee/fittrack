@@ -16,6 +16,8 @@ class WorkoutSessionController final : public QObject
     Q_PROPERTY(QVariantList equipment READ equipment NOTIFY equipmentChanged)
     Q_PROPERTY(QVariantList exercises READ exercises NOTIFY exercisesChanged)
     Q_PROPERTY(QVariantList activeSessions READ activeSessions NOTIFY activeSessionsChanged)
+    Q_PROPERTY(QVariantMap preparation READ preparation NOTIFY preparationChanged)
+    Q_PROPERTY(bool preparing READ preparing NOTIFY preparationChanged)
     Q_PROPERTY(QString selectedGymId READ selectedGymId NOTIFY selectedGymChanged)
     Q_PROPERTY(QString sessionId READ sessionId NOTIFY sessionChanged)
     Q_PROPERTY(QString sessionName READ sessionName NOTIFY sessionChanged)
@@ -34,6 +36,8 @@ public:
     QVariantList equipment() const;
     QVariantList exercises() const;
     QVariantList activeSessions() const;
+    QVariantMap preparation() const;
+    bool preparing() const;
     QString selectedGymId() const;
     QString sessionId() const;
     QString sessionName() const;
@@ -46,7 +50,22 @@ public:
     Q_INVOKABLE QVariantMap requestStartPlanDay(const QString &dayId);
     Q_INVOKABLE QVariantMap requestStartSuggestedDay();
     Q_INVOKABLE QVariantMap requestStartFreeWorkout(const QString &name = {});
+    Q_INVOKABLE QVariantMap requestPreparePlanDay(const QString &dayId);
+    Q_INVOKABLE QVariantMap requestPrepareSuggestedDay();
+    Q_INVOKABLE QVariantMap requestPrepareFreeWorkout(const QString &name = {});
+    Q_INVOKABLE bool updatePreparedExercise(const QString &draftExerciseId, int sets,
+                                            const QString &reps, int restSeconds);
+    Q_INVOKABLE bool restorePreparedExerciseDefaults(const QString &draftExerciseId);
+    Q_INVOKABLE bool addPreparedExercise(const QString &exerciseId);
+    Q_INVOKABLE bool replacePreparedExercise(const QString &draftExerciseId,
+                                             const QString &exerciseId);
+    Q_INVOKABLE bool movePreparedExercise(const QString &draftExerciseId, int toIndex);
+    Q_INVOKABLE bool removePreparedExercise(const QString &draftExerciseId);
+    Q_INVOKABLE bool savePreparationAsPlan(const QString &planName, const QString &dayName);
+    Q_INVOKABLE bool commitPreparation();
+    Q_INVOKABLE void cancelPreparation();
     Q_INVOKABLE bool continueExistingWorkout();
+    Q_INVOKABLE bool resolveCurrentWorkout(bool discardCurrent);
     Q_INVOKABLE bool recoverActiveSessions(const QString &keepSessionId, bool discardOthers);
     Q_INVOKABLE bool switchToPlanDay(const QString &dayId, bool discardCurrent);
     Q_INVOKABLE bool switchToFreeWorkout(const QString &name, bool discardCurrent);
@@ -69,6 +88,9 @@ public:
     Q_INVOKABLE bool moveExercise(int fromIndex, int toIndex);
     Q_INVOKABLE bool removeExercise(int exerciseIndex);
     Q_INVOKABLE bool configureExercise(int exerciseIndex, double weightKg, int targetReps, int setCount);
+    Q_INVOKABLE bool configureExerciseParameters(int exerciseIndex, double weightKg,
+                                                 const QString &targetReps, int setCount,
+                                                 int restSeconds);
     Q_INVOKABLE bool completeSet(int exerciseIndex, int setIndex, double weightKg, int actualReps,
                                  bool toFailure = false, const QString &bodyweightLoadType = QStringLiteral("Bodyweight"));
     Q_INVOKABLE bool updateCompletedSet(
@@ -94,6 +116,7 @@ signals:
     void sessionChanged();
     void unfinishedChanged();
     void activeSessionsChanged();
+    void preparationChanged();
     void sessionStateChanged();
     void errorMessageChanged();
     void setCompleted(int restSeconds);
@@ -107,6 +130,12 @@ private:
     void refreshUnfinished();
     QVariantMap requestStart(const QString &kind, const QString &targetId,
                              const QString &displayName);
+    QVariantMap requestPrepare(const QString &kind, const QString &targetId,
+                               const QString &displayName);
+    bool preparePlanDay(const QString &dayId);
+    bool prepareFreeWorkout(const QString &name);
+    QVariantMap exerciseDefaults(const QString &exerciseId) const;
+    int preparedExerciseIndex(const QString &draftExerciseId) const;
     QVariantMap activeSessionSummary() const;
     int activeSessionCount() const;
     bool insertPlanDaySession(const QString &dayId, QString *sessionId);
@@ -124,6 +153,7 @@ private:
     QVariantList m_equipment;
     QVariantList m_exercises;
     QVariantList m_activeSessions;
+    QVariantMap m_preparation;
     QString m_selectedGymId;
     QString m_sessionId;
     QString m_sessionName;

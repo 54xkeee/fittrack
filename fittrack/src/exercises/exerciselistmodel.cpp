@@ -160,6 +160,39 @@ void ExerciseListModel::setFavoritesOnly(bool enabled)
     reload();
 }
 
+QVariantMap ExerciseListModel::exerciseById(const QString &exerciseId) const
+{
+    for (int row = 0; row < m_items.size(); ++row) {
+        if (m_items.at(row).id != exerciseId) continue;
+        const QModelIndex itemIndex = index(row, 0);
+        return QVariantMap{
+            {QStringLiteral("exerciseId"), data(itemIndex, ExerciseIdRole)},
+            {QStringLiteral("name"), data(itemIndex, NameRole)},
+            {QStringLiteral("bodyPart"), data(itemIndex, BodyPartRole)},
+            {QStringLiteral("movement"), data(itemIndex, MovementRole)},
+            {QStringLiteral("loadMode"), data(itemIndex, LoadModeRole)},
+            {QStringLiteral("recommendedSets"), data(itemIndex, RecommendedSetsRole)},
+            {QStringLiteral("recommendedReps"), data(itemIndex, RecommendedRepsRole)},
+            {QStringLiteral("restSeconds"), data(itemIndex, RestSecondsRole)},
+            {QStringLiteral("introduction"), data(itemIndex, IntroductionRole)},
+            {QStringLiteral("steps"), data(itemIndex, StepsRole)},
+            {QStringLiteral("cautions"), data(itemIndex, CautionsRole)},
+            {QStringLiteral("difficulty"), data(itemIndex, DifficultyRole)},
+            {QStringLiteral("techniquePoints"), data(itemIndex, TechniquePointsRole)},
+            {QStringLiteral("commonMistakes"), data(itemIndex, CommonMistakesRole)},
+            {QStringLiteral("collections"), data(itemIndex, CollectionsRole)},
+            {QStringLiteral("primaryMuscles"), data(itemIndex, PrimaryMusclesRole)},
+            {QStringLiteral("secondaryMuscles"), data(itemIndex, SecondaryMusclesRole)},
+            {QStringLiteral("mediaItems"), data(itemIndex, MediaItemsRole)},
+            {QStringLiteral("sources"), data(itemIndex, SourcesRole)},
+            {QStringLiteral("equipmentText"), data(itemIndex, EquipmentTextRole)},
+            {QStringLiteral("isSystem"), data(itemIndex, IsSystemRole)},
+            {QStringLiteral("isFavorite"), data(itemIndex, IsFavoriteRole)},
+        };
+    }
+    return {};
+}
+
 void ExerciseListModel::reload()
 {
     QString sql = QStringLiteral(

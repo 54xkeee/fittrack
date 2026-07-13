@@ -6,6 +6,7 @@
 #include <QSqlDatabase>
 #include <QString>
 #include <QVector>
+#include <QVariantMap>
 
 namespace fittrack {
 
@@ -71,6 +72,7 @@ public:
     void setFavoritesOnly(bool enabled);
 
     Q_INVOKABLE void reload();
+    Q_INVOKABLE QVariantMap exerciseById(const QString &exerciseId) const;
     Q_INVOKABLE bool toggleFavorite(const QString &exerciseId);
     Q_INVOKABLE bool createCustomExercise(const QString &name, const QString &bodyPart,
         const QString &movement, const QString &equipment, const QString &introduction,

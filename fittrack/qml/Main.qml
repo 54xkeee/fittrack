@@ -24,10 +24,14 @@ ApplicationWindow {
     Binding {
         target: Design.Theme
         property: "fontScale"
-        value: Math.max(0.85, Math.min(1.5, window.fontScale))
+        value: Math.max(0.85, Math.min(2.0, window.fontScale))
     }
 
     function handleBack() {
+        if (workoutController.preparing) {
+            preparationPage.requestCancel()
+            return true
+        }
         if (navigation.currentIndex === 4 && insightsPage.handleBack())
             return true
         if (navigation.currentIndex === 0)
@@ -62,12 +66,19 @@ ApplicationWindow {
         showStartError(result.message)
     }
 
+    function handlePreparationResult(result) {
+        const status = String(result.status || "error")
+        if (status === "prepared")
+            return
+        handleStartResult(result)
+    }
+
     function requestPlanDay(dayId) {
-        handleStartResult(workoutController.requestStartPlanDay(dayId))
+        handlePreparationResult(workoutController.requestPreparePlanDay(dayId))
     }
 
     function requestFreeWorkout(name) {
-        handleStartResult(workoutController.requestStartFreeWorkout(name || ""))
+        handlePreparationResult(workoutController.requestPrepareFreeWorkout(name || ""))
     }
 
     function requestSuggestedOrContinue() {
@@ -80,11 +91,24 @@ ApplicationWindow {
                 showStartError(workoutController.errorMessage)
             return
         }
-        handleStartResult(workoutController.requestStartSuggestedDay())
+        handlePreparationResult(workoutController.requestPrepareSuggestedDay())
     }
 
     function switchPendingWorkout(discardCurrent) {
         const request = pendingWorkoutRequest || ({})
+        if (Boolean(request.prepareAfterResolve)) {
+            if (!workoutController.resolveCurrentWorkout(discardCurrent)) {
+                workoutStartConflictDialog.showError(workoutController.errorMessage)
+                return
+            }
+            workoutStartConflictDialog.close()
+            pendingWorkoutRequest = ({})
+            const result = request.requestedKind === "plan"
+                    ? workoutController.requestPreparePlanDay(request.requestedTargetId)
+                    : workoutController.requestPrepareFreeWorkout(request.requestedName || "")
+            handlePreparationResult(result)
+            return
+        }
         const succeeded = request.requestedKind === "plan"
                 ? workoutController.switchToPlanDay(request.requestedTargetId, discardCurrent)
                 : workoutController.switchToFreeWorkout(request.requestedName || "", discardCurrent)
@@ -200,6 +224,15 @@ ApplicationWindow {
             wrapMode: Text.WordWrap
             Accessible.name: text
         }
+    }
+
+    WorkoutPreparationPage {
+        id: preparationPage
+        anchors.fill: parent
+        visible: workoutController.preparing
+        z: 1000
+        onStartSucceeded: navigation.currentIndex = 2
+        onCancelled: navigation.currentIndex = 0
     }
 
     footer: Rectangle {

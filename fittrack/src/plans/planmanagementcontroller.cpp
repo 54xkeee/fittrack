@@ -108,7 +108,8 @@ bool PlanManagementController::selectPlan(const QString &planId)
         QVariantList exercises;
         QSqlQuery exercise(m_database);
         exercise.prepare(QStringLiteral(
-            "SELECT e.name_zh,pe.default_sets,pe.default_reps,pe.notes,pe.id,pe.rest_seconds,"
+            "SELECT e.name_zh,pe.default_sets,pe.default_reps,pe.notes,pe.id,pe.exercise_id,"
+            "e.recommended_sets,e.recommended_reps,e.rest_seconds,pe.rest_seconds,"
             "pe.section_id,COALESCE(s.name,'') "
             "FROM plan_exercise pe JOIN exercise e ON e.id=pe.exercise_id "
             "LEFT JOIN plan_section s ON s.id=pe.section_id "
@@ -122,9 +123,13 @@ bool PlanManagementController::selectPlan(const QString &planId)
                     {QStringLiteral("reps"), exercise.value(2)},
                     {QStringLiteral("notes"), exercise.value(3)},
                     {QStringLiteral("id"), exercise.value(4)},
-                    {QStringLiteral("restSeconds"), exercise.value(5)},
-                    {QStringLiteral("sectionId"), exercise.value(6)},
-                    {QStringLiteral("sectionName"), exercise.value(7)},
+                    {QStringLiteral("exerciseId"), exercise.value(5)},
+                    {QStringLiteral("recommendedSets"), exercise.value(6)},
+                    {QStringLiteral("recommendedReps"), exercise.value(7)},
+                    {QStringLiteral("recommendedRestSeconds"), exercise.value(8)},
+                    {QStringLiteral("restSeconds"), exercise.value(9)},
+                    {QStringLiteral("sectionId"), exercise.value(10)},
+                    {QStringLiteral("sectionName"), exercise.value(11)},
                 });
             }
         }

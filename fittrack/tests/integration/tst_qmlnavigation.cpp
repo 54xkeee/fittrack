@@ -124,6 +124,30 @@ bool isDescendantOf(QObject *object, QObject *ancestor)
     return false;
 }
 
+QAccessibleInterface *findAccessibleByObjectName(
+    QAccessibleInterface *root, const QString &objectName,
+    QSet<QAccessibleInterface *> *visited = nullptr)
+{
+    if (!root || !root->isValid()) return nullptr;
+
+    QSet<QAccessibleInterface *> localVisited;
+    if (!visited) visited = &localVisited;
+    if (visited->contains(root)) return nullptr;
+    visited->insert(root);
+
+    if (!root->state().invisible && root->object()
+        && root->object()->objectName() == objectName) {
+        return root;
+    }
+    for (int index = 0; index < root->childCount(); ++index) {
+        if (QAccessibleInterface *match = findAccessibleByObjectName(
+                root->child(index), objectName, visited)) {
+            return match;
+        }
+    }
+    return nullptr;
+}
+
 } // namespace
 
 void QmlNavigationTest::loadsAndSwitchesEveryPrimaryPage()
@@ -217,8 +241,142 @@ void QmlNavigationTest::loadsAndSwitchesEveryPrimaryPage()
     QVERIFY(startTraining->actionInterface()->actionNames().contains(
         QAccessibleActionInterface::pressAction()));
     QVERIFY(touchTap(window, touchDevice, startTraining));
+    QTRY_VERIFY(workoutController.preparing());
+    QObject *preparationPage = root->findChild<QObject *>(
+        QStringLiteral("workoutPreparationPage"));
+    QObject *commitPreparation = root->findChild<QObject *>(
+        QStringLiteral("commitPreparationButton"));
+    QVERIFY(preparationPage);
+    QVERIFY(commitPreparation);
+    QTRY_VERIFY(preparationPage->property("visible").toBool());
+    QSqlQuery preparationCount(databaseManager.database());
+    QVERIFY(preparationCount.exec(QStringLiteral("SELECT COUNT(*) FROM workout_session")));
+    QVERIFY(preparationCount.next());
+    QCOMPARE(preparationCount.value(0).toInt(), 0);
+    const QString preparationScreenshotDirectory = QStringLiteral(FITTRACK_SCREENSHOT_DIR);
+    QVERIFY(QDir().mkpath(preparationScreenshotDirectory));
+    window->update();
+    QTest::qWait(100);
+    QVERIFY(window->grabWindow().save(QDir(preparationScreenshotDirectory).filePath(
+        QStringLiteral("workout-preparation-360x800.png"))));
+
+    QVERIFY(root->setProperty("fontScale", 2.0));
+    window->update();
+    QTest::qWait(120);
+    auto *commitPreparationItem = qobject_cast<QQuickItem *>(commitPreparation);
+    QVERIFY(commitPreparationItem);
+    const QRectF commitRect = commitPreparationItem->mapRectToScene(
+        commitPreparationItem->boundingRect());
+    QVERIFY(commitRect.width() >= 48 && commitRect.height() >= 48);
+    QVERIFY(commitRect.left() >= -0.5 && commitRect.right() <= window->width() + 0.5);
+    QVERIFY(commitRect.top() >= -0.5 && commitRect.bottom() <= window->height() + 0.5);
+    QVERIFY(window->grabWindow().save(QDir(preparationScreenshotDirectory).filePath(
+        QStringLiteral("workout-preparation-font-200-360x800.png"))));
+    QVERIFY(root->setProperty("fontScale", 1.0));
+
+    const QVariantMap preparedExercise = workoutController.preparation()
+                                             .value(QStringLiteral("exercises"))
+                                             .toList().first().toMap();
+    QAccessibleInterface *previewPreparedExercise = findAccessibleByObjectName(
+        accessibleRoot, QStringLiteral("preparedExercisePreviewButton"));
+    QVERIFY2(previewPreparedExercise, "准备页动作名称必须可以打开动作详情");
+    previewPreparedExercise->actionInterface()->doAction(
+        QAccessibleActionInterface::pressAction());
+    QObject *sharedDetail = root->findChild<QObject *>(
+        QStringLiteral("preparationExerciseDetailSheet"));
+    QVERIFY(sharedDetail);
+    QTRY_VERIFY(sharedDetail->property("visible").toBool());
+    const QVariantMap detailExercise = sharedDetail->property("exercise").toMap();
+    QVERIFY(!detailExercise.value(QStringLiteral("mediaItems")).toList().isEmpty());
+    QAccessibleInterface *closePreparedDetail = findAccessibleByName(
+        accessibleRoot, QStringLiteral("关闭动作详情"), QAccessible::Button);
+    QVERIFY(closePreparedDetail);
+    closePreparedDetail->actionInterface()->doAction(QAccessibleActionInterface::pressAction());
+    QTRY_VERIFY(!sharedDetail->property("visible").toBool());
+
+    QAccessibleInterface *parameters = findAccessibleByObjectName(
+        accessibleRoot, QStringLiteral("preparedExerciseParametersButton"));
+    QVERIFY(parameters);
+    parameters->actionInterface()->doAction(QAccessibleActionInterface::pressAction());
+    QObject *parameterSheet = root->findChild<QObject *>(
+        QStringLiteral("preparationExerciseParameterSheet"));
+    QObject *setsInput = parameterSheet ? parameterSheet->findChild<QObject *>(
+        QStringLiteral("parameterSetsInput")) : nullptr;
+    QObject *repsInput = parameterSheet ? parameterSheet->findChild<QObject *>(
+        QStringLiteral("parameterRepsInput")) : nullptr;
+    QObject *restInput = parameterSheet ? parameterSheet->findChild<QObject *>(
+        QStringLiteral("parameterRestInput")) : nullptr;
+    QVERIFY(parameterSheet);
+    QVERIFY(setsInput);
+    QVERIFY(repsInput);
+    QVERIFY(restInput);
+    QTRY_VERIFY(parameterSheet->property("visible").toBool());
+    QVERIFY(setsInput->setProperty("value", 4));
+    QVERIFY(repsInput->setProperty("text", QStringLiteral("12,10,8,6")));
+    QVERIFY(restInput->setProperty("value", 45));
+    QAccessibleInterface *saveParameters = findAccessibleByName(
+        accessibleRoot, QStringLiteral("保存"), QAccessible::Button);
+    QVERIFY(saveParameters);
+    saveParameters->actionInterface()->doAction(QAccessibleActionInterface::pressAction());
+    QTRY_VERIFY(!parameterSheet->property("visible").toBool());
+    QVariantMap editedExercise = workoutController.preparation()
+                                     .value(QStringLiteral("exercises"))
+                                     .toList().first().toMap();
+    QCOMPARE(editedExercise.value(QStringLiteral("sets")).toInt(), 4);
+    QCOMPARE(editedExercise.value(QStringLiteral("reps")).toString(),
+             QStringLiteral("12,10,8,6"));
+    QCOMPARE(editedExercise.value(QStringLiteral("restSeconds")).toInt(), 45);
+
+    parameters = findAccessibleByObjectName(
+        accessibleRoot, QStringLiteral("preparedExerciseParametersButton"));
+    QVERIFY(parameters);
+    parameters->actionInterface()->doAction(QAccessibleActionInterface::pressAction());
+    QTRY_VERIFY(parameterSheet->property("visible").toBool());
+    QAccessibleInterface *restoreParameters = findAccessibleByName(
+        accessibleRoot, QStringLiteral("恢复进入准备时的默认值"), QAccessible::Button);
+    QVERIFY(restoreParameters);
+    restoreParameters->actionInterface()->doAction(QAccessibleActionInterface::pressAction());
+    editedExercise = workoutController.preparation()
+                         .value(QStringLiteral("exercises"))
+                         .toList().first().toMap();
+    QCOMPARE(editedExercise.value(QStringLiteral("sets")).toInt(),
+             preparedExercise.value(QStringLiteral("sets")).toInt());
+    QCOMPARE(editedExercise.value(QStringLiteral("restSeconds")).toInt(),
+             preparedExercise.value(QStringLiteral("restSeconds")).toInt());
+    QVERIFY(QMetaObject::invokeMethod(parameterSheet, "close"));
+
+    QAccessibleInterface *cancelPreparation = findAccessibleByName(
+        accessibleRoot, QStringLiteral("取消训练准备"), QAccessible::Button);
+    QVERIFY(cancelPreparation);
+    cancelPreparation->actionInterface()->doAction(QAccessibleActionInterface::pressAction());
+    QObject *cancelPreparationConfirm = root->findChild<QObject *>(
+        QStringLiteral("cancelPreparationConfirmDialog"));
+    QVERIFY(cancelPreparationConfirm);
+    QTRY_VERIFY(cancelPreparationConfirm->property("visible").toBool());
+    QVERIFY(QMetaObject::invokeMethod(cancelPreparationConfirm, "accept"));
+    QTRY_VERIFY(!workoutController.preparing());
+    QVERIFY(preparationCount.exec(QStringLiteral("SELECT COUNT(*) FROM workout_session")));
+    QVERIFY(preparationCount.next());
+    QCOMPARE(preparationCount.value(0).toInt(), 0);
+
+    startTraining = findAccessibleByName(
+        accessibleRoot, QStringLiteral("开始训练"), QAccessible::Button);
+    QVERIFY(startTraining);
+    startTraining->actionInterface()->doAction(QAccessibleActionInterface::pressAction());
+    QTRY_VERIFY(workoutController.preparing());
+    QVERIFY(workoutController.updatePreparedExercise(
+        workoutController.preparation().value(QStringLiteral("exercises"))
+            .toList().first().toMap().value(QStringLiteral("draftId")).toString(),
+        4, QStringLiteral("12,10,8,6"), 45));
+    QAccessibleInterface *startPreparedWorkout = findAccessibleByName(
+        accessibleRoot, QStringLiteral("开始本次训练"), QAccessible::Button);
+    QVERIFY(startPreparedWorkout);
+    QVERIFY(isTouchTargetAtLeast(startPreparedWorkout, window, 48));
+    startPreparedWorkout->actionInterface()->doAction(QAccessibleActionInterface::pressAction());
     QTRY_VERIFY(workoutController.active());
     QTRY_COMPARE(navigation->property("currentIndex").toInt(), 2);
+    QCOMPARE(workoutController.exercises().first().toMap()
+                 .value(QStringLiteral("restSeconds")).toInt(), 45);
     QVERIFY(workoutController.discardWorkout());
     QVERIFY(navigation->setProperty("currentIndex", 0));
     QTest::qWait(80);
@@ -423,27 +581,31 @@ void QmlNavigationTest::loadsAndSwitchesEveryPrimaryPage()
     QVERIFY(benchPress->actionInterface()->actionNames().contains(
         QAccessibleActionInterface::pressAction()));
     benchPress->actionInterface()->doAction(QAccessibleActionInterface::pressAction());
-    QObject *referenceSection = root->findChild<QObject *>(
-        QStringLiteral("exerciseReferenceSection"));
-    QObject *mediaCredit = root->findChild<QObject *>(
-        QStringLiteral("exerciseMediaCredit"));
-    QVERIFY(referenceSection);
+    sharedDetail = root->findChild<QObject *>(QStringLiteral("libraryExerciseDetailSheet"));
+    QObject *mediaCredit = sharedDetail ? sharedDetail->findChild<QObject *>(
+        QStringLiteral("sharedExerciseMediaCredit")) : nullptr;
+    QObject *detailImage = sharedDetail ? sharedDetail->findChild<QObject *>(
+        QStringLiteral("sharedExerciseDetailImage")) : nullptr;
+    QVERIFY(sharedDetail);
+    QVERIFY(detailImage);
     QVERIFY(mediaCredit);
-    QTRY_VERIFY(referenceSection->property("visible").toBool());
+    QTRY_VERIFY(sharedDetail->property("visible").toBool());
     QTRY_VERIFY(mediaCredit->property("visible").toBool());
+    QTRY_VERIFY(detailImage->property("visible").toBool());
     QVERIFY(capture(QStringLiteral("exercise-detail-media-credit"), QSize(360, 800)));
-    QAccessibleInterface *referenceInterface =
-        QAccessible::queryAccessibleInterface(referenceSection);
-    QVERIFY(referenceInterface);
-    QCOMPARE(referenceInterface->role(), QAccessible::Grouping);
-    QCOMPARE(referenceInterface->text(QAccessible::Name), QStringLiteral("参考资料"));
-    QVERIFY(!referenceInterface->actionInterface()
-            || !referenceInterface->actionInterface()->actionNames().contains(
-                QAccessibleActionInterface::pressAction()));
+    const QVariantMap libraryDetailExercise = sharedDetail->property("exercise").toMap();
+    QCOMPARE(libraryDetailExercise.value(QStringLiteral("name")).toString(),
+             QStringLiteral("杠铃卧推"));
+    QVERIFY(!libraryDetailExercise.value(QStringLiteral("steps")).toList().isEmpty());
+    QVERIFY(!libraryDetailExercise.value(QStringLiteral("mediaItems")).toList().isEmpty());
+    QAccessibleInterface *detailImageInterface =
+        QAccessible::queryAccessibleInterface(detailImage);
+    QVERIFY(detailImageInterface);
+    QCOMPARE(detailImageInterface->role(), QAccessible::Graphic);
+    QVERIFY(!detailImageInterface->text(QAccessible::Name).isEmpty());
     QAccessibleInterface *mediaCreditInterface =
         QAccessible::queryAccessibleInterface(mediaCredit);
     QVERIFY(mediaCreditInterface);
-    QCOMPARE(mediaCreditInterface->role(), QAccessible::Grouping);
     QCOMPARE(mediaCreditInterface->text(QAccessible::Name), QStringLiteral("图片来源"));
     QVERIFY(!mediaCreditInterface->text(QAccessible::Description).isEmpty());
     QVERIFY(!mediaCreditInterface->actionInterface()
@@ -455,7 +617,7 @@ void QmlNavigationTest::loadsAndSwitchesEveryPrimaryPage()
     QVERIFY(mediaCreditInterface->text(QAccessible::Description)
                 .contains(QStringLiteral("Public domain")));
     QObject *detailScroll = root->findChild<QObject *>(
-        QStringLiteral("exerciseDetailScroll"));
+        QStringLiteral("sharedExerciseDetailScroll"));
     QVERIFY(detailScroll);
     QObject *detailFlickable = detailScroll->property("contentItem").value<QObject *>();
     QVERIFY(detailFlickable);
@@ -477,7 +639,7 @@ void QmlNavigationTest::loadsAndSwitchesEveryPrimaryPage()
         QAccessibleActionInterface::pressAction()));
     closeExerciseDetail->actionInterface()->doAction(
         QAccessibleActionInterface::pressAction());
-    QTRY_VERIFY(!referenceSection->property("visible").toBool());
+    QTRY_VERIFY(!sharedDetail->property("visible").toBool());
     exerciseModel.setSearchText({});
 
     const QString systemPlanId = planManagement.selectedPlan()
@@ -572,6 +734,19 @@ void QmlNavigationTest::loadsAndSwitchesEveryPrimaryPage()
     window->resize(360, 640);
     window->update();
     QTest::qWait(160);
+    QVERIFY(capture(QStringLiteral("training-large-font-150"), QSize(360, 640)));
+    for (const QString &objectName : coreObjectNames) {
+        auto *item = qobject_cast<QQuickItem *>(root->findChild<QObject *>(objectName));
+        QVERIFY2(item, qPrintable(QStringLiteral("找不到 1.5 倍字体核心控件：%1")
+                                      .arg(objectName)));
+        const QRectF rect = item->mapRectToScene(item->boundingRect());
+        QVERIFY2(rect.left() >= -0.5 && rect.right() <= window->width() + 0.5,
+                 qPrintable(QStringLiteral("1.5 倍字体下控件横向溢出：%1")
+                                .arg(objectName)));
+        QVERIFY2(rect.top() >= -0.5 && rect.bottom() <= window->height() + 0.5,
+                 qPrintable(QStringLiteral("1.5 倍字体下控件纵向溢出：%1")
+                                .arg(objectName)));
+    }
     const QStringList trainingDialogNames{
         QStringLiteral("sessionActionsDialog"),
         QStringLiteral("exerciseActionsDialog"),
