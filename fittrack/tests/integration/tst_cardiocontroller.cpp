@@ -1,7 +1,9 @@
 #include "cardio/cardiocontroller.h"
 #include "storage/databasemanager.h"
 
+#include <QSqlError>
 #include <QSqlQuery>
+#include <QSet>
 #include <QtTest>
 
 class CardioControllerTest final : public QObject
@@ -9,6 +11,7 @@ class CardioControllerTest final : public QObject
     Q_OBJECT
 private slots:
     void recordsStandaloneAndAttachedCardioWithNullOptionals();
+    void loadsLatestForHomeAndPaginatesHistory();
 };
 
 void CardioControllerTest::recordsStandaloneAndAttachedCardioWithNullOptionals()
@@ -43,6 +46,7 @@ void CardioControllerTest::recordsStandaloneAndAttachedCardioWithNullOptionals()
     QVERIFY(treadmill.value(QStringLiteral("distanceKm")).isNull());
     QCOMPARE(treadmill.value(QStringLiteral("sessionName")).toString(), QStringLiteral("Push"));
 
+    controller.ensureLoaded();
     QVERIFY(controller.addStairClimber(20, 8, 45, -1, 138, QStringLiteral("稳定")));
     QCOMPARE(controller.records().size(), 2);
     const QVariantMap overview = controller.overview(7);
@@ -61,6 +65,44 @@ void CardioControllerTest::recordsStandaloneAndAttachedCardioWithNullOptionals()
     QVERIFY(!verify.value(1).toString().isEmpty());
     QVERIFY(verify.value(2).isNull());
     QVERIFY(verify.value(3).isNull());
+}
+
+void CardioControllerTest::loadsLatestForHomeAndPaginatesHistory()
+{
+    fittrack::DatabaseManager manager;
+    QString error;
+    QVERIFY2(manager.initialize(QStringLiteral(":memory:"), &error), qPrintable(error));
+    QVERIFY(manager.database().transaction());
+    QSqlQuery insert(manager.database());
+    insert.prepare(QStringLiteral(
+        "INSERT INTO cardio_record(id,cardio_type,performed_at,duration_seconds) "
+        "VALUES(?,'TreadmillIncline',datetime('2026-01-01','+' || ? || ' minutes'),600)"));
+    for (int index = 0; index < 121; ++index) {
+        insert.bindValue(0, QStringLiteral("cardio-%1").arg(index));
+        insert.bindValue(1, index);
+        QVERIFY2(insert.exec(), qPrintable(insert.lastError().text()));
+    }
+    QVERIFY(manager.database().commit());
+
+    fittrack::CardioController controller(manager.database());
+    QCOMPARE(controller.records().size(), 1);
+    QVERIFY(controller.hasMore());
+    QCOMPARE(controller.overview(0).value(QStringLiteral("count")).toInt(), 121);
+
+    controller.ensureLoaded();
+    QCOMPARE(controller.records().size(), 50);
+    QVERIFY(controller.hasMore());
+    controller.loadMore();
+    QCOMPARE(controller.records().size(), 100);
+    QVERIFY(controller.hasMore());
+    controller.loadMore();
+    QCOMPARE(controller.records().size(), 121);
+    QVERIFY(!controller.hasMore());
+
+    QSet<QString> ids;
+    for (const QVariant &record : controller.records())
+        ids.insert(record.toMap().value(QStringLiteral("id")).toString());
+    QCOMPARE(ids.size(), 121);
 }
 
 QTEST_GUILESS_MAIN(CardioControllerTest)

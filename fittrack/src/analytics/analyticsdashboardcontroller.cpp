@@ -34,7 +34,8 @@ AnalyticsDashboardController::AnalyticsDashboardController(
     const QSqlDatabase &database, QObject *parent)
     : QObject(parent), m_database(database)
 {
-    reload();
+    m_sevenDayOverview = buildOverview(7);
+    m_overview = m_sevenDayOverview;
 }
 
 int AnalyticsDashboardController::periodDays() const { return m_periodDays; }
@@ -66,13 +67,6 @@ QVariantMap AnalyticsDashboardController::buildOverview(int days) const
     bindPeriod(sessions, since);
     sessions.exec();
     sessions.next();
-    QSqlQuery setCount(m_database);
-    setCount.prepare(QStringLiteral(
-        "SELECT COUNT(*) FROM set_record s JOIN workout_exercise we ON we.id=s.workout_exercise_id "
-        "JOIN workout_session ws ON ws.id=we.session_id WHERE ws.status='completed' AND s.completed=1") + periodSql);
-    bindPeriod(setCount, since);
-    setCount.exec();
-    setCount.next();
     QSqlQuery cardio(m_database);
     cardio.prepare(QStringLiteral(
         "SELECT COUNT(*),COALESCE(SUM(duration_seconds),0) FROM cardio_record")
@@ -88,53 +82,70 @@ QVariantMap AnalyticsDashboardController::buildOverview(int days) const
     QString highestExercise;
     double bestOneRepMax = 0.0;
     QString bestOneRepMaxExercise;
+    int completedSetCount = 0;
     QSqlQuery sets(m_database);
     sets.prepare(QStringLiteral(
-        "SELECT s.id,s.weight_kg,s.actual_reps,s.both_sides,e.load_mode,e.name_zh,s.bodyweight_load_type "
+        "SELECT s.id,s.weight_kg,s.actual_reps,s.both_sides,e.load_mode,e.name_zh,"
+        "s.bodyweight_load_type,a.id,a.weight_kg,a.reps,a.rest_seconds "
         "FROM set_record s JOIN workout_exercise we ON we.id=s.workout_exercise_id "
         "JOIN workout_session ws ON ws.id=we.session_id JOIN exercise e ON e.id=we.exercise_id "
-        "WHERE ws.status='completed' AND s.completed=1") + periodSql);
+        "LEFT JOIN append_set_record a ON a.parent_set_id=s.id "
+        "WHERE ws.status='completed' AND s.completed=1") + periodSql
+        + QStringLiteral(" ORDER BY ws.ended_at,we.sort_order,we.id,s.set_order,s.id,a.rowid"));
     bindPeriod(sets, since);
+    QString currentSetId;
+    QString currentExercise;
+    LoadMode currentMode = LoadMode::Standard;
+    SetRecord currentRecord;
+    auto flushSet = [&] {
+        if (currentSetId.isEmpty())
+            return;
+        ++completedSetCount;
+        volume += TrainingAnalytics::setVolume(currentRecord, currentMode);
+        if (currentRecord.weightKg > highestWeight) {
+            highestWeight = currentRecord.weightKg;
+            highestReps = currentRecord.reps;
+            highestSetCount = 1;
+            highestExercise = currentExercise;
+        } else if (qFuzzyCompare(currentRecord.weightKg, highestWeight)
+                   && currentExercise == highestExercise) {
+            ++highestSetCount;
+            highestReps = qMax(highestReps, currentRecord.reps);
+        }
+        const auto estimate = TrainingAnalytics::estimatedOneRepMax(
+            {currentRecord}, currentMode);
+        if (estimate && *estimate > bestOneRepMax) {
+            bestOneRepMax = *estimate;
+            bestOneRepMaxExercise = currentExercise;
+        }
+    };
     if (sets.exec()) {
         while (sets.next()) {
-            SetRecord record;
-            record.weightKg = sets.value(1).toDouble();
-            record.reps = sets.value(2).toInt();
-            record.bothSides = sets.value(3).toBool();
-            record.completed = true;
-            record.bodyweightLoadType = bodyweightTypeFromString(sets.value(6).toString());
-            QSqlQuery append(m_database);
-            append.prepare(QStringLiteral(
-                "SELECT weight_kg,reps,rest_seconds FROM append_set_record WHERE parent_set_id=?"));
-            append.addBindValue(sets.value(0));
-            if (append.exec()) {
-                while (append.next()) {
-                    record.appendSets.append({append.value(0).toDouble(), append.value(1).toInt(),
-                                             append.value(2).toInt(), true});
-                }
+            const QString setId = sets.value(0).toString();
+            if (setId != currentSetId) {
+                flushSet();
+                currentSetId = setId;
+                currentExercise = sets.value(5).toString();
+                currentMode = modeFromString(sets.value(4).toString());
+                currentRecord = {};
+                currentRecord.weightKg = sets.value(1).toDouble();
+                currentRecord.reps = sets.value(2).toInt();
+                currentRecord.bothSides = sets.value(3).toBool();
+                currentRecord.completed = true;
+                currentRecord.bodyweightLoadType = bodyweightTypeFromString(
+                    sets.value(6).toString());
             }
-            const LoadMode mode = modeFromString(sets.value(4).toString());
-            volume += TrainingAnalytics::setVolume(record, mode);
-            if (record.weightKg > highestWeight) {
-                highestWeight = record.weightKg;
-                highestReps = record.reps;
-                highestSetCount = 1;
-                highestExercise = sets.value(5).toString();
-            } else if (qFuzzyCompare(record.weightKg, highestWeight)
-                       && sets.value(5).toString() == highestExercise) {
-                ++highestSetCount;
-                highestReps = qMax(highestReps, record.reps);
-            }
-            const auto estimate = TrainingAnalytics::estimatedOneRepMax({record}, mode);
-            if (estimate && *estimate > bestOneRepMax) {
-                bestOneRepMax = *estimate;
-                bestOneRepMaxExercise = sets.value(5).toString();
-            }
+            if (!sets.value(7).isNull())
+                currentRecord.appendSets.append({
+                    sets.value(8).toDouble(), sets.value(9).toInt(),
+                    sets.value(10).toInt(), true,
+                });
         }
+        flushSet();
     }
     return {
         {QStringLiteral("workoutCount"), sessions.value(0)},
-        {QStringLiteral("setCount"), setCount.value(0)},
+        {QStringLiteral("setCount"), completedSetCount},
         {QStringLiteral("durationSeconds"), sessions.value(1)},
         {QStringLiteral("cardioCount"), cardio.value(0)},
         {QStringLiteral("cardioDurationSeconds"), cardio.value(1)},
@@ -148,29 +159,31 @@ QVariantMap AnalyticsDashboardController::buildOverview(int days) const
     };
 }
 
-QVariantList AnalyticsDashboardController::buildMuscles(int days, const QString &role) const
+void AnalyticsDashboardController::loadMuscles(int days)
 {
     const QString since = cutoff(days);
     QSqlQuery query(m_database);
     query.prepare(QStringLiteral(
-        "SELECT m.name_zh,COUNT(DISTINCT s.id) FROM set_record s "
+        "SELECT em.role,m.name_zh,COUNT(DISTINCT s.id) FROM set_record s "
         "JOIN workout_exercise we ON we.id=s.workout_exercise_id "
         "JOIN workout_session ws ON ws.id=we.session_id "
         "JOIN exercise_muscle em ON em.exercise_id=we.exercise_id "
         "JOIN muscle m ON m.id=em.muscle_id "
-        "WHERE ws.status='completed' AND s.completed=1 AND em.role=?")
+        "WHERE ws.status='completed' AND s.completed=1")
         + (since.isEmpty() ? QString{} : QStringLiteral(" AND ws.ended_at>=?"))
-        + QStringLiteral(" GROUP BY m.id ORDER BY COUNT(DISTINCT s.id) DESC,m.name_zh"));
-    query.addBindValue(role);
+        + QStringLiteral(
+            " GROUP BY em.role,m.id ORDER BY em.role,COUNT(DISTINCT s.id) DESC,m.name_zh"));
     bindPeriod(query, since);
-    QVariantList result;
+    m_primaryMuscles.clear();
+    m_secondaryMuscles.clear();
     if (query.exec()) {
         while (query.next()) {
-            result.append(QVariantMap{{QStringLiteral("name"), query.value(0)},
-                                      {QStringLiteral("sets"), query.value(1)}});
+            QVariantMap item{{QStringLiteral("name"), query.value(1)},
+                             {QStringLiteral("sets"), query.value(2)}};
+            (query.value(0).toString() == QStringLiteral("primary")
+                 ? m_primaryMuscles : m_secondaryMuscles).append(item);
         }
     }
-    return result;
 }
 
 void AnalyticsDashboardController::loadOptions()
@@ -199,6 +212,11 @@ void AnalyticsDashboardController::loadOptions()
         }
     }
 
+    loadEquipment();
+}
+
+void AnalyticsDashboardController::loadEquipment()
+{
     m_equipment.clear();
     QSqlQuery equipment(m_database);
     equipment.prepare(QStringLiteral(
@@ -225,11 +243,17 @@ void AnalyticsDashboardController::loadTrend()
     const QString since = cutoff(m_periodDays);
     QSqlQuery query(m_database);
     query.prepare(QStringLiteral(
-        "SELECT we.id,ws.ended_at FROM workout_exercise we JOIN workout_session ws ON ws.id=we.session_id "
+        "SELECT we.id,ws.ended_at,e.load_mode,s.id,s.weight_kg,s.actual_reps,s.both_sides,"
+        "s.bodyweight_load_type,a.id,a.weight_kg,a.reps,a.rest_seconds "
+        "FROM workout_exercise we JOIN workout_session ws ON ws.id=we.session_id "
+        "JOIN exercise e ON e.id=we.exercise_id "
+        "LEFT JOIN set_record s ON s.workout_exercise_id=we.id AND s.completed=1 "
+        "LEFT JOIN append_set_record a ON a.parent_set_id=s.id "
         "WHERE ws.status='completed' AND we.exercise_id=? AND (?='' OR ws.gym_id=?) "
         "AND (?='' OR we.equipment_instance_id=?)")
         + (since.isEmpty() ? QString{} : QStringLiteral(" AND ws.ended_at>=?"))
-        + QStringLiteral(" ORDER BY ws.ended_at"));
+        + QStringLiteral(
+            " ORDER BY ws.ended_at,we.id,s.set_order,s.id,a.rowid"));
     query.addBindValue(m_selectedExerciseId);
     const QString gymFilter = m_gymFilterId.isEmpty() ? QStringLiteral("") : m_gymFilterId;
     const QString equipmentFilter = m_equipmentFilterId.isEmpty()
@@ -240,89 +264,134 @@ void AnalyticsDashboardController::loadTrend()
     query.addBindValue(equipmentFilter);
     bindPeriod(query, since);
     if (!query.exec()) return;
-    while (query.next()) {
-        QVector<SetRecord> records;
-        QSqlQuery sets(m_database);
-        sets.prepare(QStringLiteral(
-            "SELECT id,weight_kg,actual_reps,both_sides,bodyweight_load_type FROM set_record "
-            "WHERE workout_exercise_id=? AND completed=1 ORDER BY set_order"));
-        sets.addBindValue(query.value(0));
-        if (sets.exec()) {
-            while (sets.next()) {
-                SetRecord record{sets.value(1).toDouble(), sets.value(2).toInt(), true,
-                                 sets.value(3).toBool(), {}};
-                record.bodyweightLoadType = bodyweightTypeFromString(sets.value(4).toString());
-                QSqlQuery append(m_database);
-                append.prepare(QStringLiteral(
-                    "SELECT weight_kg,reps,rest_seconds FROM append_set_record WHERE parent_set_id=?"));
-                append.addBindValue(sets.value(0));
-                if (append.exec()) {
-                    while (append.next()) {
-                        record.appendSets.append({append.value(0).toDouble(), append.value(1).toInt(),
-                                                 append.value(2).toInt(), true});
-                    }
-                }
-                records.append(record);
-            }
-        }
-        QSqlQuery modeQuery(m_database);
-        modeQuery.prepare(QStringLiteral(
-            "SELECT e.load_mode FROM workout_exercise we JOIN exercise e ON e.id=we.exercise_id WHERE we.id=?"));
-        modeQuery.addBindValue(query.value(0));
-        modeQuery.exec();
-        modeQuery.next();
-        const LoadMode mode = modeFromString(modeQuery.value(0).toString());
+
+    QString currentWorkoutId;
+    QString currentDate;
+    QString currentSetId;
+    LoadMode currentMode = LoadMode::Standard;
+    QVector<SetRecord> records;
+    SetRecord currentRecord;
+    bool hasCurrentSet = false;
+    auto flushSet = [&] {
+        if (!hasCurrentSet)
+            return;
+        records.append(currentRecord);
+        hasCurrentSet = false;
+    };
+    auto flushWorkout = [&] {
+        if (currentWorkoutId.isEmpty())
+            return;
+        flushSet();
         const auto highest = TrainingAnalytics::highestWeight(records);
-        const auto estimate = TrainingAnalytics::estimatedOneRepMax(records, mode);
+        const auto estimate = TrainingAnalytics::estimatedOneRepMax(records, currentMode);
         m_trend.append(QVariantMap{
-            {QStringLiteral("date"), query.value(1)},
+            {QStringLiteral("date"), currentDate},
             {QStringLiteral("highestWeight"), highest ? highest->weightKg : 0.0},
             {QStringLiteral("highestReps"), highest ? highest->bestReps : 0},
             {QStringLiteral("highestSetCount"), highest ? highest->setCount : 0},
             {QStringLiteral("oneRepMax"), estimate ? *estimate : 0.0},
-            {QStringLiteral("volume"), TrainingAnalytics::totalVolume(records, mode)},
+            {QStringLiteral("volume"), TrainingAnalytics::totalVolume(records, currentMode)},
         });
+        records.clear();
+        currentSetId.clear();
+    };
+    while (query.next()) {
+        const QString workoutId = query.value(0).toString();
+        if (workoutId != currentWorkoutId) {
+            flushWorkout();
+            currentWorkoutId = workoutId;
+            currentDate = query.value(1).toString();
+            currentMode = modeFromString(query.value(2).toString());
+        }
+        const QString setId = query.value(3).toString();
+        if (setId.isEmpty())
+            continue;
+        if (!hasCurrentSet || setId != currentSetId) {
+            flushSet();
+            currentSetId = setId;
+            hasCurrentSet = true;
+            currentRecord = {};
+            currentRecord.weightKg = query.value(4).toDouble();
+            currentRecord.reps = query.value(5).toInt();
+            currentRecord.completed = true;
+            currentRecord.bothSides = query.value(6).toBool();
+            currentRecord.bodyweightLoadType = bodyweightTypeFromString(
+                query.value(7).toString());
+        }
+        if (!query.value(8).isNull())
+            currentRecord.appendSets.append({
+                query.value(9).toDouble(), query.value(10).toInt(),
+                query.value(11).toInt(), true,
+            });
     }
+    flushWorkout();
 }
 
-void AnalyticsDashboardController::reload()
+void AnalyticsDashboardController::ensureLoaded()
 {
-    m_sevenDayOverview = buildOverview(7);
-    m_overview = buildOverview(m_periodDays);
-    m_primaryMuscles = buildMuscles(m_periodDays, QStringLiteral("primary"));
-    m_secondaryMuscles = buildMuscles(m_periodDays, QStringLiteral("secondary"));
+    if (m_loaded)
+        return;
+    m_loaded = true;
+    m_overview = m_periodDays == 7 ? m_sevenDayOverview : buildOverview(m_periodDays);
+    loadMuscles(m_periodDays);
     loadOptions();
     loadTrend();
     emit dataChanged();
 }
 
+void AnalyticsDashboardController::reload()
+{
+    m_sevenDayOverview = buildOverview(7);
+    if (m_loaded) {
+        m_overview = m_periodDays == 7 ? m_sevenDayOverview : buildOverview(m_periodDays);
+        loadMuscles(m_periodDays);
+        loadOptions();
+        loadTrend();
+    } else {
+        m_overview = m_sevenDayOverview;
+    }
+    emit dataChanged();
+}
+
 void AnalyticsDashboardController::setPeriodDays(int days)
 {
-    if (days != 7 && days != 30 && days != -1) return;
+    if ((days != 7 && days != 30 && days != -1) || m_periodDays == days) return;
     m_periodDays = days;
-    reload();
+    if (m_loaded)
+        reload();
+    else
+        ensureLoaded();
 }
 
 void AnalyticsDashboardController::selectExercise(const QString &exerciseId)
 {
+    ensureLoaded();
+    if (m_selectedExerciseId == exerciseId)
+        return;
     m_selectedExerciseId = exerciseId;
     m_equipmentFilterId.clear();
-    loadOptions();
+    loadEquipment();
     loadTrend();
     emit dataChanged();
 }
 
 void AnalyticsDashboardController::setGymFilter(const QString &gymId)
 {
+    ensureLoaded();
+    if (m_gymFilterId == gymId)
+        return;
     m_gymFilterId = gymId;
     m_equipmentFilterId.clear();
-    loadOptions();
+    loadEquipment();
     loadTrend();
     emit dataChanged();
 }
 
 void AnalyticsDashboardController::setEquipmentFilter(const QString &equipmentId)
 {
+    ensureLoaded();
+    if (m_equipmentFilterId == equipmentId)
+        return;
     m_equipmentFilterId = equipmentId;
     loadTrend();
     emit dataChanged();

@@ -3,6 +3,7 @@
 #include "storage/exerciseseedimporter.h"
 
 #include <QFile>
+#include <QSignalSpy>
 #include <QSqlQuery>
 #include <QTest>
 
@@ -16,6 +17,7 @@ private slots:
     void exposesAllBundledExercises();
     void filtersByAliasAndBodyPart();
     void managesFavoritesFiltersAndCustomExercises();
+    void debouncesSearchReload();
 
 private:
     static QList<QByteArray> documents();
@@ -83,7 +85,7 @@ void ExerciseListModelTest::filtersByAliasAndBodyPart()
 
     ExerciseListModel model(manager.database());
     model.setSearchText(QStringLiteral("保加利亚深蹲"));
-    QCOMPARE(model.rowCount(), 1);
+    QTRY_COMPARE(model.rowCount(), 1);
     QCOMPARE(model.data(model.index(0), ExerciseListModel::NameRole).toString(), QStringLiteral("单腿保加利亚蹲"));
 
     model.setSearchText({});
@@ -107,6 +109,7 @@ void ExerciseListModelTest::managesFavoritesFiltersAndCustomExercises()
     const auto seedDocuments = documents();
     QVERIFY(ExerciseSeedImporter::importDocuments(manager.database(), seedDocuments, &error));
     ExerciseListModel model(manager.database(), seedDocuments);
+    QSignalSpy catalogSpy(&model, &ExerciseListModel::catalogChanged);
 
     QVERIFY(model.toggleFavorite(QStringLiteral("barbell-bench-press")));
     model.setFavoritesOnly(true);
@@ -127,7 +130,7 @@ void ExerciseListModelTest::managesFavoritesFiltersAndCustomExercises()
         QStringLiteral("水平推"), QStringLiteral("固定器械"), QStringLiteral("自定义轨迹。"),
         3, QStringLiteral("8-12"), 90));
     model.setSearchText(QStringLiteral("学校推胸机"));
-    QCOMPARE(model.rowCount(), 1);
+    QTRY_COMPARE(model.rowCount(), 1);
     const QString customId = model.data(model.index(0), ExerciseListModel::ExerciseIdRole).toString();
     QCOMPARE(model.data(model.index(0), ExerciseListModel::IsSystemRole).toBool(), false);
     QVERIFY(model.data(model.index(0), ExerciseListModel::PrimaryMusclesRole).toStringList()
@@ -136,7 +139,7 @@ void ExerciseListModelTest::managesFavoritesFiltersAndCustomExercises()
         QStringLiteral("水平推"), QStringLiteral("固定器械"), QStringLiteral("座椅四档。"),
         4, QStringLiteral("10"), 120));
     model.setSearchText(QStringLiteral("学校推胸机A"));
-    QCOMPARE(model.rowCount(), 1);
+    QTRY_COMPARE(model.rowCount(), 1);
     QSqlQuery history(manager.database());
     QVERIFY(history.exec(QStringLiteral(
         "INSERT INTO workout_session(id,name,started_at,status) VALUES('history','历史训练','2026-07-13T00:00:00Z','active')")));
@@ -158,6 +161,7 @@ void ExerciseListModelTest::managesFavoritesFiltersAndCustomExercises()
         "UPDATE exercise SET name_zh='被修改' WHERE id='barbell-bench-press'")));
     QVERIFY(model.restoreSystemExercises());
     model.setSearchText(QStringLiteral("杠铃卧推"));
+    model.reload();
     bool benchRestored = false;
     for (int row = 0; row < model.rowCount(); ++row) {
         const QModelIndex index = model.index(row);
@@ -169,6 +173,28 @@ void ExerciseListModelTest::managesFavoritesFiltersAndCustomExercises()
         }
     }
     QVERIFY(benchRestored);
+    QCOMPARE(catalogSpy.count(), 5);
+}
+
+void ExerciseListModelTest::debouncesSearchReload()
+{
+    DatabaseManager manager;
+    QString error;
+    QVERIFY(manager.initialize(QStringLiteral(":memory:"), &error));
+    QVERIFY(ExerciseSeedImporter::importDocuments(manager.database(), documents(), &error));
+
+    ExerciseListModel model(manager.database());
+    QSignalSpy resetSpy(&model, &QAbstractItemModel::modelReset);
+    QSignalSpy catalogSpy(&model, &ExerciseListModel::catalogChanged);
+    model.setSearchText(QStringLiteral("保"));
+    model.setSearchText(QStringLiteral("保加利亚"));
+    model.setSearchText(QStringLiteral("保加利亚深蹲"));
+
+    QTest::qWait(100);
+    QCOMPARE(resetSpy.count(), 0);
+    QTRY_COMPARE(resetSpy.count(), 1);
+    QCOMPARE(catalogSpy.count(), 0);
+    QCOMPARE(model.rowCount(), 1);
 }
 
 QTEST_GUILESS_MAIN(ExerciseListModelTest)

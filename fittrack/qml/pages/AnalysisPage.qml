@@ -8,6 +8,8 @@ AppPage {
     id: page
     implicitWidth: 0
 
+    Component.onCompleted: analyticsDashboard.ensureLoaded()
+
     property string selectedMetric: "highestWeight"
     property bool filtersExpanded: false
     property bool showSecondaryMuscles: false

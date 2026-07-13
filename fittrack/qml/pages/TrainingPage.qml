@@ -8,6 +8,7 @@ AppPage {
     id: page
 
     implicitWidth: 0
+    implicitHeight: 0
     signal planStartRequested(string dayId)
     signal freeStartRequested(string name)
     property string selectedExerciseId: ""
@@ -154,6 +155,8 @@ AppPage {
             && nextIncompleteExerciseId(-1).length === 0
 
     Component.onCompleted: {
+        exerciseModel.ensureLoaded()
+        planExerciseModel.ensureLoaded()
         ensureExerciseSelection()
         Qt.callLater(loadCurrentSetInputs)
     }

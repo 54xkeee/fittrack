@@ -8,6 +8,8 @@
 namespace fittrack {
 namespace {
 
+constexpr int pageSize = 50;
+
 QVariant optionalDouble(double value)
 {
     return value < 0.0 ? QVariant{} : QVariant(value);
@@ -28,15 +30,34 @@ QString newId()
 CardioController::CardioController(const QSqlDatabase &database, QObject *parent)
     : QObject(parent), m_database(database)
 {
-    reload();
+    loadPage(true, 1);
 }
 
 QVariantList CardioController::records() const { return m_records; }
+bool CardioController::hasMore() const { return m_hasMore; }
 QString CardioController::pendingSessionId() const { return m_pendingSessionId; }
 QVariantMap CardioController::pendingTarget() const { return m_pendingTarget; }
 QString CardioController::errorMessage() const { return m_errorMessage; }
 
+void CardioController::ensureLoaded()
+{
+    if (m_loaded) return;
+    m_loaded = true;
+    loadPage(true, pageSize);
+}
+
 void CardioController::reload()
+{
+    loadPage(true, m_loaded ? pageSize : 1);
+}
+
+void CardioController::loadMore()
+{
+    if (!m_loaded || !m_hasMore) return;
+    loadPage(false, pageSize);
+}
+
+void CardioController::loadPage(bool reset, int limit)
 {
     QVariantList result;
     QSqlQuery query(m_database);
@@ -44,7 +65,10 @@ void CardioController::reload()
         "SELECT c.id,c.cardio_type,c.performed_at,c.duration_seconds,c.incline,c.speed_kmh,"
         "c.distance_km,c.machine_level,c.floors,c.steps,c.average_heart_rate,c.notes,"
         "COALESCE(ws.name,'') FROM cardio_record c "
-        "LEFT JOIN workout_session ws ON ws.id=c.session_id ORDER BY c.performed_at DESC,c.rowid DESC"));
+        "LEFT JOIN workout_session ws ON ws.id=c.session_id "
+        "ORDER BY c.performed_at DESC,c.id LIMIT ? OFFSET ?"));
+    query.addBindValue(limit + 1);
+    query.addBindValue(reset ? 0 : m_records.size());
     if (query.exec()) {
         while (query.next()) {
             result.append(QVariantMap{
@@ -64,7 +88,16 @@ void CardioController::reload()
             });
         }
     }
-    m_records = result;
+    const bool hasMore = result.size() > limit;
+    if (hasMore) result.removeLast();
+    if (reset)
+        m_records = result;
+    else
+        m_records.append(result);
+    if (m_hasMore != hasMore) {
+        m_hasMore = hasMore;
+        emit hasMoreChanged();
+    }
     emit recordsChanged();
 }
 
@@ -151,8 +184,9 @@ bool CardioController::removeRecord(const QString &recordId)
     query.prepare(QStringLiteral("DELETE FROM cardio_record WHERE id=?"));
     query.addBindValue(recordId);
     if (!query.exec()) return fail(query.lastError().text());
-    reload();
-    return query.numRowsAffected() > 0;
+    const bool changed = query.numRowsAffected() > 0;
+    if (changed) reload();
+    return changed;
 }
 
 void CardioController::setPendingSession(const QString &sessionId)

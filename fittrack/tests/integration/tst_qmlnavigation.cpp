@@ -187,8 +187,10 @@ void QmlNavigationTest::loadsAndSwitchesEveryPrimaryPage()
                  readFile(QStringLiteral(FITTRACK_SOURCE_DIR "/resources/data/tan-three-day-split.json")),
                  &error), qPrintable(error));
 
-    fittrack::ExerciseListModel exerciseModel(databaseManager.database(), exerciseDocuments);
-    fittrack::ExerciseListModel planExerciseModel(databaseManager.database(), exerciseDocuments);
+    fittrack::ExerciseListModel exerciseModel(
+        databaseManager.database(), exerciseDocuments, false);
+    fittrack::ExerciseListModel planExerciseModel(
+        databaseManager.database(), exerciseDocuments, false);
     fittrack::RestTimerController restTimer;
     fittrack::WorkoutSessionController workoutController(databaseManager.database());
     fittrack::WorkoutHistoryController workoutHistory(databaseManager.database());
@@ -239,16 +241,20 @@ void QmlNavigationTest::loadsAndSwitchesEveryPrimaryPage()
 
     QObject *navigation = root->findChild<QObject *>(QStringLiteral("navigation"));
     QObject *stack = root->findChild<QObject *>(QStringLiteral("mainStack"));
-    QObject *historyPage = root->findChild<QObject *>(QStringLiteral("historyPage"));
-    QObject *insightsTabs = root->findChild<QObject *>(QStringLiteral("insightsTabs"));
-    QObject *cardioEditor = root->findChild<QObject *>(QStringLiteral("cardioEditor"));
-    QObject *targetRepsDialog = root->findChild<QObject *>(QStringLiteral("targetRepsDialog"));
+    QObject *historyPage = nullptr;
+    QObject *insightsTabs = nullptr;
+    QObject *cardioEditor = nullptr;
+    QObject *targetRepsDialog = nullptr;
     QVERIFY(navigation);
     QVERIFY(stack);
-    QVERIFY(historyPage);
-    QVERIFY(insightsTabs);
-    QVERIFY(cardioEditor);
-    QVERIFY(targetRepsDialog);
+    QVERIFY(!root->findChild<QObject *>(QStringLiteral("historyPage")));
+    QVERIFY(!root->findChild<QObject *>(QStringLiteral("insightsTabs")));
+    QVERIFY(!root->findChild<QObject *>(QStringLiteral("cardioEditor")));
+    QVERIFY(!root->findChild<QObject *>(QStringLiteral("targetRepsDialog")));
+    QVERIFY2(analyticsDashboard.trend().isEmpty(),
+             "启动时不应构建分析详情或未访问页面");
+    QCOMPARE(exerciseModel.rowCount(), 0);
+    QCOMPARE(planExerciseModel.rowCount(), 0);
 
     QAccessibleInterface *startTraining = findAccessibleByName(
         accessibleRoot, QStringLiteral("开始训练"), QAccessible::Button);
@@ -662,7 +668,7 @@ void QmlNavigationTest::loadsAndSwitchesEveryPrimaryPage()
     exerciseModel.setSearchText(QStringLiteral("杠铃卧推"));
     QVERIFY(navigation->setProperty("currentIndex", 3));
     window->update();
-    QTest::qWait(120);
+    QTRY_COMPARE(exerciseModel.rowCount(), 2);
     for (const QSize &viewport : viewports)
         QVERIFY(capture(QStringLiteral("exercise-media"), viewport));
 
@@ -733,6 +739,7 @@ void QmlNavigationTest::loadsAndSwitchesEveryPrimaryPage()
         QAccessibleActionInterface::pressAction());
     QTRY_VERIFY(!sharedDetail->property("visible").toBool());
     exerciseModel.setSearchText({});
+    QTRY_COMPARE(exerciseModel.rowCount(), 58);
 
     const QString systemPlanId = planManagement.selectedPlan()
                                      .value(QStringLiteral("id")).toString();
@@ -744,6 +751,8 @@ void QmlNavigationTest::loadsAndSwitchesEveryPrimaryPage()
     QVERIFY(planManagement.setCardio(personalDayId, QStringLiteral("TreadmillIncline"),
                                      30, 9.0, 5.0, -1.0, QStringLiteral("力量后完成")));
     QVERIFY(navigation->setProperty("currentIndex", 1));
+    QTRY_VERIFY((cardioEditor = root->findChild<QObject *>(
+                     QStringLiteral("cardioEditor"))) != nullptr);
     for (const QSize &viewport : viewports)
         QVERIFY(capture(QStringLiteral("plans-editable"), viewport));
     const QVariantMap personalDay = planManagement.selectedPlan()
@@ -810,6 +819,8 @@ void QmlNavigationTest::loadsAndSwitchesEveryPrimaryPage()
     QVERIFY(workoutController.reorderExercises(originalWorkoutIds));
     restTimer.start(180);
     QVERIFY(navigation->setProperty("currentIndex", 2));
+    QTRY_VERIFY((targetRepsDialog = root->findChild<QObject *>(
+                     QStringLiteral("targetRepsDialog"))) != nullptr);
     window->resize(360, 800);
     window->update();
     QTest::qWait(160);
@@ -1130,6 +1141,10 @@ void QmlNavigationTest::loadsAndSwitchesEveryPrimaryPage()
 
     QVERIFY(workoutController.finishWorkout());
     QCOMPARE(navigation->property("currentIndex").toInt(), 4);
+    QTRY_VERIFY((insightsTabs = root->findChild<QObject *>(
+                     QStringLiteral("insightsTabs"))) != nullptr);
+    QTRY_VERIFY((historyPage = root->findChild<QObject *>(
+                     QStringLiteral("historyPage"))) != nullptr);
     QCOMPARE(insightsTabs->property("currentIndex").toInt(), 1);
     QVERIFY(historyPage->property("showDetails").toBool());
     QVERIFY(historyPage->property("completionMode").toBool());

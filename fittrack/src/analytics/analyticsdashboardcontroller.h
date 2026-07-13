@@ -43,6 +43,7 @@ public:
     Q_INVOKABLE void selectExercise(const QString &exerciseId);
     Q_INVOKABLE void setGymFilter(const QString &gymId);
     Q_INVOKABLE void setEquipmentFilter(const QString &equipmentId);
+    Q_INVOKABLE void ensureLoaded();
     Q_INVOKABLE void reload();
 
 signals:
@@ -50,8 +51,9 @@ signals:
 
 private:
     QVariantMap buildOverview(int days) const;
-    QVariantList buildMuscles(int days, const QString &role) const;
+    void loadMuscles(int days);
     void loadOptions();
+    void loadEquipment();
     void loadTrend();
     QString cutoff(int days) const;
 
@@ -68,6 +70,7 @@ private:
     QString m_selectedExerciseId;
     QString m_gymFilterId;
     QString m_equipmentFilterId;
+    bool m_loaded = false;
 };
 
 } // namespace fittrack

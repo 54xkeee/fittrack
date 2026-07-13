@@ -19,15 +19,21 @@ QString newId()
 PlanManagementController::PlanManagementController(const QSqlDatabase &database, QObject *parent)
     : QObject(parent), m_database(database)
 {
-    reload();
 }
 
 QVariantList PlanManagementController::plans() const { return m_plans; }
 QVariantMap PlanManagementController::selectedPlan() const { return m_selectedPlan; }
 QString PlanManagementController::errorMessage() const { return m_errorMessage; }
 
+void PlanManagementController::ensureLoaded()
+{
+    if (!m_loaded)
+        reload();
+}
+
 void PlanManagementController::reload()
 {
+    m_loaded = true;
     QVariantList result;
     QSqlQuery query(m_database);
     query.prepare(QStringLiteral(
@@ -65,89 +71,103 @@ bool PlanManagementController::selectPlan(const QString &planId)
         "SELECT id,name,is_system,is_read_only FROM training_plan WHERE id=?"));
     plan.addBindValue(planId);
     if (!plan.exec() || !plan.next()) return fail(QStringLiteral("找不到训练计划"));
+    const QString selectedId = plan.value(0).toString();
+    const QString selectedName = plan.value(1).toString();
+    const bool isSystem = plan.value(2).toBool();
+    const bool isReadOnly = plan.value(3).toBool();
 
     QVariantList days;
     QSqlQuery day(m_database);
     day.prepare(QStringLiteral(
         "SELECT d.id,d.name,d.sort_order,COUNT(pe.id) FROM plan_day d "
         "LEFT JOIN plan_exercise pe ON pe.day_id=d.id WHERE d.plan_id=? "
-        "GROUP BY d.id ORDER BY d.sort_order"));
+        "GROUP BY d.id ORDER BY d.sort_order,d.id"));
     day.addBindValue(planId);
     if (!day.exec()) return fail(day.lastError().text());
     while (day.next()) {
-        QVariantList sections;
-        QSqlQuery section(m_database);
-        section.prepare(QStringLiteral(
-            "SELECT id,name FROM plan_section WHERE day_id=? ORDER BY sort_order,id"));
-        section.addBindValue(day.value(0));
-        if (!section.exec()) return fail(section.lastError().text());
-        while (section.next()) {
-            sections.append(QVariantMap{
-                {QStringLiteral("id"), section.value(0)},
-                {QStringLiteral("name"), section.value(1)},
-            });
-        }
-
-        QVariantMap cardio;
-        QSqlQuery cardioQuery(m_database);
-        cardioQuery.prepare(QStringLiteral(
-            "SELECT cardio_type,duration_seconds,incline,speed_kmh,machine_level,notes "
-            "FROM plan_cardio WHERE day_id=?"));
-        cardioQuery.addBindValue(day.value(0));
-        if (!cardioQuery.exec()) return fail(cardioQuery.lastError().text());
-        if (cardioQuery.next()) {
-            cardio = QVariantMap{
-                {QStringLiteral("type"), cardioQuery.value(0)},
-                {QStringLiteral("durationMinutes"), cardioQuery.value(1).toInt() / 60},
-                {QStringLiteral("incline"), cardioQuery.value(2)},
-                {QStringLiteral("speedKmh"), cardioQuery.value(3)},
-                {QStringLiteral("machineLevel"), cardioQuery.value(4)},
-                {QStringLiteral("notes"), cardioQuery.value(5)},
-            };
-        }
-
-        QVariantList exercises;
-        QSqlQuery exercise(m_database);
-        exercise.prepare(QStringLiteral(
-            "SELECT e.name_zh,pe.default_sets,pe.default_reps,pe.notes,pe.id,pe.exercise_id,"
-            "e.recommended_sets,e.recommended_reps,e.rest_seconds,pe.rest_seconds,"
-            "pe.section_id,COALESCE(s.name,'') "
-            "FROM plan_exercise pe JOIN exercise e ON e.id=pe.exercise_id "
-            "LEFT JOIN plan_section s ON s.id=pe.section_id "
-            "WHERE pe.day_id=? ORDER BY pe.sort_order"));
-        exercise.addBindValue(day.value(0));
-        if (exercise.exec()) {
-            while (exercise.next()) {
-                exercises.append(QVariantMap{
-                    {QStringLiteral("name"), exercise.value(0)},
-                    {QStringLiteral("sets"), exercise.value(1)},
-                    {QStringLiteral("reps"), exercise.value(2)},
-                    {QStringLiteral("notes"), exercise.value(3)},
-                    {QStringLiteral("id"), exercise.value(4)},
-                    {QStringLiteral("exerciseId"), exercise.value(5)},
-                    {QStringLiteral("recommendedSets"), exercise.value(6)},
-                    {QStringLiteral("recommendedReps"), exercise.value(7)},
-                    {QStringLiteral("recommendedRestSeconds"), exercise.value(8)},
-                    {QStringLiteral("restSeconds"), exercise.value(9)},
-                    {QStringLiteral("sectionId"), exercise.value(10)},
-                    {QStringLiteral("sectionName"), exercise.value(11)},
-                });
-            }
-        }
         days.append(QVariantMap{
             {QStringLiteral("id"), day.value(0)},
             {QStringLiteral("name"), day.value(1)},
             {QStringLiteral("exerciseCount"), day.value(3)},
-            {QStringLiteral("sections"), sections},
-            {QStringLiteral("exercises"), exercises},
-            {QStringLiteral("cardio"), cardio},
         });
     }
+
+    QHash<QString, QVariantList> sectionsByDay;
+    QSqlQuery section(m_database);
+    section.prepare(QStringLiteral(
+        "SELECT s.day_id,s.id,s.name FROM plan_section s "
+        "JOIN plan_day d ON d.id=s.day_id WHERE d.plan_id=? "
+        "ORDER BY d.sort_order,d.id,s.sort_order,s.id"));
+    section.addBindValue(planId);
+    if (!section.exec()) return fail(section.lastError().text());
+    while (section.next()) {
+        sectionsByDay[section.value(0).toString()].append(QVariantMap{
+            {QStringLiteral("id"), section.value(1)},
+            {QStringLiteral("name"), section.value(2)},
+        });
+    }
+
+    QHash<QString, QVariantMap> cardioByDay;
+    QSqlQuery cardioQuery(m_database);
+    cardioQuery.prepare(QStringLiteral(
+        "SELECT c.day_id,c.cardio_type,c.duration_seconds,c.incline,c.speed_kmh,"
+        "c.machine_level,c.notes FROM plan_cardio c "
+        "JOIN plan_day d ON d.id=c.day_id WHERE d.plan_id=?"));
+    cardioQuery.addBindValue(planId);
+    if (!cardioQuery.exec()) return fail(cardioQuery.lastError().text());
+    while (cardioQuery.next()) {
+        cardioByDay.insert(cardioQuery.value(0).toString(), QVariantMap{
+            {QStringLiteral("type"), cardioQuery.value(1)},
+            {QStringLiteral("durationMinutes"), cardioQuery.value(2).toInt() / 60},
+            {QStringLiteral("incline"), cardioQuery.value(3)},
+            {QStringLiteral("speedKmh"), cardioQuery.value(4)},
+            {QStringLiteral("machineLevel"), cardioQuery.value(5)},
+            {QStringLiteral("notes"), cardioQuery.value(6)},
+        });
+    }
+
+    QHash<QString, QVariantList> exercisesByDay;
+    QSqlQuery exercise(m_database);
+    exercise.prepare(QStringLiteral(
+        "SELECT pe.day_id,e.name_zh,pe.default_sets,pe.default_reps,pe.notes,"
+        "pe.id,pe.exercise_id,e.recommended_sets,e.recommended_reps,e.rest_seconds,"
+        "pe.rest_seconds,pe.section_id,COALESCE(s.name,'') "
+        "FROM plan_exercise pe JOIN plan_day d ON d.id=pe.day_id "
+        "JOIN exercise e ON e.id=pe.exercise_id "
+        "LEFT JOIN plan_section s ON s.id=pe.section_id "
+        "WHERE d.plan_id=? ORDER BY d.sort_order,d.id,pe.sort_order,pe.id"));
+    exercise.addBindValue(planId);
+    if (!exercise.exec()) return fail(exercise.lastError().text());
+    while (exercise.next()) {
+        exercisesByDay[exercise.value(0).toString()].append(QVariantMap{
+            {QStringLiteral("name"), exercise.value(1)},
+            {QStringLiteral("sets"), exercise.value(2)},
+            {QStringLiteral("reps"), exercise.value(3)},
+            {QStringLiteral("notes"), exercise.value(4)},
+            {QStringLiteral("id"), exercise.value(5)},
+            {QStringLiteral("exerciseId"), exercise.value(6)},
+            {QStringLiteral("recommendedSets"), exercise.value(7)},
+            {QStringLiteral("recommendedReps"), exercise.value(8)},
+            {QStringLiteral("recommendedRestSeconds"), exercise.value(9)},
+            {QStringLiteral("restSeconds"), exercise.value(10)},
+            {QStringLiteral("sectionId"), exercise.value(11)},
+            {QStringLiteral("sectionName"), exercise.value(12)},
+        });
+    }
+
+    for (QVariant &value : days) {
+        QVariantMap dayData = value.toMap();
+        const QString dayId = dayData.value(QStringLiteral("id")).toString();
+        dayData.insert(QStringLiteral("sections"), sectionsByDay.value(dayId));
+        dayData.insert(QStringLiteral("exercises"), exercisesByDay.value(dayId));
+        dayData.insert(QStringLiteral("cardio"), cardioByDay.value(dayId));
+        value = dayData;
+    }
     m_selectedPlan = QVariantMap{
-        {QStringLiteral("id"), plan.value(0)},
-        {QStringLiteral("name"), plan.value(1)},
-        {QStringLiteral("isSystem"), plan.value(2).toBool()},
-        {QStringLiteral("isReadOnly"), plan.value(3).toBool()},
+        {QStringLiteral("id"), selectedId},
+        {QStringLiteral("name"), selectedName},
+        {QStringLiteral("isSystem"), isSystem},
+        {QStringLiteral("isReadOnly"), isReadOnly},
         {QStringLiteral("days"), days},
     };
     emit selectedPlanChanged();

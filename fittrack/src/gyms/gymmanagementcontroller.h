@@ -22,6 +22,7 @@ public:
     QString selectedGymId() const;
     QString errorMessage() const;
 
+    Q_INVOKABLE void ensureLoaded();
     Q_INVOKABLE void reload();
     Q_INVOKABLE bool selectGym(const QString &gymId);
     Q_INVOKABLE bool createGym(const QString &name);
@@ -34,6 +35,7 @@ public:
     Q_INVOKABLE bool removeEquipment(const QString &equipmentId);
 
 signals:
+    void catalogChanged();
     void dataChanged();
     void errorMessageChanged();
 
@@ -48,6 +50,7 @@ private:
     QVariantList m_equipment;
     QString m_selectedGymId;
     QString m_errorMessage;
+    bool m_loaded = false;
 };
 
 } // namespace fittrack

@@ -9,7 +9,7 @@ QML 页面与组件
         ↓ context properties / signals
 C++ Controller 与 Model
         ↓ QSqlDatabase
-SQLite v7
+SQLite v8
 ```
 
 `src/app/main.cpp` 负责初始化数据库、导入系统动作和计划种子，并把各控制器注入 QML。当前控制器直接使用同一个 SQLite 连接，没有额外 Repository 抽象；在现阶段这能保持实现简单。
@@ -54,7 +54,7 @@ SQLite v7
 
 ### 备份恢复
 
-- JSON 导出包含受支持业务表的完整数据，包括计划有氧与训练快照；恢复在单个事务中替换本地数据并执行外键检查。旧版 JSON 缺少新表时按空表恢复，并在事务内把结构版本归一到 v7。
+- JSON 导出包含受支持业务表的完整数据，包括计划有氧与训练快照；恢复在单个事务中替换本地数据并执行外键检查。旧版 JSON 缺少新表时按空表恢复，并在事务内把结构版本归一到 v8。
 - SQLite 导出通过 `VACUUM INTO` 生成一致快照。
 - 本地路径使用 `QSaveFile` 原子写入；Android `content://` URI 通过 Qt 文件接口直接读写。SQLite 导出先生成临时一致快照，再流式复制到文档 URI。
 - JSON 恢复拒绝超过 64MB 的输入，恢复成功后会清空旧的活动训练内存状态，并重新加载动作、计划、历史、分析、有氧和场馆数据。
@@ -73,7 +73,7 @@ SQLite v7
 - `scripts/build-android.ps1` 将 Debug 与 Release 构建目录分离，可生成 APK 或 AAB；签名时只从进程环境读取 keystore 路径、别名和密码，并显式重置未选择的签名模式，避免复用旧 CMake 缓存。
 - 当前配置为包名 `com.fittrack.app`、版本 `0.1.0`/1、min API 28、target/compile API 35。最终包不含 `INTERNET` 或 `ACCESS_NETWORK_STATE` 权限。直接分享前必须冻结包名并改用长期发布签名。
 
-## SQLite v7
+## SQLite v8
 
 数据库表按领域分组：
 
@@ -88,7 +88,9 @@ SQLite v7
 
 外键在连接初始化时开启。`gym` 和 `equipment_instance` 通过 `is_enabled` 归档；`cardio_record.performed_at` 保存有氧发生时间。
 
-`exercise` 在 v5 增加 `difficulty`、`technique_points_json`、`common_mistakes_json` 和 `collections_json`；`exercise_media` 保留多媒体结构，但当前 58 个系统动作各导入 1 张已审核的可分发图片。v6 为 `workout_session` 增加单 active 的 INSERT/UPDATE 触发器；v7 为 `workout_exercise` 增加 `rest_seconds`，开始训练时把计划或准备草稿的间歇保存为历史快照。当前升级逻辑采用“建表 + 检查缺失列 + 创建触发器 + 写入 schema 版本 7”的幂等方式，并有旧版数据库升级测试。
+`exercise` 在 v5 增加专业资料字段，v6 增加单 active 触发器，v7 为 `workout_exercise` 增加 `rest_seconds` 快照。v8 把常用排序、关联删除和筛选查询补齐索引，并让当前版本启动在读取 `schema_version` 后直接返回；旧版本仍按“建表、补列、建触发器与索引、写入版本”的顺序事务升级，迁移顺序和快路径均有回归测试。
+
+动作与计划种子保存 SHA-256 内容摘要，内容未变时各只执行一次摘要查询。动作目录、计划详情、训练恢复、历史详情和分析聚合均使用固定数量的批量 SQL；动作模型与一级页面按首次使用加载，历史和有氧列表分页，避免启动成本与历史数据量线性增长。
 
 ## QML 导航
 

@@ -12,6 +12,8 @@ AppPage {
     topPadding: SafeArea.margins.top
     bottomPadding: SafeArea.margins.bottom
 
+    Component.onCompleted: cardioController.ensureLoaded()
+
     property var sevenDay: {
         cardioController.records
         return cardioController.overview(7)
@@ -22,7 +24,8 @@ AppPage {
     }
     property var durationTrend: {
         let result = []
-        for (let i = cardioController.records.length - 1; i >= 0; --i) {
+        const count = Math.min(cardioController.records.length, 30)
+        for (let i = count - 1; i >= 0; --i) {
             const item = cardioController.records[i]
             result.push({"date": item.performedAt, "durationMinutes": item.durationMinutes})
         }
@@ -30,7 +33,8 @@ AppPage {
     }
     property var heartRateTrend: {
         let result = []
-        for (let i = cardioController.records.length - 1; i >= 0; --i) {
+        const count = Math.min(cardioController.records.length, 30)
+        for (let i = count - 1; i >= 0; --i) {
             const item = cardioController.records[i]
             if (item.averageHeartRate !== null && Number(item.averageHeartRate) > 0)
                 result.push({"date": item.performedAt, "averageHeartRate": item.averageHeartRate})
@@ -413,7 +417,7 @@ AppPage {
                 Layout.leftMargin: 16
                 Layout.rightMargin: 16
                 visible: page.durationTrend.length > 0
-                title: qsTr("单次有氧时长")
+                title: qsTr("最近 30 次有氧时长")
                 points: page.durationTrend
                 metric: "durationMinutes"
                 suffix: qsTr(" 分")
@@ -424,7 +428,7 @@ AppPage {
                 Layout.leftMargin: 16
                 Layout.rightMargin: 16
                 visible: page.heartRateTrend.length > 0
-                title: qsTr("平均心率趋势")
+                title: qsTr("最近 30 次平均心率")
                 points: page.heartRateTrend
                 metric: "averageHeartRate"
                 suffix: " bpm"
@@ -523,6 +527,16 @@ AppPage {
                         }
                     }
                 }
+            }
+
+            ActionPill {
+                objectName: "cardioLoadMoreButton"
+                visible: cardioController.hasMore
+                Layout.fillWidth: true
+                Layout.leftMargin: 16
+                Layout.rightMargin: 16
+                text: qsTr("加载更多记录")
+                onClicked: cardioController.loadMore()
             }
 
             InlineFeedback {

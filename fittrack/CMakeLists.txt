@@ -18,6 +18,7 @@ endif()
 find_package(Qt6 6.9 REQUIRED COMPONENTS ${FITTRACK_QT_COMPONENTS})
 if(BUILD_TESTING)
     find_package(Qt6 6.9 REQUIRED COMPONENTS Test)
+    find_package(SQLite3 REQUIRED)
 endif()
 
 qt_standard_project_setup(REQUIRES 6.9)

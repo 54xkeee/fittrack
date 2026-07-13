@@ -9,14 +9,36 @@ Page {
     background: Rectangle { color: Design.Theme.background }
 
     signal workoutSummaryDone()
+    property int initialTab: 0
+    readonly property var loadedHistory: historyLoader.item
 
-    function openCardio() { tabs.currentIndex = 2 }
+    Component.onCompleted: ensureTab(tabs.currentIndex)
+
+    function ensureTab(index) {
+        if (index === 0)
+            analysisLoader.active = true
+        else if (index === 1)
+            historyLoader.active = true
+        else if (index === 2) {
+            cardioController.ensureLoaded()
+            cardioLoader.active = true
+        }
+        else if (index === 3)
+            managementLoader.active = true
+    }
+
+    function openCardio() {
+        ensureTab(2)
+        tabs.currentIndex = 2
+    }
     function openWorkoutSummary(sessionId) {
+        ensureTab(1)
         tabs.currentIndex = 1
-        return historyPage.openCompletion(sessionId)
+        return loadedHistory && loadedHistory.openCompletion(sessionId)
     }
     function handleBack() {
-        if (tabs.currentIndex === 1 && historyPage.handleBack())
+        if (tabs.currentIndex === 1 && loadedHistory
+                && loadedHistory.handleBack())
             return true
         if (tabs.currentIndex === 0)
             return false
@@ -36,8 +58,9 @@ Page {
             RowLayout {
                 id: tabs
                 objectName: "insightsTabs"
-                property int currentIndex: 0
+                property int currentIndex: page.initialTab
                 property var items: [qsTr("趋势"), qsTr("历史"), qsTr("有氧"), qsTr("管理")]
+                onCurrentIndexChanged: page.ensureTab(currentIndex)
 
                 anchors.left: parent.left
                 anchors.right: parent.right
@@ -63,6 +86,8 @@ Page {
                         padding: 0
                         flat: true
                         Accessible.name: modelData
+                        Accessible.role: Accessible.PageTab
+                        Accessible.selected: tabs.currentIndex === index
                         Accessible.description: tabs.currentIndex === index
                                                 ? qsTr("当前页面") : qsTr("切换页面")
                         onClicked: tabs.currentIndex = index
@@ -108,19 +133,58 @@ Page {
             Layout.minimumHeight: 0
             currentIndex: tabs.currentIndex
 
-            AnalysisPage { Layout.fillWidth: true; Layout.fillHeight: true }
-            HistoryPage {
-                id: historyPage
+            Loader {
+                id: analysisLoader
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                onCompletionDismissed: {
-                    cardioController.clearPendingSession()
-                    page.workoutSummaryDone()
-                }
-                onAddCardioRequested: page.openCardio()
+                Layout.minimumWidth: 0
+                Layout.minimumHeight: 0
+                Layout.preferredWidth: 0
+                Layout.preferredHeight: 0
+                active: false
+                sourceComponent: Component { AnalysisPage {} }
             }
-            CardioPage { Layout.fillWidth: true; Layout.fillHeight: true }
-            ManagementPage { Layout.fillWidth: true; Layout.fillHeight: true }
+            Loader {
+                id: historyLoader
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                Layout.minimumWidth: 0
+                Layout.minimumHeight: 0
+                Layout.preferredWidth: 0
+                Layout.preferredHeight: 0
+                active: false
+                sourceComponent: Component {
+                    HistoryPage {
+                        onCompletionDismissed: {
+                            cardioController.clearPendingSession()
+                            page.workoutSummaryDone()
+                        }
+                        onAddCardioRequested: page.openCardio()
+                    }
+                }
+            }
+            Loader {
+                id: cardioLoader
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                Layout.minimumWidth: 0
+                Layout.minimumHeight: 0
+                Layout.preferredWidth: 0
+                Layout.preferredHeight: 0
+                active: false
+                sourceComponent: Component { CardioPage {} }
+            }
+            Loader {
+                id: managementLoader
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                Layout.minimumWidth: 0
+                Layout.minimumHeight: 0
+                Layout.preferredWidth: 0
+                Layout.preferredHeight: 0
+                active: false
+                sourceComponent: Component { ManagementPage {} }
+            }
         }
     }
 }

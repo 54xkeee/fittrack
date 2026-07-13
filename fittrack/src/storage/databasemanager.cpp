@@ -40,6 +40,12 @@ bool DatabaseManager::initialize(const QString &databasePath, QString *errorMess
     if (!execute(QStringLiteral("PRAGMA foreign_keys = ON"), errorMessage)) {
         return false;
     }
+    QSqlQuery version(db);
+    if (version.exec(QStringLiteral(
+            "SELECT value FROM app_meta WHERE key='schema_version'"))
+        && version.next() && version.value(0).toString() == QStringLiteral("8")) {
+        return true;
+    }
     return createSchema(errorMessage);
 }
 
@@ -92,7 +98,7 @@ bool DatabaseManager::createSchema(QString *errorMessage)
                        "AND OLD.status<>'active' AND EXISTS(SELECT 1 FROM workout_session "
                        "WHERE status='active' AND id<>NEW.id) "
                        "BEGIN SELECT RAISE(ABORT, '已有进行中的训练'); END"),
-        QStringLiteral("INSERT OR IGNORE INTO app_meta(key, value) VALUES('schema_version', '7')"),
+        QStringLiteral("INSERT OR IGNORE INTO app_meta(key, value) VALUES('schema_version', '8')"),
     };
 
     auto db = database();
@@ -174,9 +180,29 @@ bool DatabaseManager::createSchema(QString *errorMessage)
             return false;
         }
     }
+    const QStringList indexStatements{
+        QStringLiteral("CREATE INDEX IF NOT EXISTS idx_exercise_media_exercise ON exercise_media(exercise_id,id)"),
+        QStringLiteral("CREATE INDEX IF NOT EXISTS idx_plan_day_plan_order ON plan_day(plan_id,sort_order,id)"),
+        QStringLiteral("CREATE INDEX IF NOT EXISTS idx_plan_section_day_order ON plan_section(day_id,sort_order,id)"),
+        QStringLiteral("CREATE INDEX IF NOT EXISTS idx_plan_exercise_day_order ON plan_exercise(day_id,sort_order,id)"),
+        QStringLiteral("CREATE INDEX IF NOT EXISTS idx_equipment_gym_enabled ON equipment_instance(gym_id,is_enabled,name,code)"),
+        QStringLiteral("CREATE INDEX IF NOT EXISTS idx_workout_session_status_end ON workout_session(status,ended_at DESC,id)"),
+        QStringLiteral("CREATE INDEX IF NOT EXISTS idx_workout_exercise_session_order ON workout_exercise(session_id,sort_order,id)"),
+        QStringLiteral("CREATE INDEX IF NOT EXISTS idx_workout_exercise_previous ON workout_exercise(exercise_id,equipment_instance_id,session_id)"),
+        QStringLiteral("CREATE INDEX IF NOT EXISTS idx_set_exercise_order ON set_record(workout_exercise_id,set_order,id)"),
+        QStringLiteral("CREATE INDEX IF NOT EXISTS idx_append_parent ON append_set_record(parent_set_id)"),
+        QStringLiteral("CREATE INDEX IF NOT EXISTS idx_cardio_performed ON cardio_record(performed_at DESC,id)"),
+        QStringLiteral("CREATE INDEX IF NOT EXISTS idx_cardio_session ON cardio_record(session_id)"),
+    };
+    for (const QString &statement : indexStatements) {
+        if (!execute(statement, errorMessage)) {
+            db.rollback();
+            return false;
+        }
+    }
     if (!execute(QStringLiteral(
-        "INSERT INTO app_meta(key,value) VALUES('schema_version','7') "
-        "ON CONFLICT(key) DO UPDATE SET value='7'"), errorMessage)) {
+        "INSERT INTO app_meta(key,value) VALUES('schema_version','8') "
+        "ON CONFLICT(key) DO UPDATE SET value='8'"), errorMessage)) {
         db.rollback();
         return false;
     }

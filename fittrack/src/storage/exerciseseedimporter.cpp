@@ -1,5 +1,6 @@
 #include "storage/exerciseseedimporter.h"
 
+#include <QCryptographicHash>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -37,13 +38,37 @@ bool execute(QSqlQuery &query, QString *errorMessage)
     return fail(errorMessage, query.lastError().text());
 }
 
+QString catalogHash(const QList<QByteArray> &documents)
+{
+    QCryptographicHash hash(QCryptographicHash::Sha256);
+    for (const QByteArray &document : documents) {
+        hash.addData(QByteArray::number(document.size()));
+        hash.addData(QByteArrayView(":"));
+        hash.addData(document);
+    }
+    return QString::fromLatin1(hash.result().toHex());
+}
+
 } // namespace
 
 bool ExerciseSeedImporter::importDocuments(
     const QSqlDatabase &database,
     const QList<QByteArray> &documents,
-    QString *errorMessage)
+    QString *errorMessage,
+    bool force)
 {
+    const QString hash = catalogHash(documents);
+    if (!force) {
+        QSqlQuery current(database);
+        current.prepare(QStringLiteral(
+            "SELECT value FROM app_meta WHERE key='exercise_catalog_hash' "
+            "AND EXISTS(SELECT 1 FROM exercise WHERE is_system=1)"));
+        if (!current.exec())
+            return fail(errorMessage, current.lastError().text());
+        if (current.next() && current.value(0).toString() == hash)
+            return true;
+    }
+
     QList<QJsonObject> exercises;
     QSet<QString> exerciseIds;
 
@@ -217,6 +242,16 @@ bool ExerciseSeedImporter::importDocuments(
                 return false;
             }
         }
+    }
+
+    QSqlQuery saveHash(db);
+    saveHash.prepare(QStringLiteral(
+        "INSERT INTO app_meta(key,value) VALUES('exercise_catalog_hash',?) "
+        "ON CONFLICT(key) DO UPDATE SET value=excluded.value"));
+    saveHash.addBindValue(hash);
+    if (!execute(saveHash, errorMessage)) {
+        db.rollback();
+        return false;
     }
 
     if (!db.commit()) {

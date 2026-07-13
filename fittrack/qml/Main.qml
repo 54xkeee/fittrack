@@ -20,6 +20,22 @@ ApplicationWindow {
     Material.accent: Design.Theme.primary
     Material.primary: Design.Theme.surface
     property var pendingWorkoutRequest: ({})
+    property int pendingInsightsTab: 0
+    readonly property var loadedInsights: insightsLoader.item
+
+    function ensureMainPage(index, insightsTab) {
+        if (index === 1)
+            planLoader.active = true
+        else if (index === 2)
+            trainingLoader.active = true
+        else if (index === 3)
+            exerciseLibraryLoader.active = true
+        else if (index === 4) {
+            if (!insightsLoader.active)
+                pendingInsightsTab = insightsTab === undefined ? 0 : insightsTab
+            insightsLoader.active = true
+        }
+    }
 
     Binding {
         target: Design.Theme
@@ -32,7 +48,8 @@ ApplicationWindow {
             preparationPage.requestCancel()
             return true
         }
-        if (navigation.currentIndex === 4 && insightsPage.handleBack())
+        if (navigation.currentIndex === 4 && loadedInsights
+                && loadedInsights.handleBack())
             return true
         if (navigation.currentIndex === 0)
             return false
@@ -68,8 +85,11 @@ ApplicationWindow {
 
     function handlePreparationResult(result) {
         const status = String(result.status || "error")
-        if (status === "prepared")
+        if (status === "prepared") {
+            exerciseModel.ensureLoaded()
+            planExerciseModel.ensureLoaded()
             return
+        }
         handleStartResult(result)
     }
 
@@ -142,29 +162,66 @@ ApplicationWindow {
             onShowAnalysisRequested: navigation.currentIndex = 4
         }
 
-        PlanPage {
+        Loader {
+            id: planLoader
             Layout.fillWidth: true
             Layout.fillHeight: true
             Layout.minimumWidth: 0
-            onTrainingRequested: dayId => window.requestPlanDay(dayId)
+            Layout.minimumHeight: 0
+            Layout.preferredWidth: 0
+            Layout.preferredHeight: 0
+            active: false
+            sourceComponent: Component {
+                PlanPage {
+                    onTrainingRequested: dayId => window.requestPlanDay(dayId)
+                }
+            }
         }
 
-        TrainingPage {
+        Loader {
+            id: trainingLoader
             Layout.fillWidth: true
             Layout.fillHeight: true
             Layout.minimumWidth: 0
-            onPlanStartRequested: dayId => window.requestPlanDay(dayId)
-            onFreeStartRequested: name => window.requestFreeWorkout(name)
+            Layout.minimumHeight: 0
+            Layout.preferredWidth: 0
+            Layout.preferredHeight: 0
+            active: false
+            sourceComponent: Component {
+                TrainingPage {
+                    onPlanStartRequested: dayId => window.requestPlanDay(dayId)
+                    onFreeStartRequested: name => window.requestFreeWorkout(name)
+                }
+            }
         }
 
-        ExerciseLibraryPage { Layout.fillWidth: true; Layout.fillHeight: true; Layout.minimumWidth: 0 }
-
-        InsightsPage {
-            id: insightsPage
+        Loader {
+            id: exerciseLibraryLoader
             Layout.fillWidth: true
             Layout.fillHeight: true
             Layout.minimumWidth: 0
-            onWorkoutSummaryDone: navigation.currentIndex = 0
+            Layout.minimumHeight: 0
+            Layout.preferredWidth: 0
+            Layout.preferredHeight: 0
+            active: false
+            sourceComponent: Component { ExerciseLibraryPage {} }
+        }
+
+        Loader {
+            id: insightsLoader
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            Layout.minimumWidth: 0
+            Layout.minimumHeight: 0
+            Layout.preferredWidth: 0
+            Layout.preferredHeight: 0
+            active: false
+            sourceComponent: Component {
+                InsightsPage {
+                    initialTab: window.pendingInsightsTab
+                    onWorkoutSummaryDone: navigation.currentIndex = 0
+                }
+            }
         }
     }
 
@@ -173,9 +230,11 @@ ApplicationWindow {
         function onWorkoutFinished(sessionId) {
             cardioController.setPendingSession(sessionId)
             workoutHistory.reload()
+            window.ensureMainPage(4, 1)
             navigation.currentIndex = 4
-            if (!insightsPage.openWorkoutSummary(sessionId))
-                insightsPage.openCardio()
+            const insights = window.loadedInsights
+            if (insights && !insights.openWorkoutSummary(sessionId))
+                insights.openCardio()
         }
     }
 
@@ -253,6 +312,7 @@ ApplicationWindow {
         color: Design.Theme.surface
         border.width: 1
         border.color: Design.Theme.outline
+        onCurrentIndexChanged: window.ensureMainPage(currentIndex)
 
         RowLayout {
             anchors.left: parent.left

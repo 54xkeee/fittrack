@@ -8,6 +8,11 @@ AppPage {
     id: page
 
     implicitWidth: 0
+    Component.onCompleted: {
+        planManagement.ensureLoaded()
+        exerciseModel.ensureLoaded()
+        planExerciseModel.ensureLoaded()
+    }
     signal trainingRequested(string dayId)
 
     readonly property bool hasSelectedPlan: planManagement.selectedPlan.id !== undefined

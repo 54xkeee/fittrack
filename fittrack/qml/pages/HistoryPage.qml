@@ -8,6 +8,8 @@ AppPage {
     id: page
     objectName: "historyPage"
 
+    Component.onCompleted: workoutHistory.ensureLoaded()
+
     signal completionDismissed()
     signal addCardioRequested()
 
@@ -136,13 +138,14 @@ AppPage {
         property string value: ""
         property string detail: ""
 
-        implicitHeight: 96
+        implicitHeight: Math.max(96, metricContent.implicitHeight + Design.Theme.space24)
         radius: Design.Theme.radiusMedium
         color: Design.Theme.surface
         border.width: 1
         border.color: Design.Theme.outline
 
         ColumnLayout {
+            id: metricContent
             anchors.fill: parent
             anchors.margins: Design.Theme.space12
             spacing: Design.Theme.space4
@@ -346,7 +349,7 @@ AppPage {
 
         RowLayout {
             Layout.fillWidth: true
-            Layout.preferredHeight: Design.Theme.touchTarget
+            Layout.minimumHeight: Design.Theme.touchTarget
             spacing: Design.Theme.space8
 
             IconButton {
@@ -372,7 +375,9 @@ AppPage {
                 Label {
                     Layout.fillWidth: true
                     visible: !page.showDetails
-                    text: qsTr("共 %1 次已完成训练").arg(workoutHistory.sessions.length)
+                    text: workoutHistory.hasMore
+                          ? qsTr("已加载最近 %1 次训练").arg(workoutHistory.sessions.length)
+                          : qsTr("共 %1 次已完成训练").arg(workoutHistory.sessions.length)
                     color: Design.Theme.surfaceMuted
                     font.pixelSize: Design.Theme.typeCaption
                 }
@@ -386,137 +391,153 @@ AppPage {
             message: workoutHistory.errorMessage
         }
 
-        ScrollView {
-            id: sessionListScroll
-
+        Item {
             visible: !page.showDetails
             Layout.fillWidth: true
             Layout.fillHeight: true
-            clip: true
-            contentWidth: availableWidth
-            ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
 
-            ColumnLayout {
-                width: sessionListScroll.availableWidth
+            ListView {
+                id: sessionList
+                objectName: "historySessionList"
+                anchors.fill: parent
+                clip: true
                 spacing: Design.Theme.space8
+                boundsBehavior: Flickable.StopAtBounds
+                reuseItems: true
+                keyNavigationEnabled: true
+                activeFocusOnTab: true
+                model: workoutHistory.sessions
+                ScrollBar.vertical: ScrollBar { policy: ScrollBar.AsNeeded }
 
-                Item {
-                    visible: workoutHistory.sessions.length === 0
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: Math.max(360, sessionListScroll.availableHeight - Design.Theme.space24)
+            delegate: ItemDelegate {
+                id: sessionRow
+                required property var modelData
+
+                width: ListView.view.width
+                implicitHeight: Math.max(84, contentItem.implicitHeight
+                                         + topPadding + bottomPadding)
+                leftPadding: Design.Theme.space16
+                rightPadding: Design.Theme.space12
+                topPadding: Design.Theme.space12
+                bottomPadding: Design.Theme.space12
+                Accessible.name: qsTr("查看 %1，%2").arg(modelData.name).arg(page.dateText(modelData.endedAt))
+                onClicked: page.openSession(modelData.id)
+
+                contentItem: RowLayout {
+                    spacing: Design.Theme.space12
 
                     ColumnLayout {
-                        anchors.centerIn: parent
-                        width: Math.min(parent.width - Design.Theme.space24 * 2, 300)
-                        spacing: Design.Theme.space12
-
-                        Rectangle {
-                            Layout.alignment: Qt.AlignHCenter
-                            Layout.preferredWidth: 64
-                            Layout.preferredHeight: 64
-                            radius: 32
-                            color: Design.Theme.surfaceElevated
-
-                            Label {
-                                anchors.centerIn: parent
-                                text: "◷"
-                                color: Design.Theme.primary
-                                font.pixelSize: Design.Theme.typeDisplay
-                            }
-                        }
-
-                        Label {
-                            Layout.fillWidth: true
-                            text: qsTr("还没有训练历史")
-                            color: Design.Theme.surfaceText
-                            font.pixelSize: Design.Theme.typeTitle
-                            font.weight: Font.DemiBold
-                            horizontalAlignment: Text.AlignHCenter
-                        }
-
-                        Label {
-                            Layout.fillWidth: true
-                            text: qsTr("完成并保存一次训练后，这里会按时间展示记录。")
-                            color: Design.Theme.surfaceMuted
-                            font.pixelSize: Design.Theme.typeLabel
-                            horizontalAlignment: Text.AlignHCenter
-                            wrapMode: Text.WordWrap
-                        }
-                    }
-                }
-
-                Repeater {
-                    model: workoutHistory.sessions
-
-                    delegate: ItemDelegate {
-                        id: sessionRow
-
-                        required property var modelData
-
                         Layout.fillWidth: true
-                        implicitHeight: 84
-                        leftPadding: Design.Theme.space16
-                        rightPadding: Design.Theme.space12
-                        topPadding: Design.Theme.space12
-                        bottomPadding: Design.Theme.space12
-                        Accessible.name: qsTr("查看 %1，%2").arg(modelData.name).arg(page.dateText(modelData.endedAt))
-                        onClicked: page.openSession(modelData.id)
+                        spacing: Design.Theme.space4
 
-                        contentItem: RowLayout {
-                            spacing: Design.Theme.space12
-
-                            ColumnLayout {
-                                Layout.fillWidth: true
-                                spacing: Design.Theme.space4
-
-                                Label {
-                                    Layout.fillWidth: true
-                                    text: sessionRow.modelData.name || qsTr("未命名训练")
-                                    color: Design.Theme.surfaceText
-                                    font.pixelSize: Design.Theme.typeBody
-                                    font.weight: Font.DemiBold
-                                    elide: Text.ElideRight
-                                }
-
-                                Label {
-                                    Layout.fillWidth: true
-                                    text: page.dateText(sessionRow.modelData.endedAt)
-                                          + "  ·  "
-                                          + qsTr("%1 个动作  ·  %2 组")
-                                            .arg(sessionRow.modelData.exerciseCount)
-                                            .arg(sessionRow.modelData.setCount)
-                                    color: Design.Theme.surfaceMuted
-                                    font.pixelSize: Design.Theme.typeCaption
-                                    elide: Text.ElideRight
-                                }
-
-                                Label {
-                                    Layout.fillWidth: true
-                                    visible: String(sessionRow.modelData.gymName || "").length > 0
-                                    text: sessionRow.modelData.gymName
-                                    color: Design.Theme.surfaceMuted
-                                    font.pixelSize: Design.Theme.typeCaption
-                                    elide: Text.ElideRight
-                                }
-                            }
-
-                            Label {
-                                text: "›"
-                                color: Design.Theme.surfaceMuted
-                                font.pixelSize: Design.Theme.typeTitle
-                            }
+                        Label {
+                            Layout.fillWidth: true
+                            text: sessionRow.modelData.name || qsTr("未命名训练")
+                            color: Design.Theme.surfaceText
+                            font.pixelSize: Design.Theme.typeBody
+                            font.weight: Font.DemiBold
+                            elide: Text.ElideRight
                         }
 
-                        background: Rectangle {
-                            color: sessionRow.down ? Design.Theme.surfacePressed : Design.Theme.surface
-                            radius: Design.Theme.radiusMedium
-                            border.width: 1
-                            border.color: Design.Theme.outline
+                        Label {
+                            Layout.fillWidth: true
+                            text: page.dateText(sessionRow.modelData.endedAt)
+                                  + "  ·  "
+                                  + qsTr("%1 个动作  ·  %2 组")
+                                    .arg(sessionRow.modelData.exerciseCount)
+                                    .arg(sessionRow.modelData.setCount)
+                            color: Design.Theme.surfaceMuted
+                            font.pixelSize: Design.Theme.typeCaption
+                            elide: Text.ElideRight
                         }
+
+                        Label {
+                            Layout.fillWidth: true
+                            visible: String(sessionRow.modelData.gymName || "").length > 0
+                            text: sessionRow.modelData.gymName
+                            color: Design.Theme.surfaceMuted
+                            font.pixelSize: Design.Theme.typeCaption
+                            elide: Text.ElideRight
+                        }
+                    }
+
+                    Label {
+                        text: "›"
+                        color: Design.Theme.surfaceMuted
+                        font.pixelSize: Design.Theme.typeTitle
                     }
                 }
 
-                Item { Layout.preferredHeight: Design.Theme.space8 }
+                background: Rectangle {
+                    color: sessionRow.down ? Design.Theme.surfacePressed : Design.Theme.surface
+                    radius: Design.Theme.radiusMedium
+                    border.width: 1
+                    border.color: Design.Theme.outline
+                }
+            }
+
+            footer: Item {
+                width: sessionList.width
+                height: workoutHistory.hasMore
+                        ? Design.Theme.controlHeight + Design.Theme.space16
+                        : Design.Theme.space8
+
+                AppButton {
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.top: parent.top
+                    anchors.topMargin: Design.Theme.space8
+                    visible: workoutHistory.hasMore
+                    text: qsTr("加载更多")
+                    variant: "secondary"
+                    onClicked: workoutHistory.loadMore()
+                }
+            }
+            }
+
+            Item {
+                objectName: "historyEmptyState"
+                anchors.fill: parent
+                visible: workoutHistory.sessions.length === 0
+
+                ColumnLayout {
+                    anchors.centerIn: parent
+                    width: Math.min(parent.width - Design.Theme.space24 * 2, 300)
+                    spacing: Design.Theme.space12
+
+                    Rectangle {
+                        Layout.alignment: Qt.AlignHCenter
+                        Layout.preferredWidth: 64
+                        Layout.preferredHeight: 64
+                        radius: 32
+                        color: Design.Theme.surfaceElevated
+
+                        Label {
+                            anchors.centerIn: parent
+                            text: "◷"
+                            color: Design.Theme.primary
+                            font.pixelSize: Design.Theme.typeDisplay
+                        }
+                    }
+
+                    Label {
+                        Layout.fillWidth: true
+                        text: qsTr("还没有训练历史")
+                        color: Design.Theme.surfaceText
+                        font.pixelSize: Design.Theme.typeTitle
+                        font.weight: Font.DemiBold
+                        horizontalAlignment: Text.AlignHCenter
+                    }
+
+                    Label {
+                        Layout.fillWidth: true
+                        text: qsTr("完成并保存一次训练后，这里会按时间展示记录。")
+                        color: Design.Theme.surfaceMuted
+                        font.pixelSize: Design.Theme.typeLabel
+                        horizontalAlignment: Text.AlignHCenter
+                        wrapMode: Text.WordWrap
+                    }
+                }
             }
         }
 

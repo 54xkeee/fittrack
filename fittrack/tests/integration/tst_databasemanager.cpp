@@ -13,7 +13,9 @@ class DatabaseManagerTest : public QObject
 private slots:
     void initializeCreatesCompleteSchema();
     void initializeIsIdempotent();
+    void usesVersionFastPathOnSubsequentOpen();
     void migratesVersionOneBodyweightRecords();
+    void migratesLegacyTablesBeforeCreatingIndexes();
     void preventsMultipleActiveWorkouts();
 };
 
@@ -54,7 +56,7 @@ void DatabaseManagerTest::initializeCreatesCompleteSchema()
     QSqlQuery query(manager.database());
     QVERIFY(query.exec(QStringLiteral("SELECT value FROM app_meta WHERE key='schema_version'")));
     QVERIFY(query.next());
-    QCOMPARE(query.value(0).toString(), QStringLiteral("7"));
+    QCOMPARE(query.value(0).toString(), QStringLiteral("8"));
     QVERIFY(query.exec(QStringLiteral("PRAGMA table_info(exercise)")));
     QStringList exerciseColumns;
     while (query.next())
@@ -101,6 +103,32 @@ void DatabaseManagerTest::initializeIsIdempotent()
     QCOMPARE(query.value(0).toInt(), 1);
 }
 
+void DatabaseManagerTest::usesVersionFastPathOnSubsequentOpen()
+{
+    QTemporaryDir directory;
+    QVERIFY(directory.isValid());
+    const QString path = directory.filePath(QStringLiteral("current.sqlite"));
+    {
+        DatabaseManager manager;
+        QString error;
+        QVERIFY2(manager.initialize(path, &error), qPrintable(error));
+        QSqlQuery guard(manager.database());
+        QVERIFY(guard.exec(QStringLiteral(
+            "CREATE TRIGGER reject_schema_update BEFORE UPDATE ON app_meta "
+            "WHEN OLD.key='schema_version' BEGIN "
+            "SELECT RAISE(FAIL,'schema migration unexpectedly ran'); END")));
+    }
+
+    DatabaseManager reopened;
+    QString error;
+    QVERIFY2(reopened.initialize(path, &error), qPrintable(error));
+    QSqlQuery verify(reopened.database());
+    QVERIFY(verify.exec(QStringLiteral(
+        "SELECT value FROM app_meta WHERE key='schema_version'")));
+    QVERIFY(verify.next());
+    QCOMPARE(verify.value(0).toString(), QStringLiteral("8"));
+}
+
 void DatabaseManagerTest::migratesVersionOneBodyweightRecords()
 {
     QTemporaryDir directory;
@@ -135,7 +163,63 @@ void DatabaseManagerTest::migratesVersionOneBodyweightRecords()
     QCOMPARE(migrated.value(0).toString(), QStringLiteral("Bodyweight"));
     QVERIFY(migrated.exec(QStringLiteral("SELECT value FROM app_meta WHERE key='schema_version'")));
     QVERIFY(migrated.next());
-    QCOMPARE(migrated.value(0).toString(), QStringLiteral("7"));
+    QCOMPARE(migrated.value(0).toString(), QStringLiteral("8"));
+}
+
+void DatabaseManagerTest::migratesLegacyTablesBeforeCreatingIndexes()
+{
+    QTemporaryDir directory;
+    QVERIFY(directory.isValid());
+    const QString path = directory.filePath(QStringLiteral("legacy-indexes.sqlite"));
+    const QString connectionName = QStringLiteral("legacy-indexes-setup");
+    {
+        auto legacy = QSqlDatabase::addDatabase(QStringLiteral("QSQLITE"), connectionName);
+        legacy.setDatabaseName(path);
+        QVERIFY(legacy.open());
+        QSqlQuery query(legacy);
+        QVERIFY(query.exec(QStringLiteral(
+            "CREATE TABLE app_meta(key TEXT PRIMARY KEY,value TEXT NOT NULL)")));
+        QVERIFY(query.exec(QStringLiteral(
+            "INSERT INTO app_meta VALUES('schema_version','2')")));
+        QVERIFY(query.exec(QStringLiteral(
+            "CREATE TABLE gym(id TEXT PRIMARY KEY,name TEXT NOT NULL UNIQUE)")));
+        QVERIFY(query.exec(QStringLiteral(
+            "CREATE TABLE equipment_instance(id TEXT PRIMARY KEY,gym_id TEXT NOT NULL,"
+            "name TEXT NOT NULL,code TEXT,notes TEXT)")));
+        QVERIFY(query.exec(QStringLiteral(
+            "CREATE TABLE cardio_record(id TEXT PRIMARY KEY,session_id TEXT,cardio_type TEXT NOT NULL,"
+            "duration_seconds INTEGER NOT NULL,incline REAL,speed_kmh REAL,distance_km REAL,"
+            "machine_level REAL,floors INTEGER,steps INTEGER,average_heart_rate INTEGER,"
+            "notes TEXT NOT NULL DEFAULT '')")));
+        QVERIFY(query.exec(QStringLiteral(
+            "INSERT INTO gym(id,name) VALUES('legacy-gym','旧健身房')")));
+        QVERIFY(query.exec(QStringLiteral(
+            "INSERT INTO equipment_instance(id,gym_id,name) "
+            "VALUES('legacy-equipment','legacy-gym','旧器械')")));
+        QVERIFY(query.exec(QStringLiteral(
+            "INSERT INTO cardio_record(id,cardio_type,duration_seconds) "
+            "VALUES('legacy-cardio','TreadmillIncline',1800)")));
+        legacy.close();
+    }
+    QSqlDatabase::removeDatabase(connectionName);
+
+    DatabaseManager manager;
+    QString error;
+    QVERIFY2(manager.initialize(path, &error), qPrintable(error));
+    QSqlQuery migrated(manager.database());
+    QVERIFY(migrated.exec(QStringLiteral(
+        "SELECT is_enabled FROM equipment_instance WHERE id='legacy-equipment'")));
+    QVERIFY(migrated.next());
+    QCOMPARE(migrated.value(0).toInt(), 1);
+    QVERIFY(migrated.exec(QStringLiteral(
+        "SELECT performed_at FROM cardio_record WHERE id='legacy-cardio'")));
+    QVERIFY(migrated.next());
+    QVERIFY(!migrated.value(0).toString().isEmpty());
+    QVERIFY(migrated.exec(QStringLiteral(
+        "SELECT COUNT(*) FROM sqlite_master WHERE type='index' AND name IN "
+        "('idx_equipment_gym_enabled','idx_cardio_performed','idx_cardio_session')")));
+    QVERIFY(migrated.next());
+    QCOMPARE(migrated.value(0).toInt(), 3);
 }
 
 void DatabaseManagerTest::preventsMultipleActiveWorkouts()

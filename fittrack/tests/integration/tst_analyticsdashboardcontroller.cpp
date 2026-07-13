@@ -58,6 +58,8 @@ void AnalyticsDashboardControllerTest::filtersPeriodsAndBuildsTrends()
     QCOMPARE(analytics.sevenDayOverview().value(QStringLiteral("workoutCount")).toInt(), 1);
     QCOMPARE(analytics.sevenDayOverview().value(QStringLiteral("cardioCount")).toInt(), 1);
     QCOMPARE(analytics.sevenDayOverview().value(QStringLiteral("cardioDurationSeconds")).toInt(), 1800);
+    QVERIFY(analytics.trend().isEmpty());
+    analytics.ensureLoaded();
     QCOMPARE(analytics.overview().value(QStringLiteral("totalVolume")).toDouble(), 480.0);
     QCOMPARE(analytics.trend().size(), 1);
     QCOMPARE(analytics.trend().first().toMap().value(QStringLiteral("volume")).toDouble(), 480.0);

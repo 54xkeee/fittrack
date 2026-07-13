@@ -8,6 +8,7 @@ import "../theme" as Design
 AppPage {
     id: page
     implicitWidth: 0
+    Component.onCompleted: gymManagement.ensureLoaded()
     leftPadding: SafeArea.margins.left
     rightPadding: SafeArea.margins.right
     topPadding: SafeArea.margins.top

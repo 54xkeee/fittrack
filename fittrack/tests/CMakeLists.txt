@@ -70,6 +70,25 @@ target_link_libraries(tst_exerciselistmodel PRIVATE
 
 add_test(NAME exerciselistmodel COMMAND tst_exerciselistmodel)
 
+qt_add_executable(tst_performance
+    integration/tst_performance.cpp
+)
+
+target_compile_definitions(tst_performance PRIVATE
+    FITTRACK_SOURCE_DIR="${CMAKE_SOURCE_DIR}"
+)
+
+target_link_libraries(tst_performance PRIVATE
+    fittrack_storage
+    fittrack_services
+    fittrack_ui_models
+    SQLite::SQLite3
+    Qt6::Sql
+    Qt6::Test
+)
+
+add_test(NAME performance COMMAND tst_performance)
+
 qt_add_executable(tst_resttimercontroller
     unit/tst_resttimercontroller.cpp
 )

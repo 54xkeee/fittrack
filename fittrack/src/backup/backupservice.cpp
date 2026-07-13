@@ -213,8 +213,8 @@ bool BackupService::restoreJson(const QString &filePath)
     }
     QSqlQuery schemaVersion(m_database);
     if (!schemaVersion.exec(QStringLiteral(
-            "INSERT INTO app_meta(key,value) VALUES('schema_version','7') "
-            "ON CONFLICT(key) DO UPDATE SET value='7'"))) {
+            "INSERT INTO app_meta(key,value) VALUES('schema_version','8') "
+            "ON CONFLICT(key) DO UPDATE SET value='8'"))) {
         return rollback(schemaVersion.lastError().text());
     }
     QSqlQuery check(m_database);

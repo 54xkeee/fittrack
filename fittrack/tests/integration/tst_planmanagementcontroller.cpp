@@ -88,6 +88,7 @@ void PlanManagementControllerTest::protectsSystemPlansAndManagesPersonalPlans()
         "INSERT INTO plan_day(id,plan_id,name,sort_order) VALUES('system-day','system','Push',0)")));
 
     fittrack::PlanManagementController plans(manager.database());
+    plans.ensureLoaded();
     QCOMPARE(plans.plans().size(), 1);
     QVERIFY(plans.selectPlan(QStringLiteral("system")));
     QVERIFY(!plans.renamePlan(QStringLiteral("system"), QStringLiteral("修改")));
@@ -175,6 +176,7 @@ void PlanManagementControllerTest::copiesCompletePlanIntoPersonalScope()
     QVERIFY2(seedPlans(manager.database(), &error), qPrintable(error));
 
     fittrack::PlanManagementController plans(manager.database());
+    plans.ensureLoaded();
     QVERIFY(plans.copyPlan(QStringLiteral("system"), QStringLiteral("我的三分化")));
     const QString copyId = plans.selectedPlan().value(QStringLiteral("id")).toString();
     QVERIFY(!copyId.isEmpty());
@@ -289,6 +291,7 @@ void PlanManagementControllerTest::usesDefaultCopyNameAndRejectsMissingPlan()
     QVERIFY2(seedPlans(manager.database(), &error), qPrintable(error));
 
     fittrack::PlanManagementController plans(manager.database());
+    plans.ensureLoaded();
     QVERIFY(plans.copyPlan(QStringLiteral("system"), QStringLiteral("   ")));
     QCOMPARE(plans.selectedPlan().value(QStringLiteral("name")).toString(),
              QStringLiteral("原版个人版"));
@@ -323,6 +326,7 @@ void PlanManagementControllerTest::rollsBackCopyWhenAChildInsertFails()
                                      QStringLiteral("SELECT COUNT(*) FROM plan_exercise")).toInt();
 
     fittrack::PlanManagementController plans(manager.database());
+    plans.ensureLoaded();
     QVERIFY(!plans.copyPlan(QStringLiteral("system"), QStringLiteral("会失败的副本")));
     QVERIFY(!plans.errorMessage().isEmpty());
     QCOMPARE(scalar(manager.database(), QStringLiteral("SELECT COUNT(*) FROM training_plan")).toInt(),
@@ -345,6 +349,7 @@ void PlanManagementControllerTest::reordersByStableIdsAndRollsBack()
     QVERIFY2(manager.initialize(QStringLiteral(":memory:"), &error), qPrintable(error));
     QVERIFY2(seedPlans(manager.database(), &error), qPrintable(error));
     fittrack::PlanManagementController plans(manager.database());
+    plans.ensureLoaded();
     QVERIFY(plans.copyPlan(QStringLiteral("system"), QStringLiteral("排序测试")));
 
     const QVariantMap day = plans.selectedPlan().value(QStringLiteral("days"))

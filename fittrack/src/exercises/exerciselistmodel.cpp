@@ -4,17 +4,30 @@
 
 #include <QJsonArray>
 #include <QJsonDocument>
+#include <QHash>
 #include <QSqlQuery>
 #include <QUuid>
 
 namespace fittrack {
 
 ExerciseListModel::ExerciseListModel(const QSqlDatabase &database,
-                                     const QList<QByteArray> &seedDocuments, QObject *parent)
+                                     const QList<QByteArray> &seedDocuments, bool autoLoad,
+                                     QObject *parent)
     : QAbstractListModel(parent)
     , m_database(database)
     , m_seedDocuments(seedDocuments)
+    , m_loaded(autoLoad)
 {
+    m_searchTimer.setSingleShot(true);
+    m_searchTimer.setInterval(150);
+    connect(&m_searchTimer, &QTimer::timeout, this, &ExerciseListModel::reload);
+    if (m_loaded) reload();
+}
+
+void ExerciseListModel::ensureLoaded()
+{
+    if (m_loaded) return;
+    m_loaded = true;
     reload();
 }
 
@@ -106,7 +119,7 @@ void ExerciseListModel::setSearchText(const QString &searchText)
     }
     m_searchText = searchText;
     emit searchTextChanged();
-    reload();
+    m_searchTimer.start();
 }
 
 QString ExerciseListModel::bodyPart() const
@@ -195,6 +208,8 @@ QVariantMap ExerciseListModel::exerciseById(const QString &exerciseId) const
 
 void ExerciseListModel::reload()
 {
+    if (!m_loaded) return;
+    m_searchTimer.stop();
     QString sql = QStringLiteral(
         "SELECT id,name_zh,body_part,movement,load_mode,recommended_sets,recommended_reps,rest_seconds,"
         "introduction,steps_json,cautions_json,difficulty,technique_points_json,common_mistakes_json,"
@@ -266,42 +281,66 @@ void ExerciseListModel::reload()
             item.sources = QJsonDocument::fromJson(query.value(18).toByteArray())
                                .array().toVariantList();
 
-            QSqlQuery muscles(m_database);
-            muscles.prepare(QStringLiteral(
-                "SELECT m.name_zh,em.role FROM exercise_muscle em JOIN muscle m ON m.id=em.muscle_id "
-                "WHERE em.exercise_id=? ORDER BY em.role,m.name_zh"));
-            muscles.addBindValue(item.id);
-            if (muscles.exec()) {
-                while (muscles.next()) {
-                    (muscles.value(1).toString() == QStringLiteral("primary")
-                         ? item.primaryMuscles : item.secondaryMuscles).append(muscles.value(0).toString());
-                }
-            }
-            QSqlQuery media(m_database);
-            media.prepare(QStringLiteral(
-                "SELECT local_path,external_url,title,source,license FROM exercise_media "
-                "WHERE exercise_id=? ORDER BY id"));
-            media.addBindValue(item.id);
-            if (media.exec()) {
-                while (media.next()) {
-                    const QVariantMap mediaItem{
-                        {QStringLiteral("url"), media.value(0).toString()},
-                        {QStringLiteral("sourceUrl"), media.value(1).toString()},
-                        {QStringLiteral("title"), media.value(2).toString()},
-                        {QStringLiteral("source"), media.value(3).toString()},
-                        {QStringLiteral("license"), media.value(4).toString()},
-                    };
-                    item.mediaItems.append(mediaItem);
-                    if (item.mediaUrl.isEmpty()) {
-                        item.mediaUrl = mediaItem.value(QStringLiteral("url")).toString();
-                        item.mediaSourceUrl = mediaItem.value(QStringLiteral("sourceUrl")).toString();
-                        item.mediaTitle = mediaItem.value(QStringLiteral("title")).toString();
-                        item.mediaSource = mediaItem.value(QStringLiteral("source")).toString();
-                        item.mediaLicense = mediaItem.value(QStringLiteral("license")).toString();
-                    }
-                }
-            }
             items.append(item);
+        }
+    }
+
+    if (!items.isEmpty()) {
+        QJsonArray ids;
+        QHash<QString, int> itemIndexes;
+        for (int index = 0; index < items.size(); ++index) {
+            ids.append(items.at(index).id);
+            itemIndexes.insert(items.at(index).id, index);
+        }
+        const QString idJson = QString::fromUtf8(
+            QJsonDocument(ids).toJson(QJsonDocument::Compact));
+
+        QSqlQuery muscles(m_database);
+        muscles.prepare(QStringLiteral(
+            "SELECT em.exercise_id,m.name_zh,em.role FROM exercise_muscle em "
+            "JOIN muscle m ON m.id=em.muscle_id "
+            "WHERE em.exercise_id IN (SELECT value FROM json_each(?)) "
+            "ORDER BY em.exercise_id,em.role,m.name_zh"));
+        muscles.addBindValue(idJson);
+        if (muscles.exec()) {
+            while (muscles.next()) {
+                const auto item = itemIndexes.constFind(muscles.value(0).toString());
+                if (item == itemIndexes.cend())
+                    continue;
+                (muscles.value(2).toString() == QStringLiteral("primary")
+                     ? items[*item].primaryMuscles : items[*item].secondaryMuscles)
+                    .append(muscles.value(1).toString());
+            }
+        }
+
+        QSqlQuery media(m_database);
+        media.prepare(QStringLiteral(
+            "SELECT exercise_id,local_path,external_url,title,source,license "
+            "FROM exercise_media WHERE exercise_id IN (SELECT value FROM json_each(?)) "
+            "ORDER BY exercise_id,id"));
+        media.addBindValue(idJson);
+        if (media.exec()) {
+            while (media.next()) {
+                const auto item = itemIndexes.constFind(media.value(0).toString());
+                if (item == itemIndexes.cend())
+                    continue;
+                const QVariantMap mediaItem{
+                    {QStringLiteral("url"), media.value(1).toString()},
+                    {QStringLiteral("sourceUrl"), media.value(2).toString()},
+                    {QStringLiteral("title"), media.value(3).toString()},
+                    {QStringLiteral("source"), media.value(4).toString()},
+                    {QStringLiteral("license"), media.value(5).toString()},
+                };
+                Item &target = items[*item];
+                target.mediaItems.append(mediaItem);
+                if (target.mediaUrl.isEmpty()) {
+                    target.mediaUrl = mediaItem.value(QStringLiteral("url")).toString();
+                    target.mediaSourceUrl = mediaItem.value(QStringLiteral("sourceUrl")).toString();
+                    target.mediaTitle = mediaItem.value(QStringLiteral("title")).toString();
+                    target.mediaSource = mediaItem.value(QStringLiteral("source")).toString();
+                    target.mediaLicense = mediaItem.value(QStringLiteral("license")).toString();
+                }
+            }
         }
     }
 
@@ -326,7 +365,10 @@ bool ExerciseListModel::toggleFavorite(const QString &exerciseId)
         update.addBindValue(exerciseId);
     }
     const bool ok = update.exec();
-    if (ok) reload();
+    if (ok) {
+        reload();
+        emit catalogChanged();
+    }
     return ok;
 }
 
@@ -387,9 +429,9 @@ bool ExerciseListModel::createCustomExercise(const QString &name, const QString 
         m_database.rollback();
         return false;
     }
-    const bool ok = true;
-    if (ok) reload();
-    return ok;
+    reload();
+    emit catalogChanged();
+    return true;
 }
 
 bool ExerciseListModel::updateCustomExercise(const QString &exerciseId, const QString &name,
@@ -450,9 +492,9 @@ bool ExerciseListModel::updateCustomExercise(const QString &exerciseId, const QS
         m_database.rollback();
         return false;
     }
-    const bool ok = true;
-    if (ok) reload();
-    return ok;
+    reload();
+    emit catalogChanged();
+    return true;
 }
 
 bool ExerciseListModel::deleteCustomExercise(const QString &exerciseId)
@@ -471,7 +513,10 @@ bool ExerciseListModel::deleteCustomExercise(const QString &exerciseId)
         query.prepare(QStringLiteral("DELETE FROM exercise WHERE id=? AND is_system=0"));
     query.addBindValue(exerciseId);
     const bool ok = query.exec() && query.numRowsAffected() == 1;
-    if (ok) reload();
+    if (ok) {
+        reload();
+        emit catalogChanged();
+    }
     return ok;
 }
 
@@ -479,8 +524,12 @@ bool ExerciseListModel::restoreSystemExercises()
 {
     if (m_seedDocuments.isEmpty()) return false;
     QString error;
-    const bool ok = ExerciseSeedImporter::importDocuments(m_database, m_seedDocuments, &error);
-    if (ok) reload();
+    const bool ok = ExerciseSeedImporter::importDocuments(
+        m_database, m_seedDocuments, &error, true);
+    if (ok) {
+        reload();
+        emit catalogChanged();
+    }
     return ok;
 }
 

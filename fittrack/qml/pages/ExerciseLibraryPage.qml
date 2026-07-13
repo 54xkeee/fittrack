@@ -1626,5 +1626,8 @@ AppPage {
         }
     }
 
-    Component.onCompleted: searchField.text = page.sourceModel.searchText
+    Component.onCompleted: {
+        page.sourceModel.ensureLoaded()
+        searchField.text = page.sourceModel.searchText
+    }
 }

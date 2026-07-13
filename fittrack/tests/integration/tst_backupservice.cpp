@@ -97,7 +97,7 @@ void BackupServiceTest::exportsAndRestoresCompleteJsonBackup()
     QCOMPARE(seed.value(0).toInt(), 0);
     QVERIFY(seed.exec(QStringLiteral(
         "SELECT value FROM app_meta WHERE key='schema_version'")) && seed.next());
-    QCOMPARE(seed.value(0).toString(), QStringLiteral("7"));
+    QCOMPARE(seed.value(0).toString(), QStringLiteral("8"));
 
     const QString invalidPath = directory.filePath(QStringLiteral("invalid.json"));
     QFile invalid(invalidPath);

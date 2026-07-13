@@ -13,7 +13,8 @@ public:
     static bool importDocuments(
         const QSqlDatabase &database,
         const QList<QByteArray> &documents,
-        QString *errorMessage = nullptr);
+        QString *errorMessage = nullptr,
+        bool force = false);
 };
 
 } // namespace fittrack

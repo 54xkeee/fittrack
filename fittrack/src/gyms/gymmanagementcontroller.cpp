@@ -12,7 +12,6 @@ QString newId() { return QUuid::createUuid().toString(QUuid::WithoutBraces); }
 GymManagementController::GymManagementController(const QSqlDatabase &database, QObject *parent)
     : QObject(parent), m_database(database)
 {
-    reload();
 }
 
 QVariantList GymManagementController::gyms() const { return m_gyms; }
@@ -20,8 +19,15 @@ QVariantList GymManagementController::equipment() const { return m_equipment; }
 QString GymManagementController::selectedGymId() const { return m_selectedGymId; }
 QString GymManagementController::errorMessage() const { return m_errorMessage; }
 
+void GymManagementController::ensureLoaded()
+{
+    if (!m_loaded)
+        reload();
+}
+
 void GymManagementController::reload()
 {
+    m_loaded = true;
     QVariantList gyms;
     QSqlQuery query(m_database);
     if (query.exec(QStringLiteral(
@@ -97,6 +103,7 @@ bool GymManagementController::createGym(const QString &name)
     if (!selected.exec() || !selected.next()) return fail(selected.lastError().text());
     m_selectedGymId = selected.value(0).toString();
     reload();
+    emit catalogChanged();
     return true;
 }
 
@@ -109,8 +116,12 @@ bool GymManagementController::renameGym(const QString &gymId, const QString &nam
     query.addBindValue(name.trimmed());
     query.addBindValue(gymId);
     if (!query.exec()) return fail(query.lastError().text());
-    reload();
-    return query.numRowsAffected() > 0;
+    const bool changed = query.numRowsAffected() > 0;
+    if (changed) {
+        reload();
+        emit catalogChanged();
+    }
+    return changed;
 }
 
 bool GymManagementController::removeGym(const QString &gymId)
@@ -134,8 +145,12 @@ bool GymManagementController::removeGym(const QString &gymId)
         query.addBindValue(gymId);
         if (!query.exec()) return fail(query.lastError().text());
     }
-    reload();
-    return query.numRowsAffected() > 0;
+    const bool changed = query.numRowsAffected() > 0;
+    if (changed) {
+        reload();
+        emit catalogChanged();
+    }
+    return changed;
 }
 
 bool GymManagementController::createEquipment(const QString &name, const QString &code,
@@ -154,6 +169,7 @@ bool GymManagementController::createEquipment(const QString &name, const QString
     query.addBindValue(notes.trimmed());
     if (!query.exec()) return fail(query.lastError().text());
     reload();
+    emit catalogChanged();
     return true;
 }
 
@@ -170,8 +186,12 @@ bool GymManagementController::updateEquipment(const QString &equipmentId, const 
     query.addBindValue(notes.trimmed());
     query.addBindValue(equipmentId);
     if (!query.exec()) return fail(query.lastError().text());
-    reload();
-    return query.numRowsAffected() > 0;
+    const bool changed = query.numRowsAffected() > 0;
+    if (changed) {
+        reload();
+        emit catalogChanged();
+    }
+    return changed;
 }
 
 bool GymManagementController::removeEquipment(const QString &equipmentId)
@@ -187,8 +207,12 @@ bool GymManagementController::removeEquipment(const QString &equipmentId)
         : QStringLiteral("DELETE FROM equipment_instance WHERE id=?"));
     query.addBindValue(equipmentId);
     if (!query.exec()) return fail(query.lastError().text());
-    reload();
-    return query.numRowsAffected() > 0;
+    const bool changed = query.numRowsAffected() > 0;
+    if (changed) {
+        reload();
+        emit catalogChanged();
+    }
+    return changed;
 }
 
 bool GymManagementController::exists(const QString &table, const QString &id) const

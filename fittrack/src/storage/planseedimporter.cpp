@@ -1,5 +1,6 @@
 #include "storage/planseedimporter.h"
 
+#include <QCryptographicHash>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -29,6 +30,8 @@ bool PlanSeedImporter::importDocument(
     const QByteArray &documentBytes,
     QString *errorMessage)
 {
+    const QString hash = QString::fromLatin1(
+        QCryptographicHash::hash(documentBytes, QCryptographicHash::Sha256).toHex());
     QJsonParseError parseError;
     const auto document = QJsonDocument::fromJson(documentBytes, &parseError);
     if (parseError.error != QJsonParseError::NoError || !document.isObject()) {
@@ -42,6 +45,16 @@ bool PlanSeedImporter::importDocument(
     if (planId.isEmpty() || planName.isEmpty() || days.isEmpty()) {
         return setError(errorMessage, QStringLiteral("训练计划缺少 id、name 或 days"));
     }
+
+    QSqlQuery current(database);
+    current.prepare(QStringLiteral(
+        "SELECT value FROM app_meta WHERE key='plan_catalog_hash' "
+        "AND EXISTS(SELECT 1 FROM training_plan WHERE id=? AND is_system=1)"));
+    current.addBindValue(planId);
+    if (!current.exec())
+        return setError(errorMessage, current.lastError().text());
+    if (current.next() && current.value(0).toString() == hash)
+        return true;
 
     QSqlDatabase db = database;
     for (const auto &dayValue : days) {
@@ -118,6 +131,16 @@ bool PlanSeedImporter::importDocument(
                 return false;
             }
         }
+    }
+
+    QSqlQuery saveHash(db);
+    saveHash.prepare(QStringLiteral(
+        "INSERT INTO app_meta(key,value) VALUES('plan_catalog_hash',?) "
+        "ON CONFLICT(key) DO UPDATE SET value=excluded.value"));
+    saveHash.addBindValue(hash);
+    if (!execute(saveHash, errorMessage)) {
+        db.rollback();
+        return false;
     }
 
     if (!db.commit()) {

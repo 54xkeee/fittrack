@@ -22,6 +22,7 @@ public:
     QVariantMap selectedPlan() const;
     QString errorMessage() const;
 
+    Q_INVOKABLE void ensureLoaded();
     Q_INVOKABLE void reload();
     Q_INVOKABLE bool selectPlan(const QString &planId);
     Q_INVOKABLE bool createPlan(const QString &name);
@@ -66,6 +67,7 @@ private:
     QVariantList m_plans;
     QVariantMap m_selectedPlan;
     QString m_errorMessage;
+    bool m_loaded = false;
 };
 
 } // namespace fittrack

@@ -119,8 +119,10 @@ int main(int argc, char *argv[])
         readResource(QStringLiteral(":/data/exercises-pull.json")),
         readResource(QStringLiteral(":/data/exercises-legs.json")),
     };
-    fittrack::ExerciseListModel exerciseModel(databaseManager.database(), exerciseDocuments);
-    fittrack::ExerciseListModel planExerciseModel(databaseManager.database(), exerciseDocuments);
+    fittrack::ExerciseListModel exerciseModel(
+        databaseManager.database(), exerciseDocuments, false);
+    fittrack::ExerciseListModel planExerciseModel(
+        databaseManager.database(), exerciseDocuments, false);
     fittrack::RestTimerController restTimer;
 #ifndef Q_OS_ANDROID
     fittrack::TimerAlertPlayer timerAlert;
@@ -143,17 +145,18 @@ int main(int argc, char *argv[])
     engine.rootContext()->setContextProperty(QStringLiteral("gymManagement"), &gymManagement);
     engine.rootContext()->setContextProperty(QStringLiteral("backupService"), &backupService);
     QObject::connect(
-        &exerciseModel, &QAbstractItemModel::modelReset,
+        &exerciseModel, &fittrack::ExerciseListModel::catalogChanged,
         &planExerciseModel, &fittrack::ExerciseListModel::reload);
     QObject::connect(
         &workoutController, &fittrack::WorkoutSessionController::planDaysChanged,
         &planManagement, &fittrack::PlanManagementController::reload);
     QObject::connect(
-        &gymManagement, &fittrack::GymManagementController::dataChanged,
-        &workoutController, &fittrack::WorkoutSessionController::reloadReferenceData);
+        &gymManagement, &fittrack::GymManagementController::catalogChanged,
+        &workoutController, &fittrack::WorkoutSessionController::reloadGymData);
     QObject::connect(&backupService, &fittrack::BackupService::restored, [&] {
         restTimer.reset();
         exerciseModel.reload();
+        planExerciseModel.reload();
         planManagement.reload();
         workoutController.reloadAfterRestore();
         workoutHistory.reload();
@@ -164,12 +167,8 @@ int main(int argc, char *argv[])
     QObject::connect(
         &workoutController,
         &fittrack::WorkoutSessionController::workoutFinished,
-        &workoutHistory,
-        [&workoutHistory, &analyticsDashboard](const QString &sessionId) {
-            workoutHistory.reload();
-            workoutHistory.selectSession(sessionId);
-            analyticsDashboard.reload();
-        });
+        &analyticsDashboard,
+        &fittrack::AnalyticsDashboardController::reload);
 #ifndef Q_OS_ANDROID
     QObject::connect(
         &restTimer, &fittrack::RestTimerController::finished,

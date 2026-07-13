@@ -5,6 +5,7 @@
 #include <QList>
 #include <QSqlDatabase>
 #include <QString>
+#include <QTimer>
 #include <QVector>
 #include <QVariantMap>
 
@@ -52,7 +53,8 @@ public:
     };
 
     explicit ExerciseListModel(const QSqlDatabase &database,
-                               const QList<QByteArray> &seedDocuments = {}, QObject *parent = nullptr);
+                               const QList<QByteArray> &seedDocuments = {}, bool autoLoad = true,
+                               QObject *parent = nullptr);
 
     int rowCount(const QModelIndex &parent = {}) const override;
     QVariant data(const QModelIndex &index, int role) const override;
@@ -71,6 +73,7 @@ public:
     bool favoritesOnly() const;
     void setFavoritesOnly(bool enabled);
 
+    Q_INVOKABLE void ensureLoaded();
     Q_INVOKABLE void reload();
     Q_INVOKABLE QVariantMap exerciseById(const QString &exerciseId) const;
     Q_INVOKABLE bool toggleFavorite(const QString &exerciseId);
@@ -85,6 +88,7 @@ public:
     Q_INVOKABLE bool restoreSystemExercises();
 
 signals:
+    void catalogChanged();
     void searchTextChanged();
     void bodyPartChanged();
     void movementFilterChanged();
@@ -132,6 +136,8 @@ private:
     bool m_favoritesOnly = false;
     QList<QByteArray> m_seedDocuments;
     QVector<Item> m_items;
+    QTimer m_searchTimer;
+    bool m_loaded = false;
 };
 
 } // namespace fittrack

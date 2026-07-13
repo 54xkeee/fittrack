@@ -11,6 +11,7 @@ class WorkoutHistoryControllerTest final : public QObject
 
 private slots:
     void summarizesCompletedWorkout();
+    void pagesCompletedWorkouts();
 };
 
 void WorkoutHistoryControllerTest::summarizesCompletedWorkout()
@@ -111,6 +112,51 @@ void WorkoutHistoryControllerTest::summarizesCompletedWorkout()
     QCOMPARE(query.value(0).toInt(), 0);
     QVERIFY(!history.deleteSession(QStringLiteral("missing-session")));
     QVERIFY(!history.errorMessage().isEmpty());
+}
+
+void WorkoutHistoryControllerTest::pagesCompletedWorkouts()
+{
+    fittrack::DatabaseManager databaseManager;
+    QString error;
+    QVERIFY2(databaseManager.initialize(QStringLiteral(":memory:"), &error), qPrintable(error));
+    QSqlQuery insert(databaseManager.database());
+    insert.prepare(QStringLiteral(
+        "INSERT INTO workout_session(id,name,started_at,ended_at,status) "
+        "VALUES(?,?,?,?, 'completed')"));
+    const QDateTime base = QDateTime::fromString(
+        QStringLiteral("2026-01-01T00:00:00Z"), Qt::ISODate);
+    for (int index = 0; index < 121; ++index) {
+        insert.bindValue(0, QStringLiteral("session-%1").arg(index, 3, 10, QLatin1Char('0')));
+        insert.bindValue(1, QStringLiteral("训练 %1").arg(index));
+        insert.bindValue(2, base.toString(Qt::ISODate));
+        insert.bindValue(3, base.addSecs(30).toString(Qt::ISODate));
+        QVERIFY(insert.exec());
+    }
+
+    fittrack::WorkoutHistoryController history(databaseManager.database());
+    QCOMPARE(history.sessions().size(), 1);
+    QVERIFY(history.hasMore());
+    history.ensureLoaded();
+    QCOMPARE(history.sessions().size(), 50);
+    QVERIFY(history.hasMore());
+    QCOMPARE(history.sessions().constFirst().toMap().value(QStringLiteral("id")).toString(),
+             QStringLiteral("session-000"));
+
+    history.loadMore();
+    QCOMPARE(history.sessions().size(), 100);
+    QVERIFY(history.hasMore());
+    history.loadMore();
+    QCOMPARE(history.sessions().size(), 121);
+    QVERIFY(!history.hasMore());
+    QCOMPARE(history.sessions().constLast().toMap().value(QStringLiteral("id")).toString(),
+             QStringLiteral("session-120"));
+
+    QSignalSpy unchangedSpy(&history, &fittrack::WorkoutHistoryController::sessionsChanged);
+    history.loadMore();
+    QCOMPARE(unchangedSpy.count(), 0);
+    history.reload();
+    QCOMPARE(history.sessions().size(), 50);
+    QVERIFY(history.hasMore());
 }
 
 QTEST_GUILESS_MAIN(WorkoutHistoryControllerTest)
