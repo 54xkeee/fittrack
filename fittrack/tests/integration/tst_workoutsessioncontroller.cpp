@@ -62,12 +62,28 @@ void WorkoutSessionControllerTest::createsPersistsAndResumesWorkout()
     QCOMPARE(completedSpy.count(), 1);
     QCOMPARE(completedSpy.first().first().toInt(), 120);
 
+    QSignalSpy exercisesChangedSpy(&controller, &fittrack::WorkoutSessionController::exercisesChanged);
+    QVERIFY(controller.updateCompletedSet(0, 0, 82.5, 6, true, QStringLiteral("Added")));
+    QCOMPARE(exercisesChangedSpy.count(), 1);
+    QCOMPARE(completedSpy.count(), 1);
+    const auto correctedSet = controller.exercises().first().toMap()
+                                  .value(QStringLiteral("sets")).toList().first().toMap();
+    QCOMPARE(correctedSet.value(QStringLiteral("weightKg")).toDouble(), 82.5);
+    QCOMPARE(correctedSet.value(QStringLiteral("actualReps")).toInt(), 6);
+    QVERIFY(correctedSet.value(QStringLiteral("toFailure")).toBool());
+    QCOMPARE(correctedSet.value(QStringLiteral("bodyweightLoadType")).toString(),
+             QStringLiteral("Added"));
+    QVERIFY(!controller.updateCompletedSet(99, 0, 80.0, 8));
+    QVERIFY(!controller.errorMessage().isEmpty());
+    QVERIFY(!controller.updateCompletedSet(0, 1, 80.0, 8));
+    QVERIFY(!controller.errorMessage().isEmpty());
+
     QSqlQuery saved(database);
     QVERIFY(saved.exec(QStringLiteral(
         "SELECT weight_kg,actual_reps,completed FROM set_record WHERE set_order=0")));
     QVERIFY(saved.next());
-    QCOMPARE(saved.value(0).toDouble(), 80.0);
-    QCOMPARE(saved.value(1).toInt(), 8);
+    QCOMPARE(saved.value(0).toDouble(), 82.5);
+    QCOMPARE(saved.value(1).toInt(), 6);
     QCOMPARE(saved.value(2).toInt(), 1);
     QSqlQuery notes(database);
     QVERIFY(notes.exec(QStringLiteral(

@@ -11,7 +11,7 @@
 - 技术栈：Qt 6 Quick/QML + C++17 + SQLite + CMake/Ninja。
 - 中文路径会影响 MSYS2 Qt 的 QML 扫描，统一从 `C:\FitTrackDev\fittrack` 配置和构建。
 - 每个大轮开始前先核对目标、已完成能力、缺口、本轮范围和验收标准；完成后必须构建、全量测试、手机尺寸截图验收，再提交 Git。
-- 前端遵循 Stitch 的 Graphite & Lime 方向：`#0F0F0F`/`#1A1A1A` 背景、`#C5FF4A` 主色、`#FFB74D` 辅色，优先保证 360–480px 竖屏触控体验。
+- 前端遵循 Stitch 的 Graphite & Lime 方向，颜色、间距、字号和动效只能引用 `qml/theme/Theme.qml`，优先保证 360–480px 竖屏触控体验。
 
 ## 红线
 
@@ -27,6 +27,6 @@ cmake --build C:\FitTrackDev\fittrack\build -j 6
 ctest --test-dir C:\FitTrackDev\fittrack\build -j 4 --output-on-failure
 ```
 
-当前测试基线为 14 项。视觉验收使用 `tst_qmlnavigation` 在 Windows/OpenGL 后端生成 `build/visual/*.png`，并额外检查训练进行中页面。
+当前测试基线为 14 项。视觉验收使用 `tst_qmlnavigation` 在 360×800、420×920、480×1056 生成 `build/visual/*.png`，并额外检查训练进行中与带真实数据的历史详情页面。
 
 项目状态和下一阶段缺口以 [`README.md`](README.md) 与 [`../docs/fittrack-development-plan.md`](../docs/fittrack-development-plan.md) 为准。

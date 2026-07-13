@@ -14,6 +14,8 @@
 
 #include <QDir>
 #include <QFile>
+#include <QFont>
+#include <QFontDatabase>
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
@@ -73,6 +75,12 @@ int main(int argc, char *argv[])
 #ifdef Q_OS_WIN
 #endif
     QQuickStyle::setStyle(QStringLiteral("Material"));
+    const int appFontId = QFontDatabase::addApplicationFont(
+        QStringLiteral(":/fonts/InterVariable.ttf"));
+    const QStringList appFontFamilies = QFontDatabase::applicationFontFamilies(appFontId);
+    if (!appFontFamilies.isEmpty()) {
+        app.setFont(QFont(appFontFamilies.constFirst()));
+    }
 
     fittrack::DatabaseManager databaseManager;
     if (!initializeDatabase(databaseManager)) {

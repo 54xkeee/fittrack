@@ -3,6 +3,7 @@
 #include "analytics/traininganalytics.h"
 
 #include <QDateTime>
+#include <QSqlError>
 #include <QSqlQuery>
 
 namespace fittrack {
@@ -40,6 +41,7 @@ WorkoutHistoryController::WorkoutHistoryController(const QSqlDatabase &database,
 
 QVariantList WorkoutHistoryController::sessions() const { return m_sessions; }
 QVariantMap WorkoutHistoryController::selectedSession() const { return m_selectedSession; }
+QString WorkoutHistoryController::errorMessage() const { return m_errorMessage; }
 
 void WorkoutHistoryController::reload()
 {
@@ -71,14 +73,18 @@ void WorkoutHistoryController::reload()
 
 bool WorkoutHistoryController::selectSession(const QString &sessionId)
 {
+    clearError();
     QSqlQuery session(m_database);
     session.prepare(QStringLiteral(
         "SELECT ws.name,ws.started_at,ws.ended_at,ws.notes,COALESCE(g.name,'') "
         "FROM workout_session ws LEFT JOIN gym g ON g.id=ws.gym_id "
         "WHERE ws.id=? AND ws.status='completed'"));
     session.addBindValue(sessionId);
-    if (!session.exec() || !session.next()) {
-        return false;
+    if (!session.exec()) {
+        return fail(session.lastError().text());
+    }
+    if (!session.next()) {
+        return fail(QStringLiteral("找不到已完成训练"));
     }
 
     const QDateTime started = QDateTime::fromString(session.value(1).toString(), Qt::ISODate);
@@ -102,7 +108,7 @@ bool WorkoutHistoryController::selectSession(const QString &sessionId)
         "WHERE we.session_id=? ORDER BY we.sort_order"));
     exercise.addBindValue(sessionId);
     if (!exercise.exec()) {
-        return false;
+        return fail(exercise.lastError().text());
     }
     while (exercise.next()) {
         QVector<SetRecord> records;
@@ -113,7 +119,7 @@ bool WorkoutHistoryController::selectSession(const QString &sessionId)
             "WHERE workout_exercise_id=? AND completed=1 ORDER BY set_order"));
         sets.addBindValue(exercise.value(0));
         if (!sets.exec()) {
-            return false;
+            return fail(sets.lastError().text());
         }
         while (sets.next()) {
             SetRecord record;
@@ -130,7 +136,7 @@ bool WorkoutHistoryController::selectSession(const QString &sessionId)
                 "WHERE parent_set_id=? ORDER BY rowid"));
             append.addBindValue(sets.value(0));
             if (!append.exec()) {
-                return false;
+                return fail(append.lastError().text());
             }
             while (append.next()) {
                 record.appendSets.append({
@@ -147,6 +153,7 @@ bool WorkoutHistoryController::selectSession(const QString &sessionId)
             records.append(record);
             ++completedSetCount;
             setDetails.append(QVariantMap{
+                {QStringLiteral("id"), sets.value(0)},
                 {QStringLiteral("weightKg"), sets.value(1)},
                 {QStringLiteral("reps"), sets.value(2)},
                 {QStringLiteral("toFailure"), sets.value(4).toBool()},
@@ -224,6 +231,88 @@ bool WorkoutHistoryController::selectSession(const QString &sessionId)
     };
     emit selectedSessionChanged();
     return true;
+}
+
+bool WorkoutHistoryController::updateCompletedSet(
+    const QString &setId, double weightKg, int actualReps, bool toFailure,
+    const QString &bodyweightLoadType)
+{
+    clearError();
+    const QString sessionId = m_selectedSession.value(QStringLiteral("id")).toString();
+    if (sessionId.isEmpty()) {
+        return fail(QStringLiteral("请先选择已完成训练"));
+    }
+    if (setId.isEmpty() || weightKg < 0 || actualReps < 0) {
+        return fail(QStringLiteral("组数据无效"));
+    }
+    if (bodyweightLoadType != QStringLiteral("Bodyweight")
+        && bodyweightLoadType != QStringLiteral("Added")
+        && bodyweightLoadType != QStringLiteral("Assisted")) {
+        return fail(QStringLiteral("自重负重类型无效"));
+    }
+
+    QSqlQuery update(m_database);
+    update.prepare(QStringLiteral(
+        "UPDATE set_record SET weight_kg=?,actual_reps=?,to_failure=?,bodyweight_load_type=? "
+        "WHERE id=? AND completed=1 AND workout_exercise_id IN ("
+        "SELECT we.id FROM workout_exercise we JOIN workout_session ws ON ws.id=we.session_id "
+        "WHERE ws.id=? AND ws.status='completed')"));
+    update.addBindValue(weightKg);
+    update.addBindValue(actualReps);
+    update.addBindValue(toFailure ? 1 : 0);
+    update.addBindValue(bodyweightLoadType);
+    update.addBindValue(setId);
+    update.addBindValue(sessionId);
+    if (!update.exec()) {
+        return fail(update.lastError().text());
+    }
+    if (update.numRowsAffected() != 1) {
+        return fail(QStringLiteral("该组不属于当前已完成训练"));
+    }
+    return selectSession(sessionId);
+}
+
+bool WorkoutHistoryController::deleteSession(const QString &sessionId)
+{
+    clearError();
+    if (sessionId.isEmpty()) {
+        return fail(QStringLiteral("训练记录编号无效"));
+    }
+
+    QSqlQuery remove(m_database);
+    remove.prepare(QStringLiteral(
+        "DELETE FROM workout_session WHERE id=? AND status='completed'"));
+    remove.addBindValue(sessionId);
+    if (!remove.exec()) {
+        return fail(remove.lastError().text());
+    }
+    if (remove.numRowsAffected() != 1) {
+        return fail(QStringLiteral("找不到可删除的已完成训练"));
+    }
+
+    if (m_selectedSession.value(QStringLiteral("id")).toString() == sessionId) {
+        m_selectedSession.clear();
+        emit selectedSessionChanged();
+    }
+    reload();
+    return true;
+}
+
+bool WorkoutHistoryController::fail(const QString &message)
+{
+    if (m_errorMessage != message) {
+        m_errorMessage = message;
+        emit errorMessageChanged();
+    }
+    return false;
+}
+
+void WorkoutHistoryController::clearError()
+{
+    if (!m_errorMessage.isEmpty()) {
+        m_errorMessage.clear();
+        emit errorMessageChanged();
+    }
 }
 
 } // namespace fittrack

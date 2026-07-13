@@ -1,11 +1,12 @@
 import QtQuick
 import QtQuick.Controls
+import "../theme" as Design
 
 Frame {
     id: root
-    padding: 14
-    implicitWidth: Math.max(48, maxChildImplicitWidth() + leftPadding + rightPadding)
-    implicitHeight: Math.max(48, maxChildImplicitHeight() + topPadding + bottomPadding)
+    padding: Design.Theme.space16
+    implicitWidth: Math.max(Design.Theme.touchTarget, maxChildImplicitWidth() + leftPadding + rightPadding)
+    implicitHeight: Math.max(Design.Theme.touchTarget, maxChildImplicitHeight() + topPadding + bottomPadding)
 
     function maxChildImplicitWidth() {
         let value = 0
@@ -22,9 +23,9 @@ Frame {
     }
 
     background: Rectangle {
-        color: "#1A1A1A"
-        radius: 8
+        color: Design.Theme.surface
+        radius: Design.Theme.radiusMedium
         border.width: 1
-        border.color: "#2B2D2D"
+        border.color: Design.Theme.outline
     }
 }

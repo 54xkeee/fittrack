@@ -2,6 +2,7 @@
 
 #include <QSqlError>
 #include <QSqlQuery>
+#include <QHash>
 #include <QUuid>
 
 namespace fittrack {
@@ -153,6 +154,113 @@ bool PlanManagementController::createPlan(const QString &name)
     if (!query.exec()) return fail(query.lastError().text());
     reload();
     return selectPlan(id);
+}
+
+bool PlanManagementController::copyPlan(const QString &planId, const QString &newName)
+{
+    clearError();
+
+    QSqlQuery sourcePlan(m_database);
+    sourcePlan.prepare(QStringLiteral("SELECT name FROM training_plan WHERE id=?"));
+    sourcePlan.addBindValue(planId);
+    if (!sourcePlan.exec()) return fail(sourcePlan.lastError().text());
+    if (!sourcePlan.next()) return fail(QStringLiteral("找不到训练计划"));
+
+    QString copyName = newName.trimmed();
+    if (copyName.isEmpty())
+        copyName = sourcePlan.value(0).toString() + QStringLiteral("个人版");
+
+    if (!m_database.transaction()) return fail(m_database.lastError().text());
+    const auto rollbackFailure = [this](const QString &message) {
+        m_database.rollback();
+        return fail(message);
+    };
+
+    const QString copiedPlanId = newId();
+    QSqlQuery insertPlan(m_database);
+    insertPlan.prepare(QStringLiteral(
+        "INSERT INTO training_plan(id,name,source_plan_id,is_system,is_read_only) "
+        "VALUES(?,?,?,0,0)"));
+    insertPlan.addBindValue(copiedPlanId);
+    insertPlan.addBindValue(copyName);
+    insertPlan.addBindValue(planId);
+    if (!insertPlan.exec()) return rollbackFailure(insertPlan.lastError().text());
+
+    QSqlQuery sourceDays(m_database);
+    sourceDays.prepare(QStringLiteral(
+        "SELECT id,name,sort_order FROM plan_day WHERE plan_id=? ORDER BY sort_order,id"));
+    sourceDays.addBindValue(planId);
+    if (!sourceDays.exec()) return rollbackFailure(sourceDays.lastError().text());
+
+    while (sourceDays.next()) {
+        const QString sourceDayId = sourceDays.value(0).toString();
+        const QString copiedDayId = newId();
+
+        QSqlQuery insertDay(m_database);
+        insertDay.prepare(QStringLiteral(
+            "INSERT INTO plan_day(id,plan_id,name,sort_order) VALUES(?,?,?,?)"));
+        insertDay.addBindValue(copiedDayId);
+        insertDay.addBindValue(copiedPlanId);
+        insertDay.addBindValue(sourceDays.value(1));
+        insertDay.addBindValue(sourceDays.value(2));
+        if (!insertDay.exec()) return rollbackFailure(insertDay.lastError().text());
+
+        QHash<QString, QString> copiedSectionIds;
+        QSqlQuery sourceSections(m_database);
+        sourceSections.prepare(QStringLiteral(
+            "SELECT id,name,sort_order FROM plan_section WHERE day_id=? ORDER BY sort_order,id"));
+        sourceSections.addBindValue(sourceDayId);
+        if (!sourceSections.exec()) return rollbackFailure(sourceSections.lastError().text());
+        while (sourceSections.next()) {
+            const QString sourceSectionId = sourceSections.value(0).toString();
+            const QString copiedSectionId = newId();
+            QSqlQuery insertSection(m_database);
+            insertSection.prepare(QStringLiteral(
+                "INSERT INTO plan_section(id,day_id,name,sort_order) VALUES(?,?,?,?)"));
+            insertSection.addBindValue(copiedSectionId);
+            insertSection.addBindValue(copiedDayId);
+            insertSection.addBindValue(sourceSections.value(1));
+            insertSection.addBindValue(sourceSections.value(2));
+            if (!insertSection.exec()) return rollbackFailure(insertSection.lastError().text());
+            copiedSectionIds.insert(sourceSectionId, copiedSectionId);
+        }
+
+        QSqlQuery sourceExercises(m_database);
+        sourceExercises.prepare(QStringLiteral(
+            "SELECT exercise_id,section_id,sort_order,default_sets,default_reps,rest_seconds,notes "
+            "FROM plan_exercise WHERE day_id=? ORDER BY sort_order,id"));
+        sourceExercises.addBindValue(sourceDayId);
+        if (!sourceExercises.exec()) return rollbackFailure(sourceExercises.lastError().text());
+        while (sourceExercises.next()) {
+            const QVariant sourceSectionId = sourceExercises.value(1);
+            QVariant copiedSectionId;
+            if (!sourceSectionId.isNull()) {
+                const auto section = copiedSectionIds.constFind(sourceSectionId.toString());
+                if (section == copiedSectionIds.cend())
+                    return rollbackFailure(QStringLiteral("计划分组数据不完整"));
+                copiedSectionId = *section;
+            }
+
+            QSqlQuery insertExercise(m_database);
+            insertExercise.prepare(QStringLiteral(
+                "INSERT INTO plan_exercise(id,day_id,section_id,exercise_id,sort_order,"
+                "default_sets,default_reps,rest_seconds,notes) VALUES(?,?,?,?,?,?,?,?,?)"));
+            insertExercise.addBindValue(newId());
+            insertExercise.addBindValue(copiedDayId);
+            insertExercise.addBindValue(copiedSectionId);
+            insertExercise.addBindValue(sourceExercises.value(0));
+            insertExercise.addBindValue(sourceExercises.value(2));
+            insertExercise.addBindValue(sourceExercises.value(3));
+            insertExercise.addBindValue(sourceExercises.value(4));
+            insertExercise.addBindValue(sourceExercises.value(5));
+            insertExercise.addBindValue(sourceExercises.value(6));
+            if (!insertExercise.exec()) return rollbackFailure(insertExercise.lastError().text());
+        }
+    }
+
+    if (!m_database.commit()) return rollbackFailure(m_database.lastError().text());
+    reload();
+    return selectPlan(copiedPlanId);
 }
 
 bool PlanManagementController::renamePlan(const QString &planId, const QString &name)

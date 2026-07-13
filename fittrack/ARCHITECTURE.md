@@ -20,7 +20,7 @@ SQLite v3
 - `plans/`：系统计划和个人计划管理。
 - `exercises/`：动作查询、组合筛选、收藏和自定义动作。
 - `analytics/`：容量、最高重量、e1RM、肌群和有氧汇总。
-- `history/`：已完成力量训练详情。
+- `history/`：已完成力量训练详情、已完成组修正和整次训练删除。
 - `cardio/`：跑步机爬坡、爬楼机和有氧历史。
 - `gyms/`：健身房和具体器械实例；被历史引用时归档。
 - `timer/`：绝对截止时间倒计时和桌面提示音。
@@ -75,7 +75,9 @@ SQLite v3
 
 一级导航为首页、计划、训练、动作、分析。分析页内部包含趋势、历史、有氧和管理四个页签。训练完成后会保留会话编号并跳转到有氧入口，用户可以附加有氧或取消。
 
-Graphite & Lime 视觉令牌目前直接存在于通用组件中：深色背景 `#0F0F0F`/`#1A1A1A`、主色 `#C5FF4A`、辅助色 `#FFB74D`。下一视觉轮应把剩余旧页面统一到同一组件体系，再决定是否提取轻量主题单例。
+Graphite & Lime 视觉令牌集中在 `qml/theme/Theme.qml`，页面通过 `AppPage`、`AppButton`、`NumberField`、`ConfirmDialog`、`RestTimerBar` 等组件复用安全区、触控尺寸、颜色、间距和状态反馈。首页、训练、计划和历史已经迁移；动作库、趋势、有氧与管理仍需统一。
+
+`resources/fonts/InterVariable.ttf` 以 SIL OFL 许可内置。启动时通过 `QFontDatabase` 注册，英文、数字和单位使用 Inter，中文由系统字体回退，避免 Windows 离屏渲染选择到符号字体。
 
 ## 验证基线
 
@@ -84,4 +86,4 @@ cmake --build C:\FitTrackDev\fittrack\build -j 6
 ctest --test-dir C:\FitTrackDev\fittrack\build -j 4 --output-on-failure
 ```
 
-当前 14 项测试覆盖计算、数据库、种子导入、动作、计划、训练、历史、分析、有氧、场馆、备份、倒计时和 QML 导航。QML 测试还生成训练进行中等手机尺寸截图；Android APK、真机生命周期和后台通知不在当前验证范围内。
+当前 14 项测试覆盖计算、数据库、种子导入、动作、计划、训练、历史、分析、有氧、场馆、备份、倒计时和 QML 导航。QML 测试在 360×800、420×920、480×1056 三档生成主页面、训练进行中和带真实数据的历史详情截图；Android APK、真机生命周期和后台通知不在当前验证范围内。

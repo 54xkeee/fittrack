@@ -1,8 +1,10 @@
-import QtQuick
+import QtQuick 6.9
 import QtQuick.Controls
+import QtQuick.Controls.Material
 import QtQuick.Layouts
 import "pages"
 import "components"
+import "theme" as Design
 
 ApplicationWindow {
     id: window
@@ -12,10 +14,11 @@ ApplicationWindow {
     minimumHeight: 640
     visible: true
     title: qsTr("训迹 FitTrack")
-    color: "#0F0F0F"
+    color: Design.Theme.background
+    font.family: Qt.application.font.family
     Material.theme: Material.Dark
-    Material.accent: "#C5FF4A"
-    Material.primary: "#1A1A1A"
+    Material.accent: Design.Theme.primary
+    Material.primary: Design.Theme.surface
 
     StackLayout {
         objectName: "mainStack"
@@ -68,48 +71,72 @@ ApplicationWindow {
         objectName: "navigation"
         property int currentIndex: 0
         property var items: [
-            {"label": qsTr("首页")},
-            {"label": qsTr("计划")},
-            {"label": qsTr("训练")},
-            {"label": qsTr("动作")},
-            {"label": qsTr("分析")}
+            {"label": qsTr("首页"), "glyph": "⌂"},
+            {"label": qsTr("计划"), "glyph": "▣"},
+            {"label": qsTr("训练"), "glyph": "+"},
+            {"label": qsTr("动作"), "glyph": "◎"},
+            {"label": qsTr("分析"), "glyph": "↗"}
         ]
 
-        height: 72
-        color: "#121212"
+        implicitHeight: 68 + SafeArea.margins.bottom
+        color: Design.Theme.surface
         border.width: 1
-        border.color: "#242626"
-        width: parent.width
+        border.color: Design.Theme.outline
 
         RowLayout {
-            anchors.fill: parent
-            anchors.margins: 8
-            spacing: 6
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.top: parent.top
+            anchors.bottom: parent.bottom
+            anchors.leftMargin: Design.Theme.space8 + SafeArea.margins.left
+            anchors.rightMargin: Design.Theme.space8 + SafeArea.margins.right
+            anchors.topMargin: Design.Theme.space4
+            anchors.bottomMargin: Design.Theme.space4 + SafeArea.margins.bottom
+            spacing: Design.Theme.space4
 
             Repeater {
                 model: navigation.items
-                delegate: Rectangle {
+                delegate: Button {
+                    id: navigationButton
                     required property var modelData
                     required property int index
 
                     Layout.fillWidth: true
                     Layout.fillHeight: true
-                    radius: 8
-                    color: navigation.currentIndex === index ? "#C5FF4A" : "transparent"
-                    border.width: navigation.currentIndex === index ? 0 : 1
-                    border.color: "#2B2D2D"
+                    implicitHeight: Design.Theme.touchTarget
+                    padding: 0
+                    flat: true
+                    Accessible.name: modelData.label
+                    onClicked: navigation.currentIndex = index
 
-                    Label {
-                        anchors.centerIn: parent
-                        text: modelData.label
-                        color: navigation.currentIndex === index ? "#121212" : "#DADADA"
-                        font.pixelSize: 13
-                        font.bold: navigation.currentIndex === index
+                    contentItem: ColumnLayout {
+                        spacing: 0
+                        Label {
+                            Layout.alignment: Qt.AlignHCenter
+                            text: navigationButton.modelData.glyph
+                            color: navigation.currentIndex === navigationButton.index
+                                   ? Design.Theme.primary : Design.Theme.surfaceMuted
+                            font.pixelSize: navigationButton.index === 2
+                                            ? Design.Theme.typeTitle : Design.Theme.typeBody
+                            font.weight: Font.DemiBold
+                        }
+                        Label {
+                            Layout.alignment: Qt.AlignHCenter
+                            text: navigationButton.modelData.label
+                            color: navigation.currentIndex === navigationButton.index
+                                   ? Design.Theme.primary : Design.Theme.surfaceMuted
+                            font.pixelSize: Design.Theme.typeCaption
+                            font.weight: navigation.currentIndex === navigationButton.index
+                                         ? Font.DemiBold : Font.Normal
+                        }
                     }
 
-                    MouseArea {
-                        anchors.fill: parent
-                        onClicked: navigation.currentIndex = index
+                    background: Rectangle {
+                        radius: Design.Theme.radiusSmall
+                        color: navigation.currentIndex === navigationButton.index
+                               ? Design.Theme.primaryContainer : "transparent"
+                        border.width: navigationButton.activeFocus ? 1 : 0
+                        border.color: Design.Theme.primary
                     }
                 }
             }

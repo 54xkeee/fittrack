@@ -24,6 +24,7 @@ public:
     Q_INVOKABLE void reload();
     Q_INVOKABLE bool selectPlan(const QString &planId);
     Q_INVOKABLE bool createPlan(const QString &name);
+    Q_INVOKABLE bool copyPlan(const QString &planId, const QString &newName = QString());
     Q_INVOKABLE bool renamePlan(const QString &planId, const QString &name);
     Q_INVOKABLE bool deletePlan(const QString &planId);
     Q_INVOKABLE bool addDay(const QString &planId, const QString &name);

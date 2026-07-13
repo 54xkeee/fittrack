@@ -728,6 +728,54 @@ bool WorkoutSessionController::completeSet(
     return true;
 }
 
+bool WorkoutSessionController::updateCompletedSet(
+    int exerciseIndex, int setIndex, double weightKg, int actualReps, bool toFailure,
+    const QString &bodyweightLoadType)
+{
+    clearError();
+    if (!active()) {
+        return fail(QStringLiteral("没有进行中的训练"));
+    }
+    if (exerciseIndex < 0 || exerciseIndex >= m_exercises.size()
+        || actualReps < 0 || weightKg < 0) {
+        return fail(QStringLiteral("组数据无效"));
+    }
+    if (bodyweightLoadType != QStringLiteral("Bodyweight")
+        && bodyweightLoadType != QStringLiteral("Added")
+        && bodyweightLoadType != QStringLiteral("Assisted")) {
+        return fail(QStringLiteral("自重负重类型无效"));
+    }
+
+    const auto sets = m_exercises.at(exerciseIndex).toMap().value(QStringLiteral("sets")).toList();
+    if (setIndex < 0 || setIndex >= sets.size()) {
+        return fail(QStringLiteral("组序号无效"));
+    }
+    const auto set = sets.at(setIndex).toMap();
+    if (!set.value(QStringLiteral("completed")).toBool()) {
+        return fail(QStringLiteral("只能修改已完成组"));
+    }
+
+    QSqlQuery update(m_database);
+    update.prepare(QStringLiteral(
+        "UPDATE set_record SET weight_kg=?,actual_reps=?,to_failure=?,bodyweight_load_type=? "
+        "WHERE id=? AND completed=1 AND workout_exercise_id IN ("
+        "SELECT we.id FROM workout_exercise we JOIN workout_session ws ON ws.id=we.session_id "
+        "WHERE ws.id=? AND ws.status='active')"));
+    update.addBindValue(weightKg);
+    update.addBindValue(actualReps);
+    update.addBindValue(toFailure ? 1 : 0);
+    update.addBindValue(bodyweightLoadType);
+    update.addBindValue(set.value(QStringLiteral("id")));
+    update.addBindValue(m_sessionId);
+    if (!update.exec()) {
+        return fail(update.lastError().text());
+    }
+    if (update.numRowsAffected() != 1) {
+        return fail(QStringLiteral("找不到当前训练中的已完成组"));
+    }
+    return loadSession(m_sessionId);
+}
+
 bool WorkoutSessionController::configureExercise(
     int exerciseIndex, double weightKg, int targetReps, int setCount)
 {

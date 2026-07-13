@@ -55,6 +55,9 @@ public:
     Q_INVOKABLE bool configureExercise(int exerciseIndex, double weightKg, int targetReps, int setCount);
     Q_INVOKABLE bool completeSet(int exerciseIndex, int setIndex, double weightKg, int actualReps,
                                  bool toFailure = false, const QString &bodyweightLoadType = QStringLiteral("Bodyweight"));
+    Q_INVOKABLE bool updateCompletedSet(
+        int exerciseIndex, int setIndex, double weightKg, int actualReps,
+        bool toFailure = false, const QString &bodyweightLoadType = QStringLiteral("Bodyweight"));
     Q_INVOKABLE bool addAppendSet(
         int exerciseIndex, int setIndex, double weightKg, int reps, int restSeconds, bool toFailure = false);
     Q_INVOKABLE bool resumeUnfinished();

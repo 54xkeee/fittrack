@@ -13,11 +13,14 @@
 
 #include <QFile>
 #include <QDir>
+#include <QFont>
+#include <QFontDatabase>
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
 #include <QQuickStyle>
 #include <QQuickWindow>
+#include <QSize>
 #include <QTest>
 
 class QmlNavigationTest final : public QObject
@@ -86,6 +89,29 @@ void QmlNavigationTest::loadsAndSwitchesEveryPrimaryPage()
     QObject *stack = root->findChild<QObject *>(QStringLiteral("mainStack"));
     QVERIFY(navigation);
     QVERIFY(stack);
+    const QString screenshotDirectory = QStringLiteral(FITTRACK_SCREENSHOT_DIR);
+    QVERIFY(QDir().mkpath(screenshotDirectory));
+    const QList<QSize> viewports{
+        QSize(360, 800), QSize(420, 920), QSize(480, 1056),
+    };
+    const auto capture = [&](const QString &name, const QSize &viewport) {
+        window->setWidth(viewport.width());
+        window->setHeight(viewport.height());
+        window->update();
+        QTest::qWait(180);
+        if (stack->property("width").toReal() > window->width() + 0.5
+            || navigation->property("width").toReal() > window->width() + 0.5) {
+            return false;
+        }
+        const QImage image = window->grabWindow();
+        const QString suffix = QStringLiteral("-%1x%2").arg(viewport.width()).arg(viewport.height());
+        if (image.isNull()
+            || !image.save(QDir(screenshotDirectory).filePath(name + suffix + QStringLiteral(".png")))) {
+            return false;
+        }
+        return viewport.width() != 420
+               || image.save(QDir(screenshotDirectory).filePath(name + QStringLiteral(".png")));
+    };
     for (int index = 0; index < 5; ++index) {
         QVERIFY(navigation->setProperty("currentIndex", index));
         window->update();
@@ -93,43 +119,49 @@ void QmlNavigationTest::loadsAndSwitchesEveryPrimaryPage()
     }
     window->update();
     QTest::qWait(300);
-    for (int index = 0; index < 5; ++index) {
-        QVERIFY(navigation->setProperty("currentIndex", index));
-        window->update();
-        QTest::qWait(200);
-        QCOMPARE(stack->property("currentIndex").toInt(), index);
-        const QString screenshotDirectory = QStringLiteral(FITTRACK_SCREENSHOT_DIR);
-        QVERIFY(QDir().mkpath(screenshotDirectory));
-        const QStringList names{QStringLiteral("home"), QStringLiteral("plans"),
-                                QStringLiteral("training"), QStringLiteral("exercises"),
-                                QStringLiteral("insights")};
-        QVERIFY(window->grabWindow().save(
-            QDir(screenshotDirectory).filePath(names.at(index) + QStringLiteral(".png"))));
+    const QStringList names{QStringLiteral("home"), QStringLiteral("plans"),
+                            QStringLiteral("training"), QStringLiteral("exercises"),
+                            QStringLiteral("insights")};
+    for (const QSize &viewport : viewports) {
+        for (int index = 0; index < 5; ++index) {
+            QVERIFY(navigation->setProperty("currentIndex", index));
+            window->update();
+            QTest::qWait(100);
+            QCOMPARE(stack->property("currentIndex").toInt(), index);
+            QVERIFY(capture(names.at(index), viewport));
+        }
     }
 
     QVERIFY(workoutController.startSuggestedDay());
     restTimer.start(180);
     QVERIFY(navigation->setProperty("currentIndex", 2));
-    window->update();
-    QTest::qWait(300);
-    QVERIFY(window->grabWindow().save(
-        QDir(QStringLiteral(FITTRACK_SCREENSHOT_DIR))
-            .filePath(QStringLiteral("training-active.png"))));
+    for (const QSize &viewport : viewports)
+        QVERIFY(capture(QStringLiteral("training-active"), viewport));
     restTimer.reset();
+
+    QVERIFY(workoutController.completeSet(0, 0, 40.0, 10));
+    restTimer.reset();
+    QVERIFY(workoutController.finishWorkout());
+    workoutHistory.reload();
+    QVERIFY(!workoutHistory.sessions().isEmpty());
+    QVERIFY(workoutHistory.selectSession(
+        workoutHistory.sessions().first().toMap().value(QStringLiteral("id")).toString()));
+    QObject *historyPage = root->findChild<QObject *>(QStringLiteral("historyPage"));
+    QVERIFY(historyPage);
+    QVERIFY(historyPage->setProperty("showDetails", true));
 
     QObject *insightsTabs = root->findChild<QObject *>(QStringLiteral("insightsTabs"));
     QVERIFY(insightsTabs);
     QVERIFY(navigation->setProperty("currentIndex", 4));
     const QList<QPair<int, QString>> secondaryPages{
+        {1, QStringLiteral("history")},
         {2, QStringLiteral("cardio")},
         {3, QStringLiteral("management")},
     };
     for (const auto &[index, name] : secondaryPages) {
         QVERIFY(insightsTabs->setProperty("currentIndex", index));
-        window->update();
-        QTest::qWait(200);
-        QVERIFY(window->grabWindow().save(
-            QDir(QStringLiteral(FITTRACK_SCREENSHOT_DIR)).filePath(name + QStringLiteral(".png"))));
+        for (const QSize &viewport : viewports)
+            QVERIFY(capture(name, viewport));
     }
 }
 
@@ -138,6 +170,10 @@ int main(int argc, char **argv)
     if (!qEnvironmentVariableIsSet("QT_QPA_PLATFORM")) qputenv("QT_QPA_PLATFORM", "offscreen");
     if (!qEnvironmentVariableIsSet("QSG_RHI_BACKEND")) qputenv("QSG_RHI_BACKEND", "software");
     QGuiApplication app(argc, argv);
+    const int fontId = QFontDatabase::addApplicationFont(
+        QStringLiteral(FITTRACK_SOURCE_DIR "/resources/fonts/InterVariable.ttf"));
+    const QStringList fontFamilies = QFontDatabase::applicationFontFamilies(fontId);
+    if (!fontFamilies.isEmpty()) app.setFont(QFont(fontFamilies.constFirst()));
     QQuickStyle::setStyle(QStringLiteral("Material"));
     QmlNavigationTest test;
     return QTest::qExec(&test, argc, argv);

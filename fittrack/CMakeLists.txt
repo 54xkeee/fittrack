@@ -6,9 +6,9 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_AUTOMOC ON)
 
-find_package(Qt6 6.8 REQUIRED COMPONENTS Core Gui Multimedia Qml Quick QuickControls2 Sql Test)
+find_package(Qt6 6.9 REQUIRED COMPONENTS Core Gui Multimedia Qml Quick QuickControls2 Sql Test)
 
-qt_standard_project_setup(REQUIRES 6.8)
+qt_standard_project_setup(REQUIRES 6.9)
 
 add_library(fittrack_domain STATIC
     src/analytics/traininganalytics.cpp
@@ -70,15 +70,25 @@ qt_add_executable(fittrack
 # MSYS2 Qt 6.9.1 qmlcachegen crashes on the root file after resolving the
 # navigation page graph. Keep all pages cached and parse only Main.qml at runtime.
 set_source_files_properties(qml/Main.qml PROPERTIES QT_QML_SKIP_CACHEGEN TRUE)
+set_source_files_properties(qml/theme/Theme.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
 
 qt_add_qml_module(fittrack
     URI FitTrack
     VERSION 1.0
     QML_FILES
         qml/Main.qml
+        qml/theme/Theme.qml
         qml/components/ActionPill.qml
+        qml/components/AppButton.qml
         qml/components/AppCard.qml
+        qml/components/AppPage.qml
+        qml/components/ConfirmDialog.qml
+        qml/components/IconButton.qml
+        qml/components/InlineFeedback.qml
+        qml/components/NumberField.qml
+        qml/components/RestTimerBar.qml
         qml/components/SectionHeader.qml
+        qml/components/SetRow.qml
         qml/components/StatCard.qml
         qml/components/TrendChart.qml
         qml/components/MuscleBars.qml
@@ -91,6 +101,8 @@ qt_add_qml_module(fittrack
         qml/pages/InsightsPage.qml
         qml/pages/CardioPage.qml
         qml/pages/ManagementPage.qml
+    RESOURCES
+        qml/theme/qmldir
 )
 
 qt_add_resources(fittrack "seed_data"
@@ -101,6 +113,14 @@ qt_add_resources(fittrack "seed_data"
         resources/data/exercises-pull.json
         resources/data/exercises-legs.json
         resources/data/tan-three-day-split.json
+)
+
+qt_add_resources(fittrack "font_assets"
+    PREFIX "/fonts"
+    BASE "resources/fonts"
+    FILES
+        resources/fonts/InterVariable.ttf
+        resources/fonts/Inter-OFL.txt
 )
 
 file(GLOB_RECURSE ACTION_IMAGES CONFIGURE_DEPENDS
