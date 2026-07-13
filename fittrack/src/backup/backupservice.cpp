@@ -10,6 +10,7 @@
 #include <QSqlError>
 #include <QSqlQuery>
 #include <QSqlRecord>
+#include <QTemporaryDir>
 #include <QUrl>
 
 namespace fittrack {
@@ -41,6 +42,41 @@ QString localPath(const QString &input)
     return url.isLocalFile() ? url.toLocalFile() : input;
 }
 
+bool isContentUri(const QString &input)
+{
+    return QUrl(input).scheme().compare(QStringLiteral("content"), Qt::CaseInsensitive) == 0;
+}
+
+bool copyFileToDocument(const QString &sourcePath, const QString &targetPath, QString *error)
+{
+    QFile source(sourcePath);
+    QFile target(targetPath);
+    if (!source.open(QIODevice::ReadOnly)) {
+        *error = source.errorString();
+        return false;
+    }
+    if (!target.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+        *error = target.errorString();
+        return false;
+    }
+    while (!source.atEnd()) {
+        const QByteArray chunk = source.read(256 * 1024);
+        if (chunk.isEmpty() && source.error() != QFileDevice::NoError) {
+            *error = source.errorString();
+            return false;
+        }
+        if (target.write(chunk) != chunk.size()) {
+            *error = target.errorString();
+            return false;
+        }
+    }
+    if (!target.flush()) {
+        *error = target.errorString();
+        return false;
+    }
+    return true;
+}
+
 } // namespace
 
 BackupService::BackupService(const QSqlDatabase &database, QObject *parent)
@@ -54,7 +90,13 @@ bool BackupService::exportDatabase(const QString &filePath)
 {
     clearError();
     if (filePath.trimmed().isEmpty()) return fail(QStringLiteral("备份路径不能为空"));
-    const QString absolutePath = QFileInfo(localPath(filePath)).absoluteFilePath();
+    const bool contentTarget = isContentUri(filePath);
+    QTemporaryDir temporaryDirectory;
+    const QString absolutePath = contentTarget
+        ? temporaryDirectory.filePath(QStringLiteral("fittrack.sqlite"))
+        : QFileInfo(localPath(filePath)).absoluteFilePath();
+    if (contentTarget && !temporaryDirectory.isValid())
+        return fail(QStringLiteral("无法创建临时备份目录"));
     if (!QDir().mkpath(QFileInfo(absolutePath).absolutePath()))
         return fail(QStringLiteral("无法创建备份目录"));
     QFile::remove(absolutePath);
@@ -63,7 +105,14 @@ bool BackupService::exportDatabase(const QString &filePath)
     QSqlQuery query(m_database);
     if (!query.exec(QStringLiteral("VACUUM INTO '%1'").arg(escaped)))
         return fail(query.lastError().text());
-    return QFileInfo(absolutePath).size() > 0;
+    if (QFileInfo(absolutePath).size() <= 0)
+        return fail(QStringLiteral("生成的SQLite快照为空"));
+    if (contentTarget) {
+        QString error;
+        if (!copyFileToDocument(absolutePath, filePath, &error))
+            return fail(error);
+    }
+    return true;
 }
 
 bool BackupService::exportJson(const QString &filePath)
@@ -90,11 +139,17 @@ bool BackupService::exportJson(const QString &filePath)
         {QStringLiteral("createdAt"), QDateTime::currentDateTimeUtc().toString(Qt::ISODate)},
         {QStringLiteral("tables"), tableData},
     };
-    QSaveFile file(localPath(filePath));
-    if (!file.open(QIODevice::WriteOnly)) return fail(file.errorString());
-    if (file.write(QJsonDocument(root).toJson(QJsonDocument::Indented)) < 0)
-        return fail(file.errorString());
-    if (!file.commit()) return fail(file.errorString());
+    const QByteArray data = QJsonDocument(root).toJson(QJsonDocument::Indented);
+    if (isContentUri(filePath)) {
+        QFile file(filePath);
+        if (!file.open(QIODevice::WriteOnly | QIODevice::Truncate)) return fail(file.errorString());
+        if (file.write(data) != data.size() || !file.flush()) return fail(file.errorString());
+    } else {
+        QSaveFile file(localPath(filePath));
+        if (!file.open(QIODevice::WriteOnly)) return fail(file.errorString());
+        if (file.write(data) != data.size()) return fail(file.errorString());
+        if (!file.commit()) return fail(file.errorString());
+    }
     return true;
 }
 
@@ -103,8 +158,12 @@ bool BackupService::restoreJson(const QString &filePath)
     clearError();
     QFile file(localPath(filePath));
     if (!file.open(QIODevice::ReadOnly)) return fail(file.errorString());
+    constexpr qint64 maximumBackupBytes = 64 * 1024 * 1024;
+    const QByteArray backupData = file.read(maximumBackupBytes + 1);
+    if (backupData.size() > maximumBackupBytes)
+        return fail(QStringLiteral("备份文件超过64MB，已拒绝恢复"));
     QJsonParseError parseError;
-    const QJsonDocument document = QJsonDocument::fromJson(file.readAll(), &parseError);
+    const QJsonDocument document = QJsonDocument::fromJson(backupData, &parseError);
     if (parseError.error != QJsonParseError::NoError || !document.isObject())
         return fail(QStringLiteral("备份文件不是有效JSON"));
     const QJsonObject root = document.object();

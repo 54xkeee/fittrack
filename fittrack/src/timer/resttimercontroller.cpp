@@ -1,4 +1,5 @@
 #include "timer/resttimercontroller.h"
+#include "timer/androidresttimerbridge.h"
 
 #include <QDateTime>
 
@@ -44,6 +45,7 @@ void RestTimerController::start(int seconds)
     emit remainingSecondsChanged();
     setState(State::Running);
     m_tickTimer.start();
+    androidtimer::start(seconds);
 }
 
 void RestTimerController::pause()
@@ -55,6 +57,7 @@ void RestTimerController::pause()
     m_tickTimer.stop();
     updateRemaining();
     setState(State::Paused);
+    androidtimer::pause(m_pausedRemainingMs);
 }
 
 void RestTimerController::resume()
@@ -65,11 +68,13 @@ void RestTimerController::resume()
     m_deadlineMs = QDateTime::currentMSecsSinceEpoch() + m_pausedRemainingMs;
     setState(State::Running);
     m_tickTimer.start();
+    androidtimer::resume(m_pausedRemainingMs);
 }
 
 void RestTimerController::reset()
 {
     m_tickTimer.stop();
+    androidtimer::stop();
     const bool durationChanged = m_durationSeconds != 0;
     const bool remainingChanged = m_remainingSeconds != 0;
     m_durationSeconds = 0;
@@ -90,6 +95,7 @@ void RestTimerController::finishEarly()
     if (m_state == State::Idle || m_state == State::Finished) {
         return;
     }
+    androidtimer::stop();
     complete();
 }
 

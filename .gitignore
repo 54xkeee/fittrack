@@ -1,4 +1,5 @@
 /build-*/
 /dist/
 /fittrack/build/
+/fittrack/build-android*/
 *.user

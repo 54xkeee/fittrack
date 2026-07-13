@@ -174,6 +174,16 @@ void QmlNavigationTest::loadsAndSwitchesEveryPrimaryPage()
         for (const QSize &viewport : viewports)
             QVERIFY(capture(name, viewport));
     }
+
+    QVariant handled;
+    QVERIFY(QMetaObject::invokeMethod(root, "handleBack", Q_RETURN_ARG(QVariant, handled)));
+    QVERIFY(handled.toBool());
+    QCOMPARE(insightsTabs->property("currentIndex").toInt(), 0);
+    QVERIFY(QMetaObject::invokeMethod(root, "handleBack", Q_RETURN_ARG(QVariant, handled)));
+    QVERIFY(handled.toBool());
+    QCOMPARE(navigation->property("currentIndex").toInt(), 0);
+    QVERIFY(QMetaObject::invokeMethod(root, "handleBack", Q_RETURN_ARG(QVariant, handled)));
+    QVERIFY(!handled.toBool());
 }
 
 int main(int argc, char **argv)

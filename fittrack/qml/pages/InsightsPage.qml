@@ -9,6 +9,14 @@ Page {
     background: Rectangle { color: Design.Theme.background }
 
     function openCardio() { tabs.currentIndex = 2 }
+    function handleBack() {
+        if (tabs.currentIndex === 1 && historyPage.handleBack())
+            return true
+        if (tabs.currentIndex === 0)
+            return false
+        tabs.currentIndex = 0
+        return true
+    }
 
     ColumnLayout {
         anchors.fill: parent
@@ -95,7 +103,7 @@ Page {
             currentIndex: tabs.currentIndex
 
             AnalysisPage { Layout.fillWidth: true; Layout.fillHeight: true }
-            HistoryPage { Layout.fillWidth: true; Layout.fillHeight: true }
+            HistoryPage { id: historyPage; Layout.fillWidth: true; Layout.fillHeight: true }
             CardioPage { Layout.fillWidth: true; Layout.fillHeight: true }
             ManagementPage { Layout.fillWidth: true; Layout.fillHeight: true }
         }

@@ -11,6 +11,7 @@ class BackupServiceTest final : public QObject
     Q_OBJECT
 private slots:
     void exportsAndRestoresCompleteJsonBackup();
+    void rejectsOversizedJsonBackup();
 };
 
 void BackupServiceTest::exportsAndRestoresCompleteJsonBackup()
@@ -50,6 +51,25 @@ void BackupServiceTest::exportsAndRestoresCompleteJsonBackup()
     QVERIFY(!backup.restoreJson(invalidPath));
     QVERIFY(seed.exec(QStringLiteral("SELECT COUNT(*) FROM cardio_record")) && seed.next());
     QCOMPARE(seed.value(0).toInt(), 1);
+}
+
+void BackupServiceTest::rejectsOversizedJsonBackup()
+{
+    QTemporaryDir directory;
+    QVERIFY(directory.isValid());
+    fittrack::DatabaseManager manager;
+    QString error;
+    QVERIFY2(manager.initialize(directory.filePath(QStringLiteral("live.sqlite")), &error), qPrintable(error));
+
+    const QString path = directory.filePath(QStringLiteral("oversized.json"));
+    QFile file(path);
+    QVERIFY(file.open(QIODevice::WriteOnly));
+    QVERIFY(file.resize(64 * 1024 * 1024 + 1));
+    file.close();
+
+    fittrack::BackupService backup(manager.database());
+    QVERIFY(!backup.restoreJson(path));
+    QVERIFY(backup.errorMessage().contains(QStringLiteral("64MB")));
 }
 
 QTEST_GUILESS_MAIN(BackupServiceTest)

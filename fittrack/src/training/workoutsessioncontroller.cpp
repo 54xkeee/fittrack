@@ -943,6 +943,21 @@ void WorkoutSessionController::reloadReferenceData()
     loadGyms();
 }
 
+void WorkoutSessionController::reloadAfterRestore()
+{
+    m_selectedGymId.clear();
+    m_sessionId.clear();
+    m_sessionName.clear();
+    m_sessionNotes.clear();
+    m_equipment.clear();
+    m_exercises.clear();
+    emit equipmentChanged();
+    emit exercisesChanged();
+    emit sessionChanged();
+    reloadReferenceData();
+    refreshUnfinished();
+}
+
 bool WorkoutSessionController::loadSession(const QString &sessionId)
 {
     QSqlQuery session(m_database);

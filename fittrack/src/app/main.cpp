@@ -9,7 +9,9 @@
 #include "storage/exerciseseedimporter.h"
 #include "storage/planseedimporter.h"
 #include "timer/resttimercontroller.h"
+#ifndef Q_OS_ANDROID
 #include "timer/timeralertplayer.h"
+#endif
 #include "training/workoutsessioncontroller.h"
 
 #include <QDir>
@@ -98,7 +100,9 @@ int main(int argc, char *argv[])
     fittrack::ExerciseListModel exerciseModel(databaseManager.database(), exerciseDocuments);
     fittrack::ExerciseListModel planExerciseModel(databaseManager.database(), exerciseDocuments);
     fittrack::RestTimerController restTimer;
+#ifndef Q_OS_ANDROID
     fittrack::TimerAlertPlayer timerAlert;
+#endif
     fittrack::WorkoutSessionController workoutController(databaseManager.database());
     fittrack::WorkoutHistoryController workoutHistory(databaseManager.database());
     fittrack::AnalyticsDashboardController analyticsDashboard(databaseManager.database());
@@ -126,9 +130,10 @@ int main(int argc, char *argv[])
         &gymManagement, &fittrack::GymManagementController::dataChanged,
         &workoutController, &fittrack::WorkoutSessionController::reloadReferenceData);
     QObject::connect(&backupService, &fittrack::BackupService::restored, [&] {
+        restTimer.reset();
         exerciseModel.reload();
         planManagement.reload();
-        workoutController.reloadReferenceData();
+        workoutController.reloadAfterRestore();
         workoutHistory.reload();
         analyticsDashboard.reload();
         cardioController.reload();
@@ -143,9 +148,11 @@ int main(int argc, char *argv[])
             workoutHistory.selectSession(sessionId);
             analyticsDashboard.reload();
         });
+#ifndef Q_OS_ANDROID
     QObject::connect(
         &restTimer, &fittrack::RestTimerController::finished,
         &timerAlert, &fittrack::TimerAlertPlayer::play);
+#endif
     QObject::connect(
         &app, &QGuiApplication::applicationStateChanged,
         &restTimer, [&restTimer](Qt::ApplicationState state) {

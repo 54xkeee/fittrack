@@ -19,11 +19,28 @@ ApplicationWindow {
     Material.accent: Design.Theme.primary
     Material.primary: Design.Theme.surface
 
+    function handleBack() {
+        if (navigation.currentIndex === 4 && insightsPage.handleBack())
+            return true
+        if (navigation.currentIndex === 0)
+            return false
+        navigation.currentIndex = 0
+        mainStack.forceActiveFocus()
+        return true
+    }
+
     StackLayout {
+        id: mainStack
         objectName: "mainStack"
         anchors.fill: parent
         anchors.topMargin: 0
         currentIndex: navigation.currentIndex
+        focus: true
+        Keys.priority: Keys.AfterItem
+        Keys.onReleased: event => {
+            if (event.key === Qt.Key_Back && window.handleBack())
+                event.accepted = true
+        }
 
         HomePage {
             Layout.fillWidth: true
@@ -106,7 +123,10 @@ ApplicationWindow {
                     padding: 0
                     flat: true
                     Accessible.name: modelData.label
-                    onClicked: navigation.currentIndex = index
+                    onClicked: {
+                        navigation.currentIndex = index
+                        mainStack.forceActiveFocus()
+                    }
 
                     contentItem: ColumnLayout {
                         spacing: 0

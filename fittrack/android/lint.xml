@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<lint>
+    <!-- The first release intentionally targets the user's arm64 Android phone. -->
+    <issue id="ChromeOsAbiSupport" severity="ignore" />
+
+    <!-- These values are consumed by Qt's Android loader through generated code. -->
+    <issue id="UnusedResources">
+        <ignore path="res/values/libs.xml" />
+    </issue>
+</lint>

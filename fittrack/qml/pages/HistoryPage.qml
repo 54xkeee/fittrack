@@ -77,6 +77,13 @@ AppPage {
             showDetails = true
     }
 
+    function handleBack() {
+        if (!showDetails)
+            return false
+        showDetails = false
+        return true
+    }
+
     function requestDeleteSelectedSession() {
         if (!hasSelectedSession)
             return

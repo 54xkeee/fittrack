@@ -3,13 +3,14 @@
 ## 产品目标
 
 - 目标是可上架、可长期使用的 Android 个人健身训练应用，不是只供答辩的界面原型。
-- 当前实现是 Windows 桌面开发版；Android APK/AAB、真机后台能力和商店交付尚未完成。
+- 当前实现可构建 Windows 桌面调试版和 Android `arm64-v8a` 调试 APK；Android 真机验收、发布签名 AAB 和商店交付尚未完成。
 - 核心边界保持不变：不做登录、云同步、饮食、社交、自动重量建议、RIR/RPE 或复杂周期算法。
 
 ## 开发方式
 
 - 技术栈：Qt 6 Quick/QML + C++17 + SQLite + CMake/Ninja。
 - 中文路径会影响 MSYS2 Qt 的 QML 扫描，统一从 `C:\FitTrackDev\fittrack` 配置和构建。
+- Android 工具链安装在 `D:\FitTrackToolchains`，统一通过 `scripts/build-android.ps1` 构建，不把本机 SDK、NDK、JDK 或签名材料提交到仓库。
 - 每个大轮开始前先核对目标、已完成能力、缺口、本轮范围和验收标准；完成后必须构建、全量测试、手机尺寸截图验收，再提交 Git。
 - 前端遵循 Stitch 的 Graphite & Lime 方向，颜色、间距、字号和动效只能引用 `qml/theme/Theme.qml`，优先保证 360–480px 竖屏触控体验。
 
@@ -24,9 +25,13 @@
 
 ```powershell
 cmake --build C:\FitTrackDev\fittrack\build -j 6
+cmake --build C:\FitTrackDev\fittrack\build --target all_qmllint -j 6
 ctest --test-dir C:\FitTrackDev\fittrack\build -j 4 --output-on-failure
+powershell -ExecutionPolicy Bypass -File C:\FitTrackDev\fittrack\scripts\build-android.ps1
 ```
 
 当前测试基线为 14 项。视觉验收使用 `tst_qmlnavigation` 在 360×800、420×920、480×1056 生成 `build/visual/*.png`，并额外检查训练进行中、带真实数据的历史详情和非空分析页面。
+
+Android 当前基线为包名 `com.fittrack.app`、min API 28、target/compile API 35、仅 `arm64-v8a`。调试 APK 必须通过 Android Lint、`aapt` 清单检查和 `apksigner` 校验；真机后台计时、通知拒绝、SAF、返回键与 ColorOS 电池策略仍需在一加 Ace 5 Pro 上验收。构建与排障见 [`../docs/fittrack-android-build.md`](../docs/fittrack-android-build.md)。
 
 项目状态和下一阶段缺口以 [`README.md`](README.md) 与 [`../docs/fittrack-development-plan.md`](../docs/fittrack-development-plan.md) 为准。
