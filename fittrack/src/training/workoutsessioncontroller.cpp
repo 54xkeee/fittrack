@@ -325,13 +325,16 @@ bool WorkoutSessionController::selectGym(const QString &gymId)
     if (m_selectedGymId == gymId) {
         return true;
     }
-    m_selectedGymId = gymId;
     if (active()) {
+        if (!m_database.transaction()) {
+            return fail(m_database.lastError().text());
+        }
         QSqlQuery update(m_database);
         update.prepare(QStringLiteral("UPDATE workout_session SET gym_id=? WHERE id=?"));
         update.addBindValue(gymId.isEmpty() ? QVariant{} : QVariant(gymId));
         update.addBindValue(m_sessionId);
         if (!update.exec()) {
+            m_database.rollback();
             return fail(update.lastError().text());
         }
         QSqlQuery clearEquipment(m_database);
@@ -339,9 +342,16 @@ bool WorkoutSessionController::selectGym(const QString &gymId)
             "UPDATE workout_exercise SET equipment_instance_id=NULL WHERE session_id=?"));
         clearEquipment.addBindValue(m_sessionId);
         if (!clearEquipment.exec()) {
+            m_database.rollback();
             return fail(clearEquipment.lastError().text());
         }
+        if (!m_database.commit()) {
+            const QString message = m_database.lastError().text();
+            m_database.rollback();
+            return fail(message);
+        }
     }
+    m_selectedGymId = gymId;
     loadEquipment();
     emit selectedGymChanged();
     if (active()) {

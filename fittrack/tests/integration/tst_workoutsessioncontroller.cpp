@@ -45,6 +45,7 @@ class WorkoutSessionControllerTest final : public QObject
 private slots:
     void createsPersistsAndResumesWorkout();
     void rollsBackExerciseReplacementWhenSetCreationFails();
+    void rollsBackGymChangeWhenEquipmentResetFails();
     void suggestsNextTanDay();
     void reportsConflictWithoutCreatingAnotherWorkout();
     void switchesWorkoutAtomically();
@@ -291,6 +292,58 @@ void WorkoutSessionControllerTest::rollsBackExerciseReplacementWhenSetCreationFa
     QCOMPARE(persistedSetIds, originalSetIds);
     QCOMPARE(controller.exercises().first().toMap().value(QStringLiteral("exerciseId")).toString(),
              QStringLiteral("bench"));
+}
+
+void WorkoutSessionControllerTest::rollsBackGymChangeWhenEquipmentResetFails()
+{
+    fittrack::DatabaseManager manager;
+    QString error;
+    QVERIFY2(manager.initialize(QStringLiteral(":memory:"), &error), qPrintable(error));
+    auto database = manager.database();
+
+    QSqlQuery setup(database);
+    QVERIFY(setup.exec(QStringLiteral(
+        "INSERT INTO exercise(id,name_zh,body_part,movement,load_mode,recommended_sets,"
+        "recommended_reps,rest_seconds) "
+        "VALUES('bench','杠铃卧推','胸部','水平推','Standard',1,'8',120)")));
+    QVERIFY(setup.exec(QStringLiteral(
+        "INSERT INTO gym(id,name) VALUES"
+        "('old-gym','旧健身房'),('new-gym','新健身房')")));
+    QVERIFY(setup.exec(QStringLiteral(
+        "INSERT INTO equipment_instance(id,gym_id,name,code,notes) "
+        "VALUES('old-bench','old-gym','旧卧推架','','')")));
+
+    fittrack::WorkoutSessionController controller(database);
+    QVERIFY(controller.selectGym(QStringLiteral("old-gym")));
+    QVERIFY(controller.startFreeWorkout(QStringLiteral("场馆回滚测试")));
+    QVERIFY(controller.addExercise(QStringLiteral("bench"), 1, QStringLiteral("8")));
+    QVERIFY(controller.setExerciseEquipment(0, QStringLiteral("old-bench")));
+    const QString sessionId = controller.sessionId();
+    const QString workoutExerciseId = controller.exercises().first().toMap()
+                                          .value(QStringLiteral("id")).toString();
+
+    QVERIFY(setup.exec(QStringLiteral(
+        "CREATE TRIGGER reject_equipment_reset BEFORE UPDATE OF equipment_instance_id "
+        "ON workout_exercise BEGIN "
+        "SELECT RAISE(ABORT,'forced equipment reset failure'); END")));
+    QVERIFY(!controller.selectGym(QStringLiteral("new-gym")));
+    QVERIFY(controller.errorMessage().contains(QStringLiteral("forced equipment reset failure")));
+    QCOMPARE(controller.selectedGymId(), QStringLiteral("old-gym"));
+
+    QSqlQuery persistedSession(database);
+    persistedSession.prepare(QStringLiteral("SELECT gym_id FROM workout_session WHERE id=?"));
+    persistedSession.addBindValue(sessionId);
+    QVERIFY(persistedSession.exec());
+    QVERIFY(persistedSession.next());
+    QCOMPARE(persistedSession.value(0).toString(), QStringLiteral("old-gym"));
+
+    QSqlQuery persistedExercise(database);
+    persistedExercise.prepare(QStringLiteral(
+        "SELECT equipment_instance_id FROM workout_exercise WHERE id=?"));
+    persistedExercise.addBindValue(workoutExerciseId);
+    QVERIFY(persistedExercise.exec());
+    QVERIFY(persistedExercise.next());
+    QCOMPARE(persistedExercise.value(0).toString(), QStringLiteral("old-bench"));
 }
 
 void WorkoutSessionControllerTest::suggestsNextTanDay()

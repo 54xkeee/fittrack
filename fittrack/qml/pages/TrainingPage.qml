@@ -15,6 +15,16 @@ AppPage {
     property string selectedExerciseId: ""
     property bool submittingSet: false
     readonly property var trainingExerciseModel: exerciseModel
+    readonly property real inputMethodOverlap: {
+        const keyboard = Qt.inputMethod.keyboardRectangle
+        if (!Qt.inputMethod.visible || keyboard.height <= 0)
+            return 0
+        const coordinateScale = Qt.platform.os === "android"
+                ? Math.max(1, Screen.devicePixelRatio) : 1
+        const keyboardTop = keyboard.y / coordinateScale
+        const pageBottom = page.mapToItem(null, 0, page.height).y
+        return Math.max(0, Math.min(page.height, pageBottom - keyboardTop))
+    }
 
     ExerciseDetailSheet {
         id: sharedExerciseDetail
@@ -1587,75 +1597,87 @@ AppPage {
         }
     }
 
-    footer: Rectangle {
+    footer: Item {
+        id: inputFooterHost
         visible: workoutController.active
+        readonly property real panelHeight: visible
+                ? Math.min(inputFooterColumn.implicitHeight + Design.Theme.space16,
+                           Math.max(0, page.height - page.inputMethodOverlap))
+                : 0
         implicitHeight: visible
-                        ? Math.min(inputFooterColumn.implicitHeight + Design.Theme.space16,
-                                   page.height)
+                        ? panelHeight + page.inputMethodOverlap
                         : 0
-        color: Design.Theme.background
-        border.width: visible ? 1 : 0
-        border.color: Design.Theme.outline
 
-        ScrollView {
-            id: inputFooterScroll
-            anchors.fill: parent
-            anchors.margins: Design.Theme.space8
-            clip: true
-            contentWidth: availableWidth
-            ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
+        Rectangle {
+            id: inputFooterPanel
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.top: parent.top
+            height: inputFooterHost.panelHeight
+            color: Design.Theme.background
+            border.width: inputFooterHost.visible ? 1 : 0
+            border.color: Design.Theme.outline
 
-            ColumnLayout {
-                id: inputFooterColumn
-                width: inputFooterScroll.availableWidth
-                spacing: Design.Theme.space8
+            ScrollView {
+                id: inputFooterScroll
+                anchors.fill: parent
+                anchors.margins: Design.Theme.space8
+                clip: true
+                contentWidth: availableWidth
+                ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
 
-                TrainingRestTimer {
-                    id: trainingRestTimer
-                    Layout.fillWidth: true
-                    timerState: restTimer.state
-                    remainingSeconds: restTimer.remainingSeconds
-                    backgroundAlertState: restTimer.backgroundAlertState
-                    onStartRequested: seconds => restTimer.start(seconds)
-                    onPauseRequested: restTimer.pause()
-                    onResumeRequested: restTimer.resume()
-                    onStopRequested: restTimer.reset()
-                    onPermissionRequested: restTimer.requestBackgroundAlertPermission()
-                    onSettingsRequested: restTimer.openBackgroundAlertSettings()
-                }
+                ColumnLayout {
+                    id: inputFooterColumn
+                    width: inputFooterScroll.availableWidth
+                    spacing: Design.Theme.space8
 
-                CurrentSetInputPanel {
-                    id: currentSetInput
-                    Layout.fillWidth: true
-                    exercise: page.currentExercise
-                    setData: page.currentSet
-                    exerciseIndex: page.currentExerciseIndex
-                    setIndex: page.currentSetIndex
-                    allExercisesComplete: page.allExercisesComplete
-                    exerciseCount: workoutController.exercises.length
-                    submitting: page.submittingSet
-                    viewportWidth: page.width
-                    onTargetRepsRequested: (exerciseId, setData) =>
-                                               targetRepsDialog.openForSet(exerciseId, setData)
-                    onTimerRequested: trainingRestTimer.open()
-                    onCompleteRequested: (weightKg, reps, toFailure, loadType) => {
-                        page.submittingSet = true
-                        const success = workoutController.completeSet(
-                                          page.currentExerciseIndex,
-                                          page.currentSetIndex,
-                                          weightKg,
-                                          reps,
-                                          toFailure,
-                                          loadType)
-                        if (!success)
-                            page.submittingSet = false
+                    TrainingRestTimer {
+                        id: trainingRestTimer
+                        Layout.fillWidth: true
+                        timerState: restTimer.state
+                        remainingSeconds: restTimer.remainingSeconds
+                        backgroundAlertState: restTimer.backgroundAlertState
+                        onStartRequested: seconds => restTimer.start(seconds)
+                        onPauseRequested: restTimer.pause()
+                        onResumeRequested: restTimer.resume()
+                        onStopRequested: restTimer.reset()
+                        onPermissionRequested: restTimer.requestBackgroundAlertPermission()
+                        onSettingsRequested: restTimer.openBackgroundAlertSettings()
                     }
-                    onAdvanceRequested: {
-                        const nextId = page.nextIncompleteExerciseId(page.currentExerciseIndex)
-                        if (nextId.length > 0)
-                            page.selectExercise(nextId)
+
+                    CurrentSetInputPanel {
+                        id: currentSetInput
+                        Layout.fillWidth: true
+                        exercise: page.currentExercise
+                        setData: page.currentSet
+                        exerciseIndex: page.currentExerciseIndex
+                        setIndex: page.currentSetIndex
+                        allExercisesComplete: page.allExercisesComplete
+                        exerciseCount: workoutController.exercises.length
+                        submitting: page.submittingSet
+                        viewportWidth: page.width
+                        onTargetRepsRequested: (exerciseId, setData) =>
+                                                   targetRepsDialog.openForSet(exerciseId, setData)
+                        onTimerRequested: trainingRestTimer.open()
+                        onCompleteRequested: (weightKg, reps, toFailure, loadType) => {
+                            page.submittingSet = true
+                            const success = workoutController.completeSet(
+                                              page.currentExerciseIndex,
+                                              page.currentSetIndex,
+                                              weightKg,
+                                              reps,
+                                              toFailure,
+                                              loadType)
+                            if (!success)
+                                page.submittingSet = false
+                        }
+                        onAdvanceRequested: {
+                            const nextId = page.nextIncompleteExerciseId(page.currentExerciseIndex)
+                            if (nextId.length > 0)
+                                page.selectExercise(nextId)
+                        }
+                        onFinishRequested: workoutController.finishWorkout()
                     }
-                    onFinishRequested: workoutController.finishWorkout()
                 }
             }
         }
