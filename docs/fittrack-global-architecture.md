@@ -1,0 +1,431 @@
+# FitTrack 0.1.0 全局架构
+
+> 本文基于 2026-07-14 的本地工作树编写，描述当前实现，而不是未来规划。
+> 当前应用版本仍为 `versionName 0.1.0`、`versionCode 1`。
+
+## 1. 产品定位与架构边界
+
+FitTrack 是一个本地优先的个人健身训练伙伴，核心目标是：
+
+- 管理动作目录、系统计划和个人计划；
+- 在开始训练前编辑本次训练快照；
+- 训练中记录每组重量、次数、力竭状态、器械和备注；
+- 提供组间休息计时、历史记录、有氧记录和统计分析；
+- 在 Android 上离线运行，不依赖账号、云端或网络接口。
+
+当前架构明确不包含登录、云同步、社交、饮食管理、自动重量建议和复杂周期算法。QML 负责界面与交互编排，C++ 控制器负责业务规则和事务，SQLite 是唯一业务数据源，Java 仅承接 Android 平台能力。
+
+## 2. 总体架构
+
+```mermaid
+flowchart TB
+    subgraph UI["展示与交互层 · QML"]
+        Main["Main.qml\n主导航 / 冲突处理 / 页面装载"]
+        Pages["Home / Plan / Training / Exercise / Insights"]
+        Components["Dialog / Sheet / Field / Card / TimerBar"]
+    end
+
+    subgraph APP["应用组合层"]
+        Bootstrap["main.cpp\n启动、依赖注入、跨模块信号连接"]
+    end
+
+    subgraph SERVICES["应用服务层 · C++ QObject"]
+        Workout["WorkoutSessionController"]
+        Plan["PlanManagementController"]
+        Exercise["ExerciseListModel"]
+        History["WorkoutHistoryController"]
+        Analytics["AnalyticsDashboardController"]
+        Cardio["CardioController"]
+        Gym["GymManagementController"]
+        Backup["BackupService"]
+        Timer["RestTimerController"]
+    end
+
+    subgraph DOMAIN["领域与基础设施"]
+        TrainingAnalytics["TrainingAnalytics / SetRecord"]
+        Storage["DatabaseManager / Seed Importers"]
+        SQLite[("SQLite v8")]
+        Resources["内置动作、计划和可分发图片资源"]
+    end
+
+    subgraph ANDROID["Android 平台层"]
+        Activity["FitTrackActivity\n系统栏 / 刘海 / IME Insets"]
+        Bridge["RestTimerBridge\n通知权限与 JNI 命令桥"]
+        Service["RestTimerService\n前台计时服务"]
+        OS["NotificationManager / WindowInsets / WakeLock"]
+    end
+
+    Main --> Pages
+    Pages --> Components
+    Pages --> SERVICES
+    Bootstrap --> SERVICES
+    SERVICES --> Storage
+    SERVICES --> TrainingAnalytics
+    Storage --> SQLite
+    Resources --> Storage
+    Timer --> Bridge
+    Bridge --> Service
+    Activity --> OS
+    Service --> OS
+```
+
+依赖方向保持单向：
+
+```text
+QML -> C++ 控制器/模型 -> SQLite
+                    -> Android JNI 桥 -> Android 系统服务
+```
+
+QML 不直接执行 SQL，Java 不保存训练业务模型，Android 平台代码不反向依赖 QML 页面。
+
+## 3. 构建模块
+
+顶层构建入口是 [`fittrack/CMakeLists.txt`](../fittrack/CMakeLists.txt)。
+
+| CMake 目标 | 主要内容 | 依赖边界 |
+| --- | --- | --- |
+| `fittrack_domain` | `TrainingAnalytics`、`SetRecord` | 仅 Qt Core，不访问数据库和 UI |
+| `fittrack_storage` | `DatabaseManager`、动作/计划种子导入 | Qt Core + Qt Sql |
+| `fittrack_ui_models` | `ExerciseListModel` | 依赖存储层，向 QML 暴露列表模型 |
+| `fittrack_services` | 训练、计划、历史、分析、有氧、场馆、备份、计时控制器 | 依赖领域层和 SQLite |
+| `fittrack_action_images` | 审核过的本地动作图片资源 | 独立 Qt Resource 静态库 |
+| `fittrack` | `main.cpp`、QML 模块、Android 打包入口 | 组合上述模块，不承载业务规则 |
+
+Android 当前配置：
+
+- 包名：`com.fittrack.app`；
+- minSdk：28；
+- compileSdk / targetSdk：35；
+- ABI：`arm64-v8a`；
+- Qt：6.9.1；
+- C++：C++17。
+
+应用可以在 Android 16 / API 36 上运行和调试，但这不等于已经切换到 `targetSdk 36`。
+
+## 4. 启动与依赖注入
+
+应用组合根位于 [`fittrack/src/app/main.cpp`](../fittrack/src/app/main.cpp)。启动顺序如下：
+
+```mermaid
+sequenceDiagram
+    participant App as QGuiApplication
+    participant DB as DatabaseManager
+    participant Seed as Seed Importers
+    participant C as Controllers
+    participant QML as QQmlApplicationEngine
+
+    App->>DB: initialize(fittrack.sqlite)
+    alt 数据库损坏
+        DB->>DB: 保留主库与 sidecar
+        DB->>DB: recoverCorruptDatabase()
+    end
+    App->>Seed: importDocuments() / importDocument()
+    Seed->>DB: 内容摘要未变化则跳过写入
+    App->>C: 构造模型与控制器
+    App->>QML: setContextProperty(...)
+    App->>C: 建立跨控制器信号连接
+    App->>QML: loadFromModule("FitTrack", "Main")
+    App->>QML: 写入平台字体缩放
+```
+
+### 4.1 启动关键函数
+
+| 函数 | 职责 |
+| --- | --- |
+| `readResource(path)` | 读取内置动作和计划 JSON |
+| `initializeDatabase(...)` | 创建数据目录、初始化/恢复数据库、导入种子数据 |
+| `platformFontScale()` | 读取测试覆盖值或 Android 系统字体缩放，并限制在 `0.85–2.0` |
+| `main(...)` | 构造依赖、注入 QML、连接信号并启动事件循环 |
+
+### 4.2 注入到 QML 的对象
+
+`main.cpp` 通过 `QQmlContext::setContextProperty()` 注入：
+
+- `exerciseModel`、`planExerciseModel`；
+- `workoutController`；
+- `planManagement`；
+- `workoutHistory`；
+- `analyticsDashboard`；
+- `cardioController`；
+- `gymManagement`；
+- `backupService`；
+- `restTimer`。
+
+这种方式在 0.1.0 阶段简单直接，但 QML 静态类型检查能力弱于注册为正式 QML 类型的方案。
+
+## 5. QML 页面与导航
+
+主壳位于 [`fittrack/qml/Main.qml`](../fittrack/qml/Main.qml)。它使用 `StackLayout` 管理五个一级入口：
+
+| 一级入口 | 页面 | 装载策略 |
+| --- | --- | --- |
+| 首页 | `HomePage` | 启动时直接创建 |
+| 计划 | `PlanPage` | 首次访问时由 `Loader` 创建 |
+| 训练 | `TrainingPage` | 首次访问时创建 |
+| 动作 | `ExerciseLibraryPage` | 首次访问时创建 |
+| 分析 | `InsightsPage` | 首次访问时创建 |
+
+`InsightsPage` 内部再次懒加载分析、历史、有氧和管理四个子页面。这样避免启动时一次性创建全部重页面和查询全部列表。
+
+训练准备页不是普通 Tab，而是覆盖在主壳上方的 `WorkoutPreparationPage`。准备期间主导航隐藏，避免“开始本次训练”按钮与底部导航争抢触控区域。
+
+共用组件集中在 `qml/components/`：
+
+- `AppPage`、`AppDialog`、`ConfirmDialog` 统一页面和弹窗边界；
+- `ExerciseDetailSheet`、`ExercisePickerSheet`、`ExerciseOrderSheet` 复用动作预览、选择和排序；
+- `NumberField`、`AppButton`、`IconButton` 统一触控尺寸与无障碍语义；
+- `RestTimerBar`、`InlineFeedback` 显示计时和后台提醒状态。
+
+## 6. SQLite 数据架构
+
+数据库入口是 [`fittrack/src/storage/databasemanager.cpp`](../fittrack/src/storage/databasemanager.cpp)，当前 schema 版本为 v8。
+
+### 6.1 表分组
+
+| 数据域 | 主要表 |
+| --- | --- |
+| 元数据 | `app_meta` |
+| 动作目录 | `muscle`、`exercise`、`exercise_muscle`、`exercise_media`、`exercise_alternative`、`favorite_exercise` |
+| 训练计划 | `training_plan`、`plan_day`、`plan_section`、`plan_exercise`、`plan_cardio` |
+| 场馆器械 | `gym`、`equipment_instance` |
+| 训练执行 | `workout_session`、`workout_exercise`、`set_record`、`append_set_record` |
+| 有氧 | `workout_cardio_target`、`cardio_record` |
+
+### 6.2 数据不变量
+
+- 启用 SQLite 外键并使用级联删除或 `SET NULL` 维护引用完整性；
+- 内置计划只读，用户修改必须保存为个人计划或仅作用于本次训练；
+- 训练开始时把计划复制为独立训练快照，后续修改计划不会改变进行中的训练；
+- 动作顺序使用稳定 ID 加连续 `sort_order`，排序写入在事务中完成；
+- 完成组保留目标次数、实际次数、重量、力竭、自重负荷方式和时间；
+- 数据库版本高于应用支持版本时拒绝启动，避免旧应用破坏新库；
+- 恢复备份前校验表和列白名单，未知字段不会进入 SQL 标识符。
+
+### 6.3 种子导入
+
+`ExerciseSeedImporter::importDocuments()` 和 `PlanSeedImporter::importDocument()` 对内置 JSON 计算 SHA-256，将摘要保存到 `app_meta`。内容未变化时直接跳过完整导入；内容变化时在事务内更新。
+
+动作文字、计划 JSON 和允许再分发的图片编译进 Qt Resource。应用运行时不访问 MuscleDB 网站，也不依赖外部网络。
+
+## 7. 训练核心状态机
+
+训练状态由 [`WorkoutSessionController`](../fittrack/src/training/workoutsessioncontroller.h) 统一管理。
+
+```mermaid
+stateDiagram-v2
+    [*] --> Idle
+    Idle --> Preparing: requestPreparePlanDay / requestPrepareFreeWorkout
+    Preparing --> Preparing: 编辑参数 / 添加 / 替换 / 排序 / 恢复默认
+    Preparing --> Idle: cancelPreparation
+    Preparing --> Active: commitPreparation
+    Active --> Active: completeSet / updateCompletedSet / reorderExercises
+    Active --> Completed: finishWorkout
+    Active --> Idle: discardWorkout
+    Completed --> [*]
+
+    Idle --> Conflict: 请求开始时已存在 active session
+    Conflict --> Active: continueExistingWorkout
+    Conflict --> Preparing: resolveCurrentWorkout 后继续准备
+    Conflict --> RecoveryRequired: 检测到多个 active session
+    RecoveryRequired --> Active: recoverActiveSessions
+```
+
+### 7.1 为什么先“准备”再“开始”
+
+直接点击计划就落库会让参数调整、动作替换和排序不断写入半成品训练。当前实现先在内存中的 `m_preparation` 保存草稿，用户确认后由 `commitPreparation()` 在一个事务内生成：
+
+1. `workout_session`；
+2. 按顺序生成 `workout_exercise`；
+3. 按每组目标生成 `set_record`；
+4. 如有计划有氧，再生成 `workout_cardio_target`。
+
+这样“准备失败”和“开始失败”不会留下半条训练记录。
+
+### 7.2 关键训练函数
+
+| 函数 | 作用 |
+| --- | --- |
+| `requestPreparePlanDay()` / `requestPrepareFreeWorkout()` | 检查当前训练冲突并建立准备草稿 |
+| `preparePlanDay()` | 从计划复制动作默认组数、次数、休息和有氧目标 |
+| `updatePreparedExercise()` | 调整本次训练的组数、次数和休息 |
+| `restorePreparedExerciseDefaults()` | 恢复动作在草稿中的默认参数 |
+| `addPreparedExercise()` / `replacePreparedExercise()` / `removePreparedExercise()` | 编辑准备草稿的动作集合 |
+| `movePreparedExercise()` / `reorderPreparedExercises()` | 使用稳定草稿 ID 校验并更新顺序 |
+| `savePreparationAsPlan()` | 把草稿事务化保存为个人计划 |
+| `commitPreparation()` | 原子创建训练快照并进入 Active 状态 |
+| `completeSet()` | 保存组数据、刷新会话并发出 `setCompleted(restSeconds)` |
+| `reorderExercises()` | 校验完整 ID 集合，在事务中写回训练动作顺序 |
+| `finishWorkout()` | 标记会话完成并触发历史/分析刷新 |
+| `discardWorkout()` | 删除当前训练及其级联数据 |
+| `loadSession()` | 从 SQLite 重建训练页需要的完整会话视图 |
+
+训练页的 QML `Connections` 接收 `setCompleted(restSeconds)`，刷新当前输入；当休息秒数大于零时调用 `restTimer.start(restSeconds)`。
+
+## 8. 计划、动作、历史和分析服务
+
+| 控制器/模型 | 核心职责 | 代表函数 |
+| --- | --- | --- |
+| `ExerciseListModel` | 动作搜索、部位/器械/动作集合筛选、收藏和自定义动作 | `ensureLoaded()`、`exerciseById()`、`toggleFavorite()`、`createCustomExercise()` |
+| `PlanManagementController` | 个人计划、训练日、分区、动作和有氧目标管理 | `copyPlan()`、`addDay()`、`updateExercise()`、`reorderExercises()` |
+| `WorkoutHistoryController` | 分页历史、详情、已完成组修订和会话删除 | `loadMore()`、`selectSession()`、`updateCompletedSet()` |
+| `AnalyticsDashboardController` | 周期概览、动作趋势、肌群统计、场馆/器械筛选 | `setPeriodDays()`、`selectExercise()`、`reload()` |
+| `CardioController` | 跑步机/爬楼机记录、有氧汇总和训练后待补录目标 | `addTreadmill()`、`addStairClimber()`、`overview()` |
+| `GymManagementController` | 场馆和器械实例目录 | `addGym()`、`addEquipment()`、`reload()` |
+| `BackupService` | JSON 导出、校验、事务恢复和 SAF 文档读写 | `exportJson()`、`restoreJson()` |
+
+这些控制器目前直接使用 `QSqlDatabase`，没有额外 Repository 层。这减少了 0.1.0 的抽象成本，但意味着 SQL 查询和业务规则主要集中在各控制器内。
+
+## 9. 休息计时架构
+
+计时采用“应用内状态机 + Android 前台服务”双通道：
+
+```mermaid
+flowchart LR
+    QML["TrainingPage / RestTimerBar"] --> Cpp["RestTimerController"]
+    Cpp --> JNI["androidresttimerbridge.cpp"]
+    JNI --> Java["RestTimerBridge.java"]
+    Java --> Service["RestTimerService"]
+    Service --> Active["低优先级进行中通知"]
+    Service --> Complete["休息完成提醒"]
+```
+
+### 9.1 C++ 状态机
+
+`RestTimerController` 暴露四个状态：`Idle`、`Running`、`Paused`、`Finished`。
+
+| 函数 | 作用 |
+| --- | --- |
+| `start(seconds)` | 建立单调截止时间并尝试启动 Android 服务 |
+| `pause()` | 先同步剩余时间，再冻结本地和平台计时 |
+| `resume()` | 用暂停剩余量重建截止时间 |
+| `reset()` | 清空本地状态并停止平台服务 |
+| `synchronize()` | 应用回到前台时校准过期状态 |
+| `refreshBackgroundAlertState()` | 刷新通知权限、频道和服务可用状态 |
+| `requestBackgroundAlertPermission()` | 仅响应用户操作请求通知权限 |
+| `openBackgroundAlertSettings()` | 打开当前应用通知设置 |
+
+C++ 使用 `QElapsedTimer`，Android 服务使用 `SystemClock.elapsedRealtime()`；两者都是单调时钟，不受用户改系统时间或网络校时影响。
+
+### 9.2 Android 通知状态
+
+后台提醒状态为：
+
+- `Unsupported`：非 Android；
+- `Available`：权限、应用通知和完成频道均可用；
+- `Requestable`：Android 13+ 尚未请求通知权限；
+- `Disabled`：权限被拒绝、应用通知关闭或频道关闭；
+- `Unavailable`：前台服务未能启动，但应用内倒计时继续。
+
+开始计时不会自动弹通知权限。只有用户点击“开启后台提醒”时才请求一次；拒绝后显示“系统设置”。因此通知策略失败不会阻断训练记录或应用内倒计时。
+
+### 9.3 Android 服务关键函数
+
+| Java 函数 | 作用 |
+| --- | --- |
+| `RestTimerBridge.start()` | 安全调用 `startForegroundService()` |
+| `backgroundAlertState()` | 合并权限、全局通知和频道状态 |
+| `requestNotificationPermission()` | 记录已询问标记并主动请求权限 |
+| `openNotificationSettings()` | 打开通知设置，失败时回退应用详情页 |
+| `RestTimerService.onStartCommand()` | 分派 START / PAUSE / RESUME / STOP |
+| `startOrResume()` | 设置单调截止时间、WakeLock 和前台通知 |
+| `pauseTimer()` | 保存剩余量并释放 WakeLock |
+| `complete()` | 有通知能力时发完成提醒，否则静默结束 |
+
+WakeLock 的持有时间为剩余休息时间加 5 秒，并在暂停、停止、完成和服务销毁时释放。
+
+## 10. Android 16 窗口与键盘适配
+
+Android 15+ 强制 edge-to-edge，而 Qt 6.9.1 在当前 API 36 设备上没有向 QML 提供可靠的系统栏 SafeArea。当前方案由 [`FitTrackActivity`](../fittrack/android/src/com/fittrack/app/FitTrackActivity.java) 接管：
+
+1. 仅在 API 35+ 安装 Insets 处理器；
+2. 从 `systemBars | displayCutout` 读取顶部、左右和底部安全区；
+3. 从 `WindowInsets.Type.ime()` 读取真实键盘高度；
+4. 将 `max(系统底栏, IME bottom)` 写为原生 content bottom padding；
+5. 只向 Qt 子树清零系统栏/刘海 Insets，保留 IME 信息；
+6. Manifest 固定 `windowSoftInputMode="adjustNothing"`，避免 Qt 动态切换 `adjustResize/adjustPan` 后把窗口起点移到屏幕 y=0。
+
+键盘显示时，`Main.qml` 隐藏主导航；训练输入页脚限制最大高度并允许滚动。这样顶部状态栏不会覆盖内容，重量、次数和“完成本组”能够保持在键盘上方。
+
+API 28–34 不安装这套 Activity Insets 补丁，继续使用 Qt 原有行为。
+
+## 11. 跨模块同步
+
+`main.cpp` 中的信号连接形成轻量事件总线：
+
+| 事件 | 下游动作 |
+| --- | --- |
+| 动作目录 `catalogChanged` | 刷新计划动作模型 |
+| 训练计划日变化 `planDaysChanged` | 刷新计划管理页 |
+| 场馆目录 `catalogChanged` | 刷新训练控制器的场馆/器械引用数据 |
+| 训练会话 ID 变化 | 重置旧会话的休息计时 |
+| 备份恢复完成 `restored` | 重置计时并刷新全部模型/控制器 |
+| 训练完成 `workoutFinished` | 刷新分析，并进入训练总结/有氧补录流 |
+| 应用回到前台 | 同步计时、刷新后台提醒状态和字体缩放 |
+
+这里不使用全局消息总线，所有跨模块连接都集中在组合根，便于追踪副作用。
+
+## 12. 错误与恢复策略
+
+- 控制器通过 `errorMessage` 向 QML 返回可展示错误；
+- 多表写入使用事务，失败立即回滚；
+- 训练冲突在原计划页保留请求上下文，由全局冲突弹窗处理，不在错误发生页强行跳转；
+- 启动发现多个 active session 时进入 `RecoveryRequired`，由用户明确选择保留项；
+- 数据库损坏时先备份主库和 sidecar，再创建新库；
+- JSON 恢复先校验结构、表和列，恢复成功后统一刷新全部模型；
+- Android 平台调用捕获运行时异常，平台能力失败不应破坏本地训练状态。
+
+## 13. 测试与质量门禁
+
+当前 CTest 共 15 项，覆盖：
+
+- 领域计算；
+- 数据库初始化、迁移、损坏恢复和未来版本拒绝；
+- 动作与计划种子导入；
+- 动作、计划、训练、历史、分析、有氧、场馆和备份控制器；
+- SQL 查询数量性能门禁；
+- 休息计时状态机；
+- QML 导航、弹窗、触控、无障碍、排序和视觉基准。
+
+主要命令：
+
+```powershell
+cmake --build C:\FitTrackDev\fittrack\build -j 6
+cmake --build C:\FitTrackDev\fittrack\build --target all_qmllint -j 6
+ctest --test-dir C:\FitTrackDev\fittrack\build -j 4 --output-on-failure
+powershell -ExecutionPolicy Bypass -File C:\FitTrackDev\fittrack\scripts\build-android.ps1
+```
+
+Android 还执行 Gradle Lint、AAPT 清单检查、APK 签名检查、ZIP 对齐和 ELF LOAD 段检查。
+
+## 14. 当前限制与技术风险
+
+1. **SDK 边界**：当前仍是 compile/target 35，API 36 只作为运行环境验证。
+2. **16 KB 页大小**：APK ZIP 层可以 16 KB 对齐，但当前 Qt 6.9.1 和大多数 `.so` 的 ELF `p_align` 仍为 `0x1000`，不能声明完整 16 KB 兼容。
+3. **发布身份**：当前 APK 使用 Debug 签名，不能作为长期覆盖升级的正式签名。
+4. **QML 类型安全**：上下文属性和动态 QVariant 结构便于迭代，但编译期类型约束有限。
+5. **控制器 SQL 耦合**：控制器直接访问数据库，代码路径清晰，但继续扩展时需要防止重复查询和事务规则分散。
+6. **训练页体量**：`TrainingPage.qml` 同时承担训练正文、固定输入区和大量弹窗，是当前最大的 UI 编排热点；新增交互应优先复用现有组件，避免继续堆叠页面内状态。
+7. **平台差异**：API 36 模拟器存在 arm64 转译渲染伪影，视觉布局应以原生 arm64 实机和 UI 坐标为主。
+
+## 15. 关键文件索引
+
+| 范围 | 文件 |
+| --- | --- |
+| 构建入口 | [`fittrack/CMakeLists.txt`](../fittrack/CMakeLists.txt) |
+| 应用组合根 | [`fittrack/src/app/main.cpp`](../fittrack/src/app/main.cpp) |
+| 数据库 | [`fittrack/src/storage/databasemanager.cpp`](../fittrack/src/storage/databasemanager.cpp) |
+| 动作种子 | [`fittrack/src/storage/exerciseseedimporter.cpp`](../fittrack/src/storage/exerciseseedimporter.cpp) |
+| 计划种子 | [`fittrack/src/storage/planseedimporter.cpp`](../fittrack/src/storage/planseedimporter.cpp) |
+| 训练业务 | [`fittrack/src/training/workoutsessioncontroller.cpp`](../fittrack/src/training/workoutsessioncontroller.cpp) |
+| 计时状态机 | [`fittrack/src/timer/resttimercontroller.cpp`](../fittrack/src/timer/resttimercontroller.cpp) |
+| 主导航 | [`fittrack/qml/Main.qml`](../fittrack/qml/Main.qml) |
+| 训练准备页 | [`fittrack/qml/pages/WorkoutPreparationPage.qml`](../fittrack/qml/pages/WorkoutPreparationPage.qml) |
+| 训练页 | [`fittrack/qml/pages/TrainingPage.qml`](../fittrack/qml/pages/TrainingPage.qml) |
+| Android Activity | [`fittrack/android/src/com/fittrack/app/FitTrackActivity.java`](../fittrack/android/src/com/fittrack/app/FitTrackActivity.java) |
+| Android 计时桥 | [`fittrack/android/src/com/fittrack/app/RestTimerBridge.java`](../fittrack/android/src/com/fittrack/app/RestTimerBridge.java) |
+| Android 前台服务 | [`fittrack/android/src/com/fittrack/app/RestTimerService.java`](../fittrack/android/src/com/fittrack/app/RestTimerService.java) |
+| 测试清单 | [`fittrack/tests/CMakeLists.txt`](../fittrack/tests/CMakeLists.txt) |
+
+---
+
+这份架构的核心判断是：FitTrack 0.1.0 不是“QML 页面直接操作数据库”的原型，而是一个以 SQLite 快照为事实来源、以 C++ 控制器为业务边界、以 QML 为交互层、以 Java 为 Android 能力适配层的本地应用。当前后续重构应继续保持这四层边界。
