@@ -153,23 +153,36 @@ void WorkoutSessionControllerTest::createsPersistsAndResumesWorkout()
     QCOMPARE(notes.value(2).toString(), QStringLiteral("动作稳定"));
     QVERIFY(!controller.configureExercise(0, 82.5, 8, 3));
     QVERIFY(controller.addAppendSet(0, 0, 80.0, 3, 5, true));
+    QVERIFY(controller.addAppendSet(0, 0, 77.5, 2, 10, false));
     QVERIFY(!controller.replaceExercise(0, QStringLiteral("row")));
 
     QSqlQuery appended(database);
     QVERIFY(appended.exec(QStringLiteral(
-        "SELECT weight_kg,reps,rest_seconds,to_failure FROM append_set_record")));
+        "SELECT weight_kg,reps,rest_seconds,to_failure FROM append_set_record ORDER BY rowid")));
     QVERIFY(appended.next());
     QCOMPARE(appended.value(0).toDouble(), 80.0);
     QCOMPARE(appended.value(1).toInt(), 3);
     QCOMPARE(appended.value(2).toInt(), 5);
     QCOMPARE(appended.value(3).toInt(), 1);
+    QVERIFY(appended.next());
+    QCOMPARE(appended.value(0).toDouble(), 77.5);
+    QCOMPARE(appended.value(1).toInt(), 2);
+    QCOMPARE(appended.value(2).toInt(), 10);
+    QCOMPARE(appended.value(3).toInt(), 0);
 
     fittrack::WorkoutSessionController restarted(database);
     QVERIFY(restarted.hasUnfinished());
     QVERIFY(restarted.resumeUnfinished());
-    QCOMPARE(restarted.exercises().first().toMap()
-                 .value(QStringLiteral("sets")).toList().first().toMap()
-                 .value(QStringLiteral("completed")).toBool(), true);
+    const QVariantMap restoredSet = restarted.exercises().first().toMap()
+                                        .value(QStringLiteral("sets")).toList().first().toMap();
+    QCOMPARE(restoredSet.value(QStringLiteral("completed")).toBool(), true);
+    const QVariantList restoredAppendSets = restoredSet.value(
+        QStringLiteral("appendSets")).toList();
+    QCOMPARE(restoredAppendSets.size(), 2);
+    QCOMPARE(restoredAppendSets.at(0).toMap().value(QStringLiteral("weightKg")).toDouble(),
+             80.0);
+    QCOMPARE(restoredAppendSets.at(1).toMap().value(QStringLiteral("weightKg")).toDouble(),
+             77.5);
     QVERIFY(restarted.finishWorkout());
     QVERIFY(!restarted.hasUnfinished());
 

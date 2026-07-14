@@ -31,10 +31,7 @@ WorkoutSessionController::WorkoutSessionController(const QSqlDatabase &database,
     : QObject(parent)
     , m_database(database)
 {
-    loadPlanDays();
-    loadSuggestedDay();
-    loadGyms();
-    refreshUnfinished();
+    loadStartupState();
 }
 
 QVariantList WorkoutSessionController::planDays() const { return m_planDays; }
@@ -59,6 +56,114 @@ QString WorkoutSessionController::sessionState() const
     return QStringLiteral("Idle");
 }
 QString WorkoutSessionController::errorMessage() const { return m_errorMessage; }
+
+void WorkoutSessionController::loadStartupState()
+{
+    QSqlQuery query(m_database);
+    query.prepare(QStringLiteral(
+        "SELECT 0 AS kind,d.id,d.name,p.name,p.id,p.is_system,d.sort_order,"
+        "CASE WHEN p.is_system=1 THEN 0 ELSE 1 END AS sort_group,"
+        "p.name AS sort_asc,'' AS sort_desc,d.sort_order AS sort_number "
+        "FROM plan_day d JOIN training_plan p ON p.id=d.plan_id "
+        "UNION ALL "
+        "SELECT 1,g.id,g.name,'','',0,0,0,g.name,'',0 "
+        "FROM gym g WHERE g.is_enabled=1 "
+        "UNION ALL "
+        "SELECT 2,ws.id,ws.name,ws.started_at,'',"
+        "(SELECT COUNT(*) FROM workout_exercise we WHERE we.session_id=ws.id),"
+        "(SELECT COUNT(*) FROM set_record sr JOIN workout_exercise we "
+        "ON we.id=sr.workout_exercise_id WHERE we.session_id=ws.id AND sr.completed=1),"
+        "0,'',ws.started_at,0 "
+        "FROM workout_session ws WHERE ws.status='active' "
+        "UNION ALL "
+        "SELECT 3,'',latest.name,'','',0,0,0,'','',0 FROM ("
+        "SELECT name FROM workout_session "
+        "WHERE source_plan_id='tan-chengyi-three-day-split' AND status='completed' "
+        "ORDER BY ended_at DESC,id DESC LIMIT 1) latest "
+        "ORDER BY kind,sort_group,sort_asc,sort_desc DESC,sort_number,id"));
+    if (!query.exec()) {
+        fail(query.lastError().text());
+        return;
+    }
+
+    QVariantList planDays;
+    QVariantList systemDays;
+    QVariantList gyms;
+    QVariantList activeSessions;
+    QString lastSystemDayName;
+    while (query.next()) {
+        switch (query.value(0).toInt()) {
+        case 0: {
+            QVariantMap day{
+                {QStringLiteral("dayId"), query.value(1)},
+                {QStringLiteral("name"), query.value(2)},
+                {QStringLiteral("planName"), query.value(3)},
+                {QStringLiteral("isSystem"), query.value(5).toBool()},
+            };
+            planDays.append(day);
+            if (query.value(4).toString()
+                == QStringLiteral("tan-chengyi-three-day-split")) {
+                systemDays.append(day);
+            }
+            break;
+        }
+        case 1:
+            gyms.append(QVariantMap{{QStringLiteral("id"), query.value(1)},
+                                    {QStringLiteral("name"), query.value(2)}});
+            break;
+        case 2:
+            activeSessions.append(QVariantMap{
+                {QStringLiteral("id"), query.value(1)},
+                {QStringLiteral("name"), query.value(2)},
+                {QStringLiteral("startedAt"), query.value(3)},
+                {QStringLiteral("exerciseCount"), query.value(5)},
+                {QStringLiteral("completedSetCount"), query.value(6)},
+            });
+            break;
+        case 3:
+            lastSystemDayName = query.value(2).toString();
+            break;
+        }
+    }
+
+    int nextSystemDay = 0;
+    for (int index = 0; index < systemDays.size(); ++index) {
+        if (systemDays.at(index).toMap().value(QStringLiteral("name")).toString()
+            == lastSystemDayName) {
+            nextSystemDay = (index + 1) % systemDays.size();
+            break;
+        }
+    }
+    m_planDays = planDays;
+    m_suggestedDay = systemDays.isEmpty()
+        ? QVariantMap{}
+        : QVariantMap{{QStringLiteral("dayId"),
+                       systemDays.at(nextSystemDay).toMap().value(QStringLiteral("dayId"))},
+                      {QStringLiteral("name"),
+                       systemDays.at(nextSystemDay).toMap().value(QStringLiteral("name"))}};
+    m_gyms = gyms;
+    emit planDaysChanged();
+    emit suggestedDayChanged();
+    emit gymsChanged();
+    applyActiveSessions(activeSessions);
+}
+
+void WorkoutSessionController::applyActiveSessions(const QVariantList &activeSessions)
+{
+    const int count = activeSessions.size();
+    const bool hasUnfinished = count > 0;
+    const bool stateChanged = m_activeSessionCount != count;
+    m_activeSessionCount = count;
+    if (m_activeSessions != activeSessions) {
+        m_activeSessions = activeSessions;
+        emit activeSessionsChanged();
+    }
+    if (m_hasUnfinished != hasUnfinished) {
+        m_hasUnfinished = hasUnfinished;
+        emit unfinishedChanged();
+    }
+    if (stateChanged) emit sessionStateChanged();
+}
 
 void WorkoutSessionController::loadPlanDays()
 {
@@ -135,19 +240,7 @@ void WorkoutSessionController::refreshUnfinished()
             });
         }
     }
-    const int count = activeSessions.size();
-    const bool hasUnfinished = count > 0;
-    const bool stateChanged = m_activeSessionCount != count;
-    m_activeSessionCount = count;
-    if (m_activeSessions != activeSessions) {
-        m_activeSessions = activeSessions;
-        emit activeSessionsChanged();
-    }
-    if (m_hasUnfinished != hasUnfinished) {
-        m_hasUnfinished = hasUnfinished;
-        emit unfinishedChanged();
-    }
-    if (stateChanged) emit sessionStateChanged();
+    applyActiveSessions(activeSessions);
 }
 
 void WorkoutSessionController::loadGyms()
@@ -1776,7 +1869,6 @@ bool WorkoutSessionController::addAppendSet(
 bool WorkoutSessionController::resumeUnfinished()
 {
     clearError();
-    refreshUnfinished();
     const int count = m_activeSessions.size();
     if (count > 1) {
         return fail(QStringLiteral("检测到多条未完成训练，请先完成恢复处理"));
@@ -1888,63 +1980,129 @@ void WorkoutSessionController::reloadAfterRestore()
     emit exercisesChanged();
     emit sessionChanged();
     if (wasActive) emit sessionStateChanged();
-    reloadReferenceData();
-    refreshUnfinished();
+    loadStartupState();
 }
 
 bool WorkoutSessionController::loadSession(const QString &sessionId)
 {
     const bool wasActive = active();
-    QSqlQuery session(m_database);
-    session.prepare(QStringLiteral("SELECT name,gym_id,notes FROM workout_session WHERE id=? AND status='active'"));
-    session.addBindValue(sessionId);
-    if (!session.exec() || !session.next()) {
-        return fail(QStringLiteral("无法加载训练"));
-    }
+    QVariantList exercises;
+    QVariantList equipment;
+    QString sessionName;
+    QString sessionGymId;
+    QString sessionNotes;
+    QSqlQuery exercise(m_database);
+    exercise.prepare(QStringLiteral(
+        "WITH target_session AS ("
+        "SELECT id,name,gym_id,notes FROM workout_session WHERE id=? AND status='active') "
+        "SELECT 0 AS kind,ts.name,ts.gym_id,ts.notes,we.id,e.name_zh,e.load_mode,"
+        "e.recommended_reps,COALESCE(we.rest_seconds,e.rest_seconds),we.notes,e.id,"
+        "we.equipment_instance_id,COALESCE(eq.name || CASE WHEN eq.code IS NULL "
+        "OR eq.code='' THEN '' ELSE ' · ' || eq.code END,''),COALESCE(we.sort_order,0) "
+        "FROM target_session ts LEFT JOIN workout_exercise we ON we.session_id=ts.id "
+        "LEFT JOIN exercise e ON e.id=we.exercise_id "
+        "LEFT JOIN equipment_instance eq ON eq.id=we.equipment_instance_id "
+        "UNION ALL "
+        "SELECT 1,ts.name,ts.gym_id,ts.notes,eq.id,eq.name,COALESCE(eq.code,''),"
+        "COALESCE(eq.notes,''),NULL,'','','','',0 "
+        "FROM target_session ts JOIN equipment_instance eq ON eq.gym_id=ts.gym_id "
+        "AND eq.is_enabled=1 ORDER BY 1,14,6,5"));
+    exercise.addBindValue(sessionId);
+    if (!exercise.exec())
+        return fail(exercise.lastError().text());
 
-    QHash<QString, QVariantList> appendSetsBySet;
-    QSqlQuery append(m_database);
-    append.prepare(QStringLiteral(
-        "SELECT a.parent_set_id,a.weight_kg,a.reps,a.rest_seconds,a.to_failure "
-        "FROM append_set_record a JOIN set_record s ON s.id=a.parent_set_id "
-        "JOIN workout_exercise we ON we.id=s.workout_exercise_id "
-        "WHERE we.session_id=? ORDER BY we.sort_order,s.set_order,a.rowid"));
-    append.addBindValue(sessionId);
-    if (!append.exec())
-        return fail(append.lastError().text());
-    while (append.next()) {
-        appendSetsBySet[append.value(0).toString()].append(QVariantMap{
-            {QStringLiteral("weightKg"), append.value(1)},
-            {QStringLiteral("reps"), append.value(2)},
-            {QStringLiteral("restSeconds"), append.value(3)},
-            {QStringLiteral("toFailure"), append.value(4).toBool()},
+    bool foundSession = false;
+    while (exercise.next()) {
+        foundSession = true;
+        sessionName = exercise.value(1).toString();
+        sessionGymId = exercise.value(2).toString();
+        sessionNotes = exercise.value(3).toString();
+        if (exercise.value(0).toInt() == 0) {
+            const QString workoutExerciseId = exercise.value(4).toString();
+            if (workoutExerciseId.isEmpty())
+                continue;
+            exercises.append(QVariantMap{
+                {QStringLiteral("id"), workoutExerciseId},
+                {QStringLiteral("name"), exercise.value(5)},
+                {QStringLiteral("loadMode"), exercise.value(6)},
+                {QStringLiteral("recommendedReps"), exercise.value(7)},
+                {QStringLiteral("restSeconds"), exercise.value(8)},
+                {QStringLiteral("notes"), exercise.value(9)},
+                {QStringLiteral("exerciseId"), exercise.value(10)},
+                {QStringLiteral("equipmentId"), exercise.value(11)},
+                {QStringLiteral("equipmentName"), exercise.value(12)},
+            });
+            continue;
+        }
+
+        const QString code = exercise.value(6).toString();
+        equipment.append(QVariantMap{
+            {QStringLiteral("id"), exercise.value(4)},
+            {QStringLiteral("name"), exercise.value(5)},
+            {QStringLiteral("code"), code},
+            {QStringLiteral("displayName"), code.isEmpty()
+                 ? exercise.value(5).toString()
+                 : QStringLiteral("%1 · %2").arg(exercise.value(5).toString(), code)},
+            {QStringLiteral("notes"), exercise.value(7)},
         });
+    }
+    if (!foundSession) {
+        return fail(QStringLiteral("无法加载训练"));
     }
 
     QHash<QString, QVariantList> setsByExercise;
     QSqlQuery set(m_database);
     set.prepare(QStringLiteral(
         "SELECT s.workout_exercise_id,s.id,s.set_order,s.weight_kg,s.target_reps,"
-        "s.actual_reps,s.completed,s.to_failure,s.notes,s.bodyweight_load_type "
+        "s.actual_reps,s.completed,s.to_failure,s.notes,s.bodyweight_load_type,"
+        "a.id,a.weight_kg,a.reps,a.rest_seconds,a.to_failure "
         "FROM set_record s JOIN workout_exercise we ON we.id=s.workout_exercise_id "
-        "WHERE we.session_id=? ORDER BY we.sort_order,we.id,s.set_order,s.id"));
+        "LEFT JOIN append_set_record a ON a.parent_set_id=s.id "
+        "WHERE we.session_id=? "
+        "ORDER BY we.sort_order,we.id,s.set_order,s.id,a.rowid,a.id"));
     set.addBindValue(sessionId);
     if (!set.exec())
         return fail(set.lastError().text());
+
+    QString currentExerciseId;
+    QString currentSetId;
+    QVariantMap currentSet;
+    QVariantList currentAppendSets;
+    const auto flushSet = [&] {
+        if (currentSetId.isEmpty())
+            return;
+        currentSet.insert(QStringLiteral("appendSets"), currentAppendSets);
+        setsByExercise[currentExerciseId].append(currentSet);
+    };
     while (set.next()) {
-        setsByExercise[set.value(0).toString()].append(QVariantMap{
-            {QStringLiteral("id"), set.value(1)},
-            {QStringLiteral("number"), set.value(2).toInt() + 1},
-            {QStringLiteral("weightKg"), set.value(3)},
-            {QStringLiteral("targetReps"), set.value(4)},
-            {QStringLiteral("actualReps"), set.value(5)},
-            {QStringLiteral("completed"), set.value(6).toBool()},
-            {QStringLiteral("toFailure"), set.value(7).toBool()},
-            {QStringLiteral("notes"), set.value(8)},
-            {QStringLiteral("bodyweightLoadType"), set.value(9)},
-            {QStringLiteral("appendSets"), appendSetsBySet.value(set.value(1).toString())},
-        });
+        const QString setId = set.value(1).toString();
+        if (setId != currentSetId) {
+            flushSet();
+            currentExerciseId = set.value(0).toString();
+            currentSetId = setId;
+            currentAppendSets.clear();
+            currentSet = QVariantMap{
+                {QStringLiteral("id"), set.value(1)},
+                {QStringLiteral("number"), set.value(2).toInt() + 1},
+                {QStringLiteral("weightKg"), set.value(3)},
+                {QStringLiteral("targetReps"), set.value(4)},
+                {QStringLiteral("actualReps"), set.value(5)},
+                {QStringLiteral("completed"), set.value(6).toBool()},
+                {QStringLiteral("toFailure"), set.value(7).toBool()},
+                {QStringLiteral("notes"), set.value(8)},
+                {QStringLiteral("bodyweightLoadType"), set.value(9)},
+            };
+        }
+        if (!set.value(10).isNull()) {
+            currentAppendSets.append(QVariantMap{
+                {QStringLiteral("weightKg"), set.value(11)},
+                {QStringLiteral("reps"), set.value(12)},
+                {QStringLiteral("restSeconds"), set.value(13)},
+                {QStringLiteral("toFailure"), set.value(14).toBool()},
+            });
+        }
     }
+    flushSet();
 
     QHash<QString, QVariantList> previousSetsByExercise;
     QSqlQuery previous(m_database);
@@ -1972,44 +2130,25 @@ bool WorkoutSessionController::loadSession(const QString &sessionId)
         });
     }
 
-    QVariantList exercises;
-    QSqlQuery exercise(m_database);
-    exercise.prepare(QStringLiteral(
-        "SELECT we.id,e.name_zh,e.load_mode,e.recommended_reps,"
-        "COALESCE(we.rest_seconds,e.rest_seconds),we.notes,"
-        "e.id,we.equipment_instance_id,COALESCE(eq.name || CASE WHEN eq.code IS NULL "
-        "OR eq.code='' THEN '' ELSE ' · ' || eq.code END,'') "
-        "FROM workout_exercise we JOIN exercise e ON e.id=we.exercise_id "
-        "LEFT JOIN equipment_instance eq ON eq.id=we.equipment_instance_id "
-        "WHERE we.session_id=? ORDER BY we.sort_order,we.id"));
-    exercise.addBindValue(sessionId);
-    if (!exercise.exec())
-        return fail(exercise.lastError().text());
-    while (exercise.next()) {
-        const QString workoutExerciseId = exercise.value(0).toString();
-        exercises.append(QVariantMap{
-            {QStringLiteral("id"), workoutExerciseId},
-            {QStringLiteral("name"), exercise.value(1)},
-            {QStringLiteral("loadMode"), exercise.value(2)},
-            {QStringLiteral("recommendedReps"), exercise.value(3)},
-            {QStringLiteral("restSeconds"), exercise.value(4)},
-            {QStringLiteral("notes"), exercise.value(5)},
-            {QStringLiteral("exerciseId"), exercise.value(6)},
-            {QStringLiteral("equipmentId"), exercise.value(7)},
-            {QStringLiteral("equipmentName"), exercise.value(8)},
-            {QStringLiteral("previousSets"), previousSetsByExercise.value(workoutExerciseId)},
-            {QStringLiteral("sets"), setsByExercise.value(workoutExerciseId)},
-        });
+    for (QVariant &item : exercises) {
+        QVariantMap loadedExercise = item.toMap();
+        const QString workoutExerciseId = loadedExercise.value(QStringLiteral("id")).toString();
+        loadedExercise.insert(
+            QStringLiteral("previousSets"), previousSetsByExercise.value(workoutExerciseId));
+        loadedExercise.insert(QStringLiteral("sets"), setsByExercise.value(workoutExerciseId));
+        item = loadedExercise;
     }
 
     m_sessionId = sessionId;
-    m_sessionName = session.value(0).toString();
-    m_sessionNotes = session.value(2).toString();
-    const QString sessionGymId = session.value(1).toString();
+    m_sessionName = sessionName;
+    m_sessionNotes = sessionNotes;
     if (m_selectedGymId != sessionGymId) {
         m_selectedGymId = sessionGymId;
-        loadEquipment();
         emit selectedGymChanged();
+    }
+    if (m_equipment != equipment) {
+        m_equipment = equipment;
+        emit equipmentChanged();
     }
     m_exercises = exercises;
     emit exercisesChanged();

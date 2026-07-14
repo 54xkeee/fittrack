@@ -164,7 +164,7 @@ void PerformanceTest::activeWorkoutLoadUsesFixedQueries()
     QVERIFY(controller.resumeUnfinished());
     QCOMPARE(controller.exercises().size(), 12);
     qInfo() << "R4 baseline workout statements" << counter.count();
-    QVERIFY2(counter.count() <= 12, qPrintable(QStringLiteral(
+    QVERIFY2(counter.count() <= 5, qPrintable(QStringLiteral(
         "训练恢复仍存在多层 N+1 查询：%1 条 SQL").arg(counter.count())));
 }
 

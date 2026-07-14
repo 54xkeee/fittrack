@@ -127,6 +127,8 @@ signals:
     void workoutFinished(const QString &sessionId);
 
 private:
+    void loadStartupState();
+    void applyActiveSessions(const QVariantList &activeSessions);
     void loadPlanDays();
     void loadSuggestedDay();
     void loadGyms();

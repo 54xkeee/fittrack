@@ -34,14 +34,14 @@ C:\FitTrackDev\fittrack\build-android-arm64\android-build\build\outputs\apk\debu
 - target/compile API：35
 - ABI：`arm64-v8a`
 
-2026-07-14 07:48 从当前源码构建并通过门禁的产物为：
+2026-07-14 08:08 从当前源码构建并通过门禁的产物为：
 
 ```text
 C:\FitTrackDev\fittrack\build-android-arm64\android-build\build\outputs\apk\debug\android-build-debug.apk
 ```
 
-- 文件大小：64,431,168 字节；
-- SHA-256：`34EBC7CA85C70481AB98995388B3D6690D246D513B31FBBC969DABDAA378CC7F`；
+- 文件大小：64,447,552 字节；
+- SHA-256：`DDD59B0DD5216696396397CC8204977631DE0A0EC7D024576D7EF330C42EFCC1`；
 - Android Lint：0 issue；
 - 签名：Android Debug 证书，APK Signature Scheme v2 校验通过；
 - 包内 ABI：仅 `arm64-v8a`；
