@@ -31,10 +31,16 @@ cmake --build C:\FitTrackDev\fittrack\build -j 6
 cmake --build C:\FitTrackDev\fittrack\build --target all_qmllint -j 6
 ctest --test-dir C:\FitTrackDev\fittrack\build -j 4 --output-on-failure
 powershell -ExecutionPolicy Bypass -File C:\FitTrackDev\fittrack\scripts\build-android.ps1
+$env:JAVA_HOME = "D:\FitTrackToolchains\jdk17\jdk-17.0.19+10"
+$env:ANDROID_SDK_ROOT = "D:\FitTrackToolchains\AndroidSdk"
+Push-Location C:\FitTrackDev\fittrack\build-android-arm64\android-build
+.\gradlew.bat lintDebug --no-daemon
+Pop-Location
+powershell -ExecutionPolicy Bypass -File C:\FitTrackDev\fittrack\scripts\package-side-load.ps1
 ```
 
-当前测试基线为 15 项。视觉验收使用 `tst_qmlnavigation` 在 360×800、420×920、480×1056 生成 `build/visual/*.png`，并额外检查 360×800 数据库恢复提示、1.0/1.3/1.5/2.0 四档字体、字符图标门禁、长标题完整换行、计划/训练动作预览 48dp 触控区、可见键盘焦点、可编辑个人计划、训练日有氧弹层、训练进行中、训练完成总结、带真实数据的历史详情和非空分析页面。
+当前测试基线为 15 项。视觉验收使用 `tst_qmlnavigation` 在 360×800、420×920、480×1056 生成 `build/visual/*.png`，并额外检查 360×800 数据库恢复提示、1.0/1.3/1.5/2.0 四档字体、字符图标门禁、长标题完整换行、计划/训练动作预览 48dp 触控区、可见键盘焦点、可编辑个人计划、训练日有氧弹层、训练进行中、训练完成总结、带真实数据的历史详情和非空分析页面。Windows 固定 Qt/字体/离屏软件渲染环境会把 5 个静态关键状态与 `tests/visual/baselines/` 比较；普通测试不得自动覆盖基准，界面有意变更时必须人工确认新图后再更新。
 
-Android 当前基线为包名 `com.fittrack.app`、min API 28、target/compile API 35、仅 `arm64-v8a`。Debug APK 必须通过 Android Lint、`aapt` 清单检查、`apksigner` 校验和包内媒体白名单检查；自动化还要覆盖 360×640、1.5 倍字体、360×800、2.0 倍字体、TalkBack 语义、48dp 触控区和真实 `QTouchEvent`。一加 Ace 5 Pro 的后台计时、通知拒绝、SAF、返回键、ColorOS 电池策略、TalkBack、大字体和数字键盘仍需连接真机验收。长期 Release 密钥与同签名覆盖升级属于 R6；AAB、商店签名及商店材料不属于当前验收范围。构建与排障见 [`../docs/fittrack-android-build.md`](../docs/fittrack-android-build.md)。
+Android 当前基线为包名 `com.fittrack.app`、min API 28、target/compile API 35、仅 `arm64-v8a`。Debug APK 必须通过 Android Lint、`aapt` 清单检查、`apksigner` 校验和包内媒体白名单检查；侧载包还必须由 `package-side-load.ps1` 生成，且只有一个 APK，并附完整许可正文、Qt SBOM、NDK NOTICE、媒体署名和 SHA-256 清单。自动化还要覆盖 360×640、1.5 倍字体、360×800、2.0 倍字体、TalkBack 语义、48dp 触控区和真实 `QTouchEvent`。一加 Ace 5 Pro 的后台计时、通知拒绝、SAF、返回键、ColorOS 电池策略、TalkBack、大字体和数字键盘仍需连接真机验收。长期 Release 密钥与同签名覆盖升级属于 R6；AAB、商店签名及商店材料不属于当前验收范围。构建与排障见 [`../docs/fittrack-android-build.md`](../docs/fittrack-android-build.md)。
 
 产品范围和媒体边界以本文件为准；代码状态和功能缺口参考 [`README.md`](README.md) 与 [`../docs/fittrack-development-plan.md`](../docs/fittrack-development-plan.md)。

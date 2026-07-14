@@ -12,12 +12,17 @@
 #include "training/workoutsessioncontroller.h"
 
 #include <QAccessible>
+#include <QCryptographicHash>
 #include <QFile>
+#include <QFileInfo>
 #include <QDir>
 #include <QDirIterator>
 #include <QFont>
 #include <QFontDatabase>
 #include <QGuiApplication>
+#include <QImage>
+#include <QLocale>
+#include <QPainter>
 #include <QPointingDevice>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
@@ -25,10 +30,13 @@
 #include <QQuickStyle>
 #include <QQuickWindow>
 #include <QResource>
+#include <QScreen>
 #include <QSet>
 #include <QSize>
 #include <QSqlQuery>
 #include <QTest>
+
+#include <cstdio>
 
 class QmlNavigationTest final : public QObject
 {
@@ -143,6 +151,156 @@ bool isDescendantOf(QObject *object, QObject *ancestor)
     return false;
 }
 
+#ifdef Q_OS_WIN
+
+constexpr auto kVisualBaselineFontHash =
+    "D79C55E68B1131EEA0CC1C47BE4F572D964F28C682E143DB2AD09C1E4CB07A3F";
+
+const QStringList &visualBaselineFiles()
+{
+    static const QStringList files{
+        QStringLiteral("database-recovery-dialog-360x800.png"),
+        QStringLiteral("plans-360x800.png"),
+        QStringLiteral("workout-preparation-font-200-360x800.png"),
+        QStringLiteral("exercise-order-font-200-360x800.png"),
+        QStringLiteral("exercise-detail-media-credit-360x800.png"),
+    };
+    return files;
+}
+
+QString visualBaselineEnvironmentError(QQuickWindow *window)
+{
+    QStringList errors;
+    if (QString::fromLatin1(qVersion()) != QStringLiteral("6.9.1"))
+        errors.append(QStringLiteral("Qt 版本必须为 6.9.1，实际为 %1").arg(qVersion()));
+    if (QGuiApplication::platformName() != QStringLiteral("offscreen")) {
+        errors.append(QStringLiteral("QPA 必须为 offscreen，实际为 %1")
+                          .arg(QGuiApplication::platformName()));
+    }
+    if (qEnvironmentVariable("QSG_RHI_BACKEND") != QStringLiteral("software")) {
+        errors.append(QStringLiteral("QSG_RHI_BACKEND 必须为 software"));
+    }
+    if (QQuickStyle::name() != QStringLiteral("Material")) {
+        errors.append(QStringLiteral("Qt Quick Controls 样式必须为 Material，实际为 %1")
+                          .arg(QQuickStyle::name()));
+    }
+    if (QLocale().name() != QStringLiteral("zh_CN"))
+        errors.append(QStringLiteral("区域设置必须为 zh_CN，实际为 %1").arg(QLocale().name()));
+    if (!window || !qFuzzyCompare(window->devicePixelRatio(), 1.0)) {
+        errors.append(QStringLiteral("设备像素比必须为 1，实际为 %1")
+                          .arg(window ? window->devicePixelRatio() : 0.0));
+    }
+    if (!QGuiApplication::primaryScreen()
+        || !qFuzzyCompare(QGuiApplication::primaryScreen()->logicalDotsPerInch(), 96.0)) {
+        errors.append(QStringLiteral("逻辑 DPI 必须为 96"));
+    }
+
+    QFile fontFile(QStringLiteral("C:/Windows/Fonts/msyh.ttc"));
+    if (!fontFile.open(QIODevice::ReadOnly)) {
+        errors.append(QStringLiteral("无法读取 C:/Windows/Fonts/msyh.ttc"));
+    } else {
+        const QByteArray hash = QCryptographicHash::hash(
+                                    fontFile.readAll(), QCryptographicHash::Sha256)
+                                    .toHex().toUpper();
+        if (hash != QByteArray(kVisualBaselineFontHash)) {
+            errors.append(QStringLiteral("微软雅黑字体哈希不匹配，实际为 %1")
+                              .arg(QString::fromLatin1(hash)));
+        }
+    }
+    return errors.join(QStringLiteral("；"));
+}
+
+bool saveDimensionDiff(const QImage &expected, const QImage &actual,
+                       const QString &diffPath)
+{
+    QImage diff(expected.width() + actual.width(),
+                qMax(expected.height(), actual.height()), QImage::Format_RGB32);
+    diff.fill(qRgb(255, 0, 96));
+    QPainter painter(&diff);
+    painter.drawImage(0, 0, expected);
+    painter.drawImage(expected.width(), 0, actual);
+    painter.end();
+    return QDir().mkpath(QFileInfo(diffPath).absolutePath()) && diff.save(diffPath);
+}
+
+bool compareVisualBaseline(const QString &name, const QString &expectedPath,
+                           const QString &actualPath, const QString &diffPath,
+                           QString *error)
+{
+    constexpr int kBadPixelChannelDelta = 8;
+    constexpr double kMaximumBadPixelRatio = 0.001;
+    constexpr double kMaximumMeanAbsoluteError = 0.25;
+
+    const QImage expectedSource(expectedPath);
+    const QImage actualSource(actualPath);
+    if (expectedSource.isNull() || actualSource.isNull()) {
+        *error = QStringLiteral("%1：无法读取基准图或实际图；expected=%2，actual=%3")
+                     .arg(name, expectedPath, actualPath);
+        return false;
+    }
+    if (expectedSource.size() != actualSource.size()) {
+        const bool diffSaved = saveDimensionDiff(expectedSource, actualSource, diffPath);
+        *error = QStringLiteral(
+                     "%1：尺寸不一致；expected=%2x%3，actual=%4x%5，diff=%6%7")
+                     .arg(name)
+                     .arg(expectedSource.width()).arg(expectedSource.height())
+                     .arg(actualSource.width()).arg(actualSource.height())
+                     .arg(diffPath, diffSaved ? QString{} : QStringLiteral("（写入失败）"));
+        return false;
+    }
+
+    const QImage expected = expectedSource.convertToFormat(QImage::Format_RGB32);
+    const QImage actual = actualSource.convertToFormat(QImage::Format_RGB32);
+    QImage diff(expected.size(), QImage::Format_RGB32);
+    diff.fill(Qt::black);
+
+    qint64 badPixels = 0;
+    qint64 absoluteError = 0;
+    int maximumDelta = 0;
+    for (int y = 0; y < expected.height(); ++y) {
+        const auto *expectedLine = reinterpret_cast<const QRgb *>(expected.constScanLine(y));
+        const auto *actualLine = reinterpret_cast<const QRgb *>(actual.constScanLine(y));
+        auto *diffLine = reinterpret_cast<QRgb *>(diff.scanLine(y));
+        for (int x = 0; x < expected.width(); ++x) {
+            const int redDelta = qAbs(qRed(expectedLine[x]) - qRed(actualLine[x]));
+            const int greenDelta = qAbs(qGreen(expectedLine[x]) - qGreen(actualLine[x]));
+            const int blueDelta = qAbs(qBlue(expectedLine[x]) - qBlue(actualLine[x]));
+            const int pixelDelta = qMax(redDelta, qMax(greenDelta, blueDelta));
+            absoluteError += redDelta + greenDelta + blueDelta;
+            maximumDelta = qMax(maximumDelta, pixelDelta);
+            if (pixelDelta > kBadPixelChannelDelta) {
+                ++badPixels;
+                diffLine[x] = qRgb(255, 0, 96);
+            } else if (pixelDelta > 0) {
+                const int intensity = qMin(255, pixelDelta * 24);
+                diffLine[x] = qRgb(intensity, intensity, intensity);
+            }
+        }
+    }
+
+    const qint64 pixelCount = static_cast<qint64>(expected.width()) * expected.height();
+    const double badPixelRatio = static_cast<double>(badPixels) / pixelCount;
+    const double meanAbsoluteError = static_cast<double>(absoluteError) / (pixelCount * 3);
+    if (badPixelRatio <= kMaximumBadPixelRatio
+        && meanAbsoluteError <= kMaximumMeanAbsoluteError) {
+        QFile::remove(diffPath);
+        return true;
+    }
+
+    const bool diffSaved = QDir().mkpath(QFileInfo(diffPath).absolutePath())
+                           && diff.save(diffPath);
+    *error = QStringLiteral(
+                 "%1：视觉差异超限；坏点=%2/%3 (%4%)，RGB MAE=%5，最大通道差=%6；"
+                 "阈值=通道差>8 的坏点比例≤0.100000%，MAE≤0.250000；diff=%7%8")
+                 .arg(name).arg(badPixels).arg(pixelCount)
+                 .arg(badPixelRatio * 100.0, 0, 'f', 6)
+                 .arg(meanAbsoluteError, 0, 'f', 6).arg(maximumDelta)
+                 .arg(diffPath, diffSaved ? QString{} : QStringLiteral("（写入失败）"));
+    return false;
+}
+
+#endif
+
 QQuickItem *findQuickItemByObjectName(QQuickItem *root, const QString &objectName)
 {
     if (!root) return nullptr;
@@ -234,10 +392,21 @@ void QmlNavigationTest::loadsAndSwitchesEveryPrimaryPage()
     QVERIFY(window);
     window->resize(360, 800);
     window->update();
+#ifdef Q_OS_WIN
+    const QString visualEnvironmentError = visualBaselineEnvironmentError(window);
+    QVERIFY2(visualEnvironmentError.isEmpty(), qPrintable(visualEnvironmentError));
+#endif
     QObject *databaseRecoveryDialog = root->findChild<QObject *>(
         QStringLiteral("databaseRecoveryDialog"));
     QVERIFY(databaseRecoveryDialog);
     QTRY_VERIFY(databaseRecoveryDialog->property("visible").toBool());
+    QTRY_COMPARE(databaseRecoveryDialog->property("opacity").toReal(), 1.0);
+    QTRY_COMPARE(databaseRecoveryDialog->property("scale").toReal(), 1.0);
+    auto *databaseRecoveryAction = qobject_cast<QQuickItem *>(
+        databaseRecoveryDialog->property("primaryActionItem").value<QObject *>());
+    QVERIFY(databaseRecoveryAction);
+    databaseRecoveryAction->forceActiveFocus();
+    QTRY_VERIFY(databaseRecoveryAction->hasActiveFocus());
     QObject *databaseRecoveryContent = databaseRecoveryDialog->property(
         "contentItem").value<QObject *>();
     QVERIFY(databaseRecoveryContent);
@@ -245,7 +414,6 @@ void QmlNavigationTest::loadsAndSwitchesEveryPrimaryPage()
     const QString recoveryScreenshotDirectory = QStringLiteral(FITTRACK_SCREENSHOT_DIR);
     QVERIFY(QDir().mkpath(recoveryScreenshotDirectory));
     window->update();
-    QTest::qWait(100);
     QVERIFY(window->grabWindow().save(QDir(recoveryScreenshotDirectory).filePath(
         QStringLiteral("database-recovery-dialog-360x800.png"))));
     QVERIFY(QMetaObject::invokeMethod(databaseRecoveryDialog, "close"));
@@ -776,7 +944,12 @@ void QmlNavigationTest::loadsAndSwitchesEveryPrimaryPage()
     QVERIFY(detailImage);
     QVERIFY(mediaCredit);
     QTRY_VERIFY(sharedDetail->property("visible").toBool());
+    QTRY_COMPARE(sharedDetail->property("opacity").toReal(), 1.0);
+    QTRY_COMPARE(sharedDetail->property("scale").toReal(), 1.0);
     QTRY_VERIFY(mediaCredit->property("visible").toBool());
+    // QML Image.Ready is 1. Wait on state instead of adding a fixed rendering delay.
+    QTRY_COMPARE(detailImage->property("status").toInt(), 1);
+    QTRY_COMPARE(detailImage->property("progress").toReal(), 1.0);
     QTRY_VERIFY(detailImage->property("visible").toBool());
     QVERIFY(capture(QStringLiteral("exercise-detail-media-credit"), QSize(360, 800)));
     const QVariantMap libraryDetailExercise = sharedDetail->property("exercise").toMap();
@@ -1343,13 +1516,47 @@ void QmlNavigationTest::loadsAndSwitchesEveryPrimaryPage()
     QCOMPARE(navigation->property("currentIndex").toInt(), 0);
     QVERIFY(QMetaObject::invokeMethod(root, "handleBack", Q_RETURN_ARG(QVariant, handled)));
     QVERIFY(!handled.toBool());
+
+#ifdef Q_OS_WIN
+    const QString baselineDirectory = QStringLiteral(
+        FITTRACK_SOURCE_DIR
+        "/tests/visual/baselines/windows-qt6.9.1-offscreen-software-material-zh_CN-dpr1");
+    const QString diffDirectory = QDir(screenshotDirectory).filePath(QStringLiteral("diff"));
+    QStringList visualFailures;
+    for (const QString &fileName : visualBaselineFiles()) {
+        QString comparisonError;
+        if (!compareVisualBaseline(
+                fileName, QDir(baselineDirectory).filePath(fileName),
+                QDir(screenshotDirectory).filePath(fileName),
+                QDir(diffDirectory).filePath(fileName), &comparisonError)) {
+            visualFailures.append(comparisonError);
+        }
+    }
+    if (!visualFailures.isEmpty()) {
+        const QByteArray failureOutput = visualFailures.join(QLatin1Char('\n')).toUtf8();
+        std::fwrite(failureOutput.constData(), 1,
+                    static_cast<size_t>(failureOutput.size()), stderr);
+        std::fputc('\n', stderr);
+        std::fflush(stderr);
+    }
+    QVERIFY2(visualFailures.isEmpty(), qPrintable(visualFailures.join(QLatin1Char('\n'))));
+#endif
 }
 
 int main(int argc, char **argv)
 {
     Q_INIT_RESOURCE(action_images);
+#ifdef Q_OS_WIN
+    qputenv("QT_QPA_PLATFORM", "offscreen");
+    qputenv("QSG_RHI_BACKEND", "software");
+    qputenv("QT_SCALE_FACTOR", "1");
+    qputenv("QT_FONT_DPI", "96");
+#else
     if (!qEnvironmentVariableIsSet("QT_QPA_PLATFORM")) qputenv("QT_QPA_PLATFORM", "offscreen");
     if (!qEnvironmentVariableIsSet("QSG_RHI_BACKEND")) qputenv("QSG_RHI_BACKEND", "software");
+#endif
+    QLocale::setDefault(QLocale(QLocale::Chinese, QLocale::China));
+    QQuickStyle::setStyle(QStringLiteral("Material"));
     QGuiApplication app(argc, argv);
 #ifdef Q_OS_WIN
     // The offscreen platform reports the generic "Sans Serif" alias instead of
@@ -1362,7 +1569,6 @@ int main(int argc, char **argv)
     if (!systemFontFamilies.isEmpty())
         app.setFont(QFont(systemFontFamilies.constFirst()));
 #endif
-    QQuickStyle::setStyle(QStringLiteral("Material"));
     QmlNavigationTest test;
     return QTest::qExec(&test, argc, argv);
 }

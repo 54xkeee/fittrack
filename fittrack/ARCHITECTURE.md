@@ -78,6 +78,7 @@ SQLite v8
 - `android/` 提供 Manifest、Java 服务、Adaptive Icon、主题图标、启动页和备份排除规则。
 - CMake 在 Android 上默认关闭测试和 Qt Multimedia，只部署 `arm64-v8a` 所需库；桌面端继续使用 Qt Multimedia 播放程序生成的提示音。
 - `scripts/build-android.ps1` 将 Debug 与 Release 构建目录分离，可生成 APK 或 AAB；签名时只从进程环境读取 keystore 路径、别名和密码，并显式重置未选择的签名模式，避免复用旧 CMake 缓存。
+- `scripts/package-side-load.ps1` 只接受已通过包名、单 ABI、Debug 证书和 v2 签名校验的 APK；输出一个可分享 ZIP，并附带许可正文、实际 Qt SBOM、NDK NOTICE、媒体署名和逐文件 SHA-256。分发产物位于忽略提交的 `dist/`，不会污染源码历史。
 - 当前配置为包名 `com.fittrack.app`、版本 `0.1.0`/1、min API 28、target/compile API 35。最终包不含 `INTERNET` 或 `ACCESS_NETWORK_STATE` 权限。直接分享前必须冻结包名并改用长期发布签名。
 
 ## SQLite v8
@@ -120,6 +121,6 @@ cmake --build C:\FitTrackDev\fittrack\build -j 6
 ctest --test-dir C:\FitTrackDev\fittrack\build -j 4 --output-on-failure
 ```
 
-当前 15 项测试覆盖计算、数据库、种子导入、动作、计划、训练、历史、分析、有氧、场馆、备份、性能 SQL 门禁、倒计时和 QML 导航。数据库用例以数据驱动夹具覆盖合成 v1–v7、旧 v8 约束修复、v9 拒绝、主库与三类 sidecar 原字节保留，以及替换前后两种中断续跑；真实历史安装包数据库仍需真机验收。计划和训练测试覆盖逐组目标次数、训练日有氧增删改、计划复制、准备草稿与训练快照，以及稳定 ID 排序、事务回滚、删除归一化和重新实例化持久化；备份测试覆盖旧版 JSON 兼容；QML 测试在 360×800、420×920、480×1056 三档生成主页面和关键流程截图，新增 360×800 数据库恢复提示，并额外检查 1.0/1.3/1.5/2.0 四档字体、字符图标门禁、准备与训练标题不截断、计划/训练动作预览 48dp、训练动作卡可见焦点、当前动作详情真实打开、TalkBack 角色/名称及真实 `QTouchEvent` 拖动输入。Windows 离屏辅助技术检查不能替代 Android 真机 TalkBack 验收。
+当前 15 项测试覆盖计算、数据库、种子导入、动作、计划、训练、历史、分析、有氧、场馆、备份、性能 SQL 门禁、倒计时和 QML 导航。数据库用例以数据驱动夹具覆盖合成 v1–v7、旧 v8 约束修复、v9 拒绝、主库与三类 sidecar 原字节保留，以及替换前后两种中断续跑；真实历史安装包数据库仍需真机验收。计划和训练测试覆盖逐组目标次数、训练日有氧增删改、计划复制、准备草稿与训练快照，以及稳定 ID 排序、事务回滚、删除归一化和重新实例化持久化；备份测试覆盖旧版 JSON 兼容；QML 测试在 360×800、420×920、480×1056 三档生成主页面和关键流程截图，并额外检查 1.0/1.3/1.5/2.0 四档字体、字符图标门禁、准备与训练标题不截断、计划/训练动作预览 48dp、训练动作卡可见焦点、当前动作详情真实打开、TalkBack 角色/名称及真实 `QTouchEvent` 拖动输入。Windows 固定环境还对 5 个静态关键状态执行尺寸、坏点比例与 RGB 平均误差门禁，失败时保留 actual、expected 和 diff 证据；这不能替代 Android 真机视觉与 TalkBack 验收。
 
 Android `arm64-v8a` Debug APK 与无签名 Release APK/AAB 已完成构建；Debug APK 通过零问题 Android Lint、API/ABI/包名/权限检查和 V2 调试签名校验。包内探针确认 58 张 shareable 图片全部嵌入，116 张本地 MuscleDB 图片、旧图片目录和 Inter 字体均未进入 APK。一次性测试密钥验证了 Release APK 的 V3 签名链路，随后已恢复为无签名构建状态。Android 自动化尚未覆盖设备生命周期、系统通知策略、真实 TalkBack、SAF 提供方差异和同签名覆盖升级，这些仍属于一加 Ace 5 Pro 真机验收范围。

@@ -34,22 +34,40 @@ C:\FitTrackDev\fittrack\build-android-arm64\android-build\build\outputs\apk\debu
 - target/compile API：35
 - ABI：`arm64-v8a`
 
-2026-07-14 14:05 从当前源码构建并通过门禁的产物为：
+2026-07-14 15:11 从当前源码构建并通过门禁的产物为：
 
 ```text
 C:\FitTrackDev\fittrack\build-android-arm64\android-build\build\outputs\apk\debug\android-build-debug.apk
 ```
 
 - 文件大小：64,480,320 字节；
-- SHA-256：`069FEFC769284E6609C18CED34A2C7198DFC3CB1D1BA09CF1DFFD7E4AA4AE191`；
+- SHA-256：`0DA757DC586153004EEB01D9ABFFB5C37B3CF2AC5EA62CC05AE4D3F90CF91315`；
 - Android Lint：0 issue；
 - 签名：Android Debug 证书，APK Signature Scheme v2 校验通过；
 - 包内 ABI：仅 `arm64-v8a`；
 - 媒体：58/58 张 shareable JPEG 已嵌入，116 张 MuscleDB 图片、旧图片目录和 Inter 字体均未进入 APK。
 
-`dist\FitTrack\FitTrack-0.1.0-debug-arm64-v8a.apk` 是 2026-07-13 的旧产物（SHA-256 `0535DA3BB2F221491F257E78CD5300FAD4E1D9B25A7C60658D5BE5A5684F62C2`），不代表当前提交。正式分享前必须从待发布提交重新构建、执行本页全部检查、记录 Git SHA 与新文件哈希，再复制到 `dist`。
+旧 `dist\FitTrack` 目录不代表当前提交，不得继续手工复制其中 APK 或 unsigned AAB。正式分享只使用下节脚本从待发布提交重新生成的 `FitTrack-sideload` 目录或 ZIP。
 
 Debug 证书适合直接侧载测试，但不能作为应用商店发布签名。若不同构建机使用不同 Debug 证书，后续包不能覆盖安装，需先卸载旧版。
+
+## 生成 Debug 侧载包
+
+完成 Debug 构建和 Android Lint 后运行：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File C:\FitTrackDev\fittrack\scripts\package-side-load.ps1
+```
+
+脚本不会把 unsigned AAB 混入分发物，并会硬性检查包名、版本、仅 `arm64-v8a`、Android Debug 证书、APK Signature Scheme v2、复制前后 APK SHA-256，以及 Lint 生成的实际 Android 运行时依赖证据。任一工具或证据缺失都会失败，不会降级为未验签包。输出为：
+
+```text
+C:\FitTrackDev\dist\FitTrack-sideload\
+C:\FitTrackDev\dist\FitTrack-0.1.0-debug-arm64-v8a.zip
+C:\FitTrackDev\dist\FitTrack-0.1.0-debug-arm64-v8a.zip.sha256
+```
+
+目录内恰好包含 1 个 APK，并附安装说明、26 份实际所需许可正文、第三方通知、媒体逐项署名、Qt 对应源码与重新链接说明、`qtbase`/`qtdeclarative`/`qtsvg` 三份 Qt 6.9.1 SBOM、Android NDK LLVM NOTICE 和 `SHA256SUMS.txt`。当前 `dist/` 被 Git 忽略；提交并推送待发布源码后必须再运行一次脚本，使包内 Git SHA 指向最终提交。
 
 ## 构建 Release 包
 
@@ -169,7 +187,7 @@ Get-FileHash $apk -Algorithm SHA256
 
 - 在一加 Ace 5 Pro 上完成首次安装、完整训练、后台计时、通知允许/拒绝、备份恢复、返回键、真实 TalkBack、系统大字体和数字键盘验收。
 - 使用真实历史数据库和损坏副本完成升级、原文件保留、启动提示及中断续跑验收；桌面合成夹具不能替代这一步。
-- 分享时同时提供版本号、SHA-256、第三方许可和媒体来源清单，并明确这是 Debug 签名测试版。
+- 从待发布提交运行 `package-side-load.ps1`，分享其 ZIP 与 `.sha256`，并明确这是 Debug 签名测试版。
 - R6 冻结包名，在仓库外创建并备份长期 Release keystore，再用同签名 Release APK 验证覆盖升级。
 
 如以后决定进入应用商店，再补签名 AAB、公开隐私政策 URL、Health Apps 声明、商店截图、Feature Graphic 和商店版本说明；这些不阻塞当前自用与直接分享目标。

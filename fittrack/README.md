@@ -22,7 +22,7 @@ FitTrack 是一个面向 Android 的个人健身训练记录与分析应用，�
 - Graphite & Lime 设计系统已经提取为语义主题与通用组件，统一线性图标由 `AppIcon` 使用 `PathSvg` 绘制，不再依赖 Unicode 字符图标。底部导航、首页、训练、计划、动作库、趋势、历史、有氧和管理页面均已纳入移动单列体系；准备页与训练页长标题可响应换行，计划/训练动作预览保持至少 48 logical px，训练动作卡提供可见键盘焦点。
 - 应用不再内置字体，直接继承 Android、Windows 等平台的系统字体；Android 字体缩放会统一映射到设计令牌，训练主流程和弹层已自动化验证 1.0、1.3、1.5 和 2.0 倍字体。
 
-当前自动化测试共 15 项，覆盖统计规则、SQLite、种子导入、训练会话、历史、分析、计划管理、动作库管理、有氧、健身房/器械、备份恢复、性能 SQL 门禁、倒计时状态和真实 QML 页面加载。数据库用例额外覆盖合成 v1–v7 迁移、旧 v8 约束修复、损坏原字节与 sidecar 保留、恢复中断续跑及损坏 v9 拒绝；QML 回归覆盖恢复提示、训练准备零写入、动作详情真实打开、参数保存/恢复、稳定 ID 排序、字符图标门禁、TalkBack 语义、计划/训练动作预览 48dp、训练动作卡焦点、长标题不截断、1.0/1.3/1.5/2.0 四档字体和真实触摸输入。
+当前自动化测试共 15 项，覆盖统计规则、SQLite、种子导入、训练会话、历史、分析、计划管理、动作库管理、有氧、健身房/器械、备份恢复、性能 SQL 门禁、倒计时状态和真实 QML 页面加载。数据库用例额外覆盖合成 v1–v7 迁移、旧 v8 约束修复、损坏原字节与 sidecar 保留、恢复中断续跑及损坏 v9 拒绝；QML 回归覆盖恢复提示、训练准备零写入、动作详情真实打开、参数保存/恢复、稳定 ID 排序、字符图标门禁、TalkBack 语义、计划/训练动作预览 48dp、训练动作卡焦点、长标题不截断、1.0/1.3/1.5/2.0 四档字体和真实触摸输入。Windows 固定离屏环境还会把恢复提示、计划页、200% 字体训练准备、200% 字体排序和动作详情共 5 个关键状态与受控基准图做像素容差比较，退化会直接使测试失败并输出差异图。
 
 当前数据库结构版本为 SQLite v8。版本判断与完整性检查通过后才进入同版本快路径；旧库会在单个事务中补列、重建不一致约束、建索引和触发器，既有用户数据会保留。v9 及以上数据库不会被当前版本降级或替换。
 
@@ -45,13 +45,7 @@ cmake --build C:\FitTrackDev\fittrack\build
 ctest --test-dir C:\FitTrackDev\fittrack\build --output-on-failure
 ```
 
-QML 导航测试会把五个主页面、可编辑个人计划、训练日有氧弹层、训练进行中、目标次数弹层、训练完成总结、历史详情、有氧、管理和带真实训练数据的分析页分别按 360×800、420×920、480×1056 写入 `C:\FitTrackDev\fittrack\build\visual`。默认使用 `offscreen` 与软件渲染，可直接在无交互窗口的测试环境运行；如需检查本机图形后端可使用：
-
-```powershell
-$env:QT_QPA_PLATFORM = "windows"
-$env:QSG_RHI_BACKEND = "d3d11"
-ctest --test-dir C:\FitTrackDev\fittrack\build -R qmlnavigation --output-on-failure
-```
+QML 导航测试会把五个主页面、可编辑个人计划、训练日有氧弹层、训练进行中、目标次数弹层、训练完成总结、历史详情、有氧、管理和带真实训练数据的分析页分别按 360×800、420×920、480×1056 写入 `C:\FitTrackDev\fittrack\build\visual`。受控基准位于 `tests/visual/baselines/`；Windows 门禁固定 Qt 6.9.1、`offscreen`、软件渲染、Material、`zh_CN`、DPR 1、96 DPI 和指定微软雅黑文件，视觉差异超限时写入 `build/visual/diff/`。如需人工检查本机图形后端，应直接运行应用；视觉基准测试不会接受外部后端覆盖。
 
 ## Android 状态
 
@@ -63,7 +57,7 @@ powershell -ExecutionPolicy Bypass -File C:\FitTrackDev\fittrack\scripts\build-a
 powershell -ExecutionPolicy Bypass -File C:\FitTrackDev\fittrack\scripts\build-android.ps1 -Configuration Release -Bundle
 ```
 
-脚本分别输出 Debug APK、无签名 Release APK 或无签名 Release AAB。当前包名为 `com.fittrack.app`，min API 28，target/compile API 35，仅包含 `arm64-v8a`；当前源码的 Debug APK 已通过 Android Lint（0 issue）、清单/ABI/最小权限检查、V2 调试签名验证和包内媒体白名单检查。`dist` 中的旧产物不能代表当前提交，正式分享前必须从当前提交重新生成并核验哈希。Release APK/AAB 的外部环境变量签名流程已用一次性测试密钥验证；若要保证跨版本覆盖升级，仍需创建并长期保管发布密钥。
+脚本分别输出 Debug APK、无签名 Release APK 或无签名 Release AAB。当前包名为 `com.fittrack.app`，min API 28，target/compile API 35，仅包含 `arm64-v8a`；当前源码的 Debug APK 已通过 Android Lint（0 issue）、清单/ABI/最小权限检查、V2 调试签名验证和包内媒体白名单检查。完成 Debug 构建和 `lintDebug` 后运行 `scripts/package-side-load.ps1`，会硬性复核 APK 元数据与签名，并在 `dist/` 生成仅含一个 Debug APK 的 ZIP、安装说明、逐文件 SHA-256、实际 Qt SBOM、NDK NOTICE、媒体署名及完整许可正文。`dist` 不提交 Git，正式分享前必须从待发布提交重新生成。Release APK/AAB 的外部环境变量签名流程已用一次性测试密钥验证；若要保证跨版本覆盖升级，仍需创建并长期保管发布密钥。
 
 完整工具链、Lint、APK 检查和真机命令见 [`../docs/fittrack-android-build.md`](../docs/fittrack-android-build.md)。
 
@@ -77,6 +71,7 @@ powershell -ExecutionPolicy Bypass -File C:\FitTrackDev\fittrack\scripts\build-a
 - MuscleDB 只保留为动作文字映射参考；其图片目录和旧动作图片不会被 CMake 打包进 APK。应用也不再打包 Inter 字体。
 - 数据映射见 [`../docs/fittrack-exercise-mapping.md`](../docs/fittrack-exercise-mapping.md)，媒体用途限制见 [`../docs/fittrack-media-credits.md`](../docs/fittrack-media-credits.md)。
 - Qt、AndroidX/Kotlin 和动作图片的分发说明见 [`../docs/fittrack-third-party-notices.md`](../docs/fittrack-third-party-notices.md)。
+- 可随包复制的许可正文与 Qt 对应源码/重新链接说明位于 [`licenses/`](licenses/)。
 - 本地数据、权限、导出与医疗边界见 [`../docs/fittrack-privacy.md`](../docs/fittrack-privacy.md)。
 - 未授权的抖音、B站、知乎视频或截图不得打包进 APK，也不提供媒体外链区域；只有自制、公共领域或明确允许再分发的开放许可素材可以内置。
 
