@@ -8,6 +8,12 @@ AppPage {
     id: page
     objectName: "trainingPage"
 
+    leftPadding: Design.Spacing.page + SafeArea.margins.left
+    rightPadding: Design.Spacing.page + SafeArea.margins.right
+    topPadding: Design.Spacing.lg + SafeArea.margins.top
+
+    background: Rectangle { color: Design.Theme.canvas }
+
     implicitWidth: 0
     implicitHeight: 0
     signal planStartRequested(string dayId)
@@ -138,6 +144,15 @@ AppPage {
         for (let i = 0; i < sets.length; ++i)
             values.push(Number(sets[i].weightKg) + " kg × " + sets[i].reps)
         return qsTr("上次：") + values.join("  ·  ")
+    }
+
+    function compactSessionName(name) {
+        const value = String(name || qsTr("训练"))
+        const fullWidthSeparator = value.indexOf("｜")
+        if (fullWidthSeparator > 0)
+            return value.slice(0, fullWidthSeparator).trim()
+        const separator = value.indexOf("|")
+        return separator > 0 ? value.slice(0, separator).trim() : value
     }
 
     readonly property int currentExerciseIndex: exerciseIndexById(selectedExerciseId)
@@ -1073,7 +1088,7 @@ AppPage {
 
         ColumnLayout {
             width: trainingScroll.availableWidth
-            spacing: Design.Theme.space12
+            spacing: Design.Spacing.section
 
             RowLayout {
                 Layout.fillWidth: true
@@ -1084,9 +1099,16 @@ AppPage {
                     spacing: 0
                     Label {
                         objectName: "trainingSessionTitle"
-                        text: workoutController.active ? workoutController.sessionName : qsTr("训练")
-                        color: Design.Theme.backgroundText
-                        font.pixelSize: Design.Theme.typeTitle
+                        text: workoutController.active && page.currentExerciseIndex >= 0
+                              ? qsTr("%1 · %2/%3")
+                                .arg(page.compactSessionName(workoutController.sessionName))
+                                .arg(page.currentExerciseIndex + 1)
+                                .arg(workoutController.exercises.length)
+                              : (workoutController.active
+                                 ? workoutController.sessionName : qsTr("训练"))
+                        color: workoutController.active
+                               ? Design.Theme.textPrimary : Design.Theme.backgroundText
+                        font.pixelSize: Design.Typography.pageTitle
                         font.weight: Font.DemiBold
                         Layout.fillWidth: true
                         Layout.minimumWidth: 0
@@ -1094,13 +1116,9 @@ AppPage {
                     }
                     Label {
                         visible: workoutController.active
-                        text: page.currentExerciseIndex >= 0
-                                ? qsTr("第 %1 / %2 个动作")
-                                    .arg(page.currentExerciseIndex + 1)
-                                    .arg(workoutController.exercises.length)
-                                : qsTr("准备开始")
-                        color: Design.Theme.surfaceMuted
-                        font.pixelSize: Design.Theme.typeCaption
+                        text: page.currentExerciseIndex >= 0 ? qsTr("训练中") : qsTr("准备开始")
+                        color: Design.Theme.textTertiary
+                        font.pixelSize: Design.Typography.caption
                     }
                 }
 
@@ -1231,18 +1249,19 @@ AppPage {
                 AppCard {
                     visible: page.currentExercise !== null
                     Layout.fillWidth: true
-                    padding: Design.Theme.space16
+                    padding: 0
+                    background: Item { }
 
                     ColumnLayout {
                         anchors.fill: parent
-                        spacing: Design.Theme.space8
+                        spacing: Design.Spacing.md
 
                         RowLayout {
                             Layout.fillWidth: true
                             Button {
                                 objectName: "currentExercisePreviewButton"
                                 Layout.fillWidth: true
-                                implicitHeight: Design.Theme.controlHeight
+                                implicitHeight: Design.Theme.touchTarget
                                 flat: true
                                 padding: 0
                                 text: page.currentExercise ? page.currentExercise.name : ""
@@ -1257,24 +1276,10 @@ AppPage {
                                                        page.currentExercise.exerciseId))
                                 contentItem: Label {
                                     text: parent.text
-                                    color: Design.Theme.surfaceText
-                                    font.pixelSize: Design.Theme.typeTitle
+                                    color: Design.Theme.textPrimary
+                                    font.pixelSize: Design.Typography.exerciseTitle
                                     font.weight: Font.DemiBold
                                     elide: Text.ElideRight
-                                }
-                            }
-                            Rectangle {
-                                implicitWidth: currentBadge.implicitWidth + Design.Theme.space16
-                                implicitHeight: 28
-                                radius: 14
-                                color: Design.Theme.primaryContainer
-                                Label {
-                                    id: currentBadge
-                                    anchors.centerIn: parent
-                                    text: qsTr("当前")
-                                    color: Design.Theme.primaryContainerText
-                                    font.pixelSize: Design.Theme.typeCaption
-                                    font.weight: Font.DemiBold
                                 }
                             }
                             IconButton {
@@ -1289,24 +1294,80 @@ AppPage {
                             }
                         }
 
-                        Label {
+                        RowLayout {
                             Layout.fillWidth: true
-                            text: page.currentExercise
-                                  ? qsTr("建议 %1 · 休息 %2 秒")
-                                    .arg(page.currentExercise.recommendedReps)
-                                    .arg(page.currentExercise.restSeconds)
-                                  : ""
-                            color: Design.Theme.surfaceMuted
-                            font.pixelSize: Design.Theme.typeLabel
-                            wrapMode: Text.WordWrap
+                            spacing: Design.Spacing.md
+
+                            ColumnLayout {
+                                Layout.fillWidth: true
+                                spacing: 0
+                                Label {
+                                    Layout.alignment: Qt.AlignHCenter
+                                    text: page.currentExercise ? page.currentExercise.sets.length : 0
+                                    color: Design.Theme.textPrimary
+                                    font.pixelSize: Design.Typography.trainingNumber
+                                    font.weight: Font.DemiBold
+                                }
+                                Label {
+                                    Layout.alignment: Qt.AlignHCenter
+                                    text: qsTr("组")
+                                    color: Design.Theme.textTertiary
+                                    font.pixelSize: Design.Typography.caption
+                                }
+                            }
+                            Rectangle {
+                                Layout.preferredWidth: 1
+                                Layout.preferredHeight: 36
+                                color: Design.Theme.divider
+                            }
+                            ColumnLayout {
+                                Layout.fillWidth: true
+                                spacing: 0
+                                Label {
+                                    Layout.alignment: Qt.AlignHCenter
+                                    text: page.currentExercise
+                                          ? page.currentExercise.recommendedReps : "—"
+                                    color: Design.Theme.textPrimary
+                                    font.pixelSize: Design.Typography.trainingNumber
+                                    font.weight: Font.DemiBold
+                                }
+                                Label {
+                                    Layout.alignment: Qt.AlignHCenter
+                                    text: qsTr("目标次数")
+                                    color: Design.Theme.textTertiary
+                                    font.pixelSize: Design.Typography.caption
+                                }
+                            }
+                            Rectangle {
+                                Layout.preferredWidth: 1
+                                Layout.preferredHeight: 36
+                                color: Design.Theme.divider
+                            }
+                            ColumnLayout {
+                                Layout.fillWidth: true
+                                spacing: 0
+                                Label {
+                                    Layout.alignment: Qt.AlignHCenter
+                                    text: page.currentExercise
+                                          ? page.currentExercise.restSeconds : 0
+                                    color: Design.Theme.textPrimary
+                                    font.pixelSize: Design.Typography.trainingNumber
+                                    font.weight: Font.DemiBold
+                                }
+                                Label {
+                                    Layout.alignment: Qt.AlignHCenter
+                                    text: qsTr("休息秒")
+                                    color: Design.Theme.textTertiary
+                                    font.pixelSize: Design.Typography.caption
+                                }
+                            }
                         }
 
                         Label {
                             Layout.fillWidth: true
                             text: page.currentExercise ? page.previousText(page.currentExercise.previousSets) : ""
-                            color: page.currentExercise && page.currentExercise.previousSets.length > 0
-                                   ? Design.Theme.primaryContainerText : Design.Theme.surfaceMuted
-                            font.pixelSize: Design.Theme.typeLabel
+                            color: Design.Theme.textSecondary
+                            font.pixelSize: Design.Typography.caption
                             wrapMode: Text.WordWrap
                         }
 
@@ -1318,13 +1379,15 @@ AppPage {
                                 text: page.currentExercise && page.currentExercise.equipmentName.length > 0
                                       ? qsTr("器械：") + page.currentExercise.equipmentName
                                       : qsTr("未指定具体器械")
-                                color: Design.Theme.surfaceMuted
-                                font.pixelSize: Design.Theme.typeLabel
+                                color: Design.Theme.textSecondary
+                                font.pixelSize: Design.Typography.caption
                                 elide: Text.ElideRight
                             }
                             AppButton {
-                                Layout.preferredWidth: 88
+                                Layout.preferredWidth: 80
                                 variant: "secondary"
+                                flatSecondary: true
+                                cornerRadius: 14
                                 text: qsTr("选择")
                                 onClicked: page.openEquipmentChoice(page.selectedExerciseId)
                             }
@@ -1333,7 +1396,7 @@ AppPage {
                         Rectangle {
                             Layout.fillWidth: true
                             implicitHeight: 1
-                            color: Design.Theme.outline
+                            color: Design.Theme.divider
                         }
 
                         Label {
@@ -1343,8 +1406,32 @@ AppPage {
                                     .arg(page.completedSetCount(page.currentExercise))
                                     .arg(page.currentExercise.sets.length)
                                   : qsTr("本动作已完成")
-                            color: Design.Theme.surfaceMuted
-                            font.pixelSize: Design.Theme.typeLabel
+                            color: Design.Theme.textSecondary
+                            font.pixelSize: Design.Typography.caption
+                        }
+
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: Design.Spacing.sm
+                            Label {
+                                Layout.preferredWidth: 52
+                                text: qsTr("组")
+                                color: Design.Theme.textTertiary
+                                font.pixelSize: Design.Typography.caption
+                            }
+                            Label {
+                                Layout.fillWidth: true
+                                text: qsTr("训练记录")
+                                color: Design.Theme.textTertiary
+                                font.pixelSize: Design.Typography.caption
+                            }
+                            Label {
+                                Layout.preferredWidth: 96
+                                text: qsTr("操作")
+                                color: Design.Theme.textTertiary
+                                font.pixelSize: Design.Typography.caption
+                                horizontalAlignment: Text.AlignHCenter
+                            }
                         }
 
                         Repeater {
@@ -1356,11 +1443,19 @@ AppPage {
                                 Layout.fillWidth: true
                                 Layout.preferredHeight: visible ? implicitHeight : 0
                                 implicitHeight: completedSetRow.implicitHeight
-                                                + Design.Theme.space12
+                                                + Design.Spacing.sm
                                                 + (appendSetColumn.visible
                                                    ? appendSetColumn.implicitHeight + Design.Theme.space4 : 0)
-                                radius: Design.Theme.radiusSmall
-                                color: Design.Theme.surfaceElevated
+                                radius: 0
+                                color: "transparent"
+
+                                Rectangle {
+                                    anchors.left: parent.left
+                                    anchors.right: parent.right
+                                    anchors.bottom: parent.bottom
+                                    height: 1
+                                    color: Design.Theme.divider
+                                }
 
                                 RowLayout {
                                     id: completedSetRow
@@ -1368,14 +1463,15 @@ AppPage {
                                     anchors.right: parent.right
                                     anchors.top: parent.top
                                     anchors.topMargin: Design.Theme.space4
-                                    anchors.leftMargin: Design.Theme.space12
-                                    anchors.rightMargin: Design.Theme.space8
+                                    anchors.leftMargin: 0
+                                    anchors.rightMargin: 0
                                     spacing: Design.Theme.space8
 
                                     Label {
-                                        text: qsTr("第 %1 组").arg(modelData.number)
+                                        Layout.preferredWidth: 52
+                                        text: String(modelData.number)
                                         color: Design.Theme.success
-                                        font.pixelSize: Design.Theme.typeLabel
+                                        font.pixelSize: Design.Typography.body
                                         font.weight: Font.DemiBold
                                     }
                                     Label {
@@ -1387,8 +1483,8 @@ AppPage {
                                             return loadText + " × " + modelData.actualReps
                                                     + (modelData.toFailure ? qsTr(" · 力竭") : "")
                                         }
-                                        color: Design.Theme.surfaceText
-                                        font.pixelSize: Design.Theme.typeBody
+                                        color: Design.Theme.textPrimary
+                                        font.pixelSize: Design.Typography.body
                                         elide: Text.ElideRight
                                     }
                                     IconButton {
@@ -1460,9 +1556,9 @@ AppPage {
 
                 Label {
                     visible: workoutController.exercises.length > 1
-                    text: qsTr("动作顺序")
-                    color: Design.Theme.surfaceText
-                    font.pixelSize: Design.Theme.typeBody
+                    text: qsTr("动作列表")
+                    color: Design.Theme.textPrimary
+                    font.pixelSize: Design.Typography.exerciseTitle
                     font.weight: Font.DemiBold
                 }
 
@@ -1478,15 +1574,14 @@ AppPage {
                         visible: workoutController.exercises.length > 1
                         Layout.fillWidth: true
                         implicitHeight: Math.max(
-                                            72,
+                                            64,
                                             trainingExerciseRowLayout.implicitHeight
                                             + Design.Theme.space8)
                         radius: Design.Theme.radiusSmall
                         color: page.selectedExerciseId === modelData.id
-                               ? Design.Theme.primaryContainer : Design.Theme.surface
-                        border.width: activeFocus ? 2 : 1
-                        border.color: activeFocus || page.selectedExerciseId === modelData.id
-                                      ? Design.Theme.primary : Design.Theme.outline
+                               ? Design.Theme.field : "transparent"
+                        border.width: activeFocus ? 1 : 0
+                        border.color: Design.Theme.accent
                         activeFocusOnTab: true
                         Accessible.role: Accessible.Button
                         Accessible.name: qsTr("%1，已完成 %2 / %3 组")
@@ -1497,12 +1592,21 @@ AppPage {
                                                 ? qsTr("当前动作") : qsTr("双击切换到该动作")
                         Accessible.selected: page.selectedExerciseId === modelData.id
                         Accessible.onPressAction: page.selectExercise(modelData.id)
+
+                        Rectangle {
+                            anchors.left: parent.left
+                            anchors.top: parent.top
+                            anchors.bottom: parent.bottom
+                            width: page.selectedExerciseId === modelData.id ? 3 : 0
+                            radius: 2
+                            color: Design.Theme.accent
+                        }
                         RowLayout {
                             id: trainingExerciseRowLayout
                             anchors.left: parent.left
                             anchors.right: parent.right
                             anchors.verticalCenter: parent.verticalCenter
-                            anchors.leftMargin: Design.Theme.space12
+                            anchors.leftMargin: Design.Theme.space16
                             anchors.rightMargin: Design.Theme.space4
                             spacing: Design.Theme.space8
 
@@ -1527,8 +1631,8 @@ AppPage {
                                     contentItem: Label {
                                         id: trainingExerciseName
                                         text: trainingExercisePreview.text
-                                        color: Design.Theme.surfaceText
-                                        font.pixelSize: Design.Theme.typeBody
+                                        color: Design.Theme.textPrimary
+                                        font.pixelSize: Design.Typography.body
                                         font.weight: Font.DemiBold
                                         wrapMode: Text.WordWrap
                                     }
@@ -1536,7 +1640,7 @@ AppPage {
                                         color: "transparent"
                                         radius: Design.Theme.radiusSmall
                                         border.width: trainingExercisePreview.activeFocus ? 2 : 0
-                                        border.color: Design.Theme.primary
+                                        border.color: Design.Theme.accent
                                     }
                                 }
                                 Label {
@@ -1545,7 +1649,7 @@ AppPage {
                                         .arg(modelData.sets.length)
                                     color: page.completedSetCount(modelData) === modelData.sets.length
                                            ? Design.Theme.success : Design.Theme.surfaceMuted
-                                    font.pixelSize: Design.Theme.typeCaption
+                                    font.pixelSize: Design.Typography.caption
                                 }
                             }
                             IconButton {
@@ -1576,12 +1680,18 @@ AppPage {
                 AppButton {
                     Layout.fillWidth: true
                     variant: "secondary"
+                    flatSecondary: true
+                    cornerRadius: 14
                     text: qsTr("添加动作")
                     onClicked: exercisePicker.openForExercise("")
                 }
 
                 AppButton {
                     Layout.fillWidth: true
+                    cornerRadius: 14
+                    primaryColor: Design.Theme.accent
+                    primaryPressedColor: Design.Theme.accentPressed
+                    primaryTextColor: Design.Theme.accentForeground
                     text: qsTr("完成本次训练")
                     enabled: workoutController.exercises.length > 0
                     onClicked: {
@@ -1614,9 +1724,16 @@ AppPage {
             anchors.right: parent.right
             anchors.top: parent.top
             height: inputFooterHost.panelHeight
-            color: Design.Theme.background
-            border.width: inputFooterHost.visible ? 1 : 0
-            border.color: Design.Theme.outline
+            color: Design.Theme.canvas
+            border.width: 0
+
+            Rectangle {
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.top: parent.top
+                height: 1
+                color: Design.Theme.divider
+            }
 
             ScrollView {
                 id: inputFooterScroll

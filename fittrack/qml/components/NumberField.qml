@@ -10,6 +10,10 @@ Control {
     property alias placeholderText: editor.placeholderText
     property alias editorItem: editor
     property string label: ""
+    property string accessibleName: ""
+    property bool subtleBorder: false
+    property int cornerRadius: Design.Theme.radiusSmall
+    property color fillColor: Design.Theme.surfaceElevated
     property string unit: ""
     property string errorText: ""
     property real from: 0
@@ -46,11 +50,14 @@ Control {
         Rectangle {
             Layout.fillWidth: true
             implicitHeight: Design.Theme.controlHeight
-            radius: Design.Theme.radiusSmall
-            color: Design.Theme.surfaceElevated
+            radius: root.cornerRadius
+            color: root.fillColor
             border.width: editor.activeFocus || root.errorText.length > 0 ? 2 : 1
             border.color: root.errorText.length > 0 ? Design.Theme.error :
-                          (editor.activeFocus ? Design.Theme.primary : Design.Theme.outline)
+                          (editor.activeFocus ? Design.Theme.primary
+                                              : (root.subtleBorder
+                                                 ? Design.Theme.divider
+                                                 : Design.Theme.outline))
 
             TextField {
                 id: editor
@@ -74,7 +81,9 @@ Control {
                     notation: DoubleValidator.StandardNotation
                     locale: Qt.locale().name
                 }
-                Accessible.name: root.label.length > 0 ? root.label : root.placeholderText
+                Accessible.name: root.accessibleName.length > 0
+                                 ? root.accessibleName
+                                 : (root.label.length > 0 ? root.label : root.placeholderText)
                 Accessible.description: root.errorText
                 onAccepted: root.accepted()
             }

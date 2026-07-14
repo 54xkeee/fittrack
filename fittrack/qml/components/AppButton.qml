@@ -7,6 +7,11 @@ Button {
 
     // Supported variants: primary, secondary and destructive.
     property string variant: "primary"
+    property bool flatSecondary: false
+    property int cornerRadius: Design.Theme.radiusSmall
+    property color primaryColor: Design.Theme.primary
+    property color primaryPressedColor: Design.Theme.primaryPressed
+    property color primaryTextColor: Design.Theme.primaryForeground
 
     readonly property bool isPrimary: variant === "primary"
     readonly property bool isDestructive: variant === "destructive"
@@ -27,7 +32,7 @@ Button {
             if (!root.enabled)
                 return Design.Theme.surfaceMuted
             if (root.isPrimary)
-                return Design.Theme.primaryForeground
+                return root.primaryTextColor
             if (root.isDestructive)
                 return Design.Theme.errorForeground
             return Design.Theme.surfaceText
@@ -39,17 +44,18 @@ Button {
     }
 
     background: Rectangle {
-        radius: Design.Theme.radiusSmall
+        radius: root.cornerRadius
         color: {
             if (!root.enabled)
                 return Design.Theme.surfaceElevated
             if (root.isPrimary)
-                return root.down ? Design.Theme.primaryPressed : Design.Theme.primary
+                return root.down ? root.primaryPressedColor : root.primaryColor
             if (root.isDestructive)
                 return root.down ? Design.Theme.errorPressed : Design.Theme.error
             return root.down ? Design.Theme.surfacePressed : Design.Theme.surfaceElevated
         }
-        border.width: root.activeFocus || (!root.isPrimary && !root.isDestructive) ? 1 : 0
+        border.width: root.activeFocus
+                      || (!root.isPrimary && !root.isDestructive && !root.flatSecondary) ? 1 : 0
         border.color: root.activeFocus
                       ? (root.isPrimary || root.isDestructive
                          ? Design.Theme.surfaceText : Design.Theme.primary)

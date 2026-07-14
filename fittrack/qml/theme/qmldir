@@ -1,2 +1,4 @@
 module FitTrack.Theme
 singleton Theme 1.0 Theme.qml
+singleton Spacing 1.0 Spacing.qml
+singleton Typography 1.0 Typography.qml

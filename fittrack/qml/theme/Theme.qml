@@ -38,14 +38,29 @@ QtObject {
     readonly property color infoContent: "#C6E3FF"
     readonly property color scrim: "#B3000000"
 
+    // New design-system roles. Pages opt in as they are migrated.
+    readonly property color canvas: "#0C0E0F"
+    readonly property color panel: "#151819"
+    readonly property color field: "#1B1F20"
+    readonly property color divider: "#292D2F"
+    readonly property color textPrimary: "#F3F5F6"
+    readonly property color textSecondary: "#A5AAAE"
+    readonly property color textTertiary: "#73797D"
+    readonly property color accent: "#B8FF3D"
+    readonly property color accentPressed: "#9DE032"
+    readonly property color accentForeground: "#121212"
+    readonly property color selection: "#25350F"
+    readonly property color danger: "#FF6468"
+
     readonly property real disabledOpacity: 0.42
 
     // Four-point spacing rhythm.
-    readonly property int space4: 4
-    readonly property int space8: 8
-    readonly property int space12: 12
-    readonly property int space16: 16
-    readonly property int space24: 24
+    readonly property int space4: Spacing.xs
+    readonly property int space8: Spacing.sm
+    readonly property int space12: Spacing.md
+    readonly property int space16: Spacing.lg
+    readonly property int space20: Spacing.page
+    readonly property int space24: Spacing.section
 
     // Android fontScale is applied at the token level so every page scales together.
     property real fontScale: 1.0

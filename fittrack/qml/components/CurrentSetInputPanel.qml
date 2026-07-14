@@ -45,24 +45,18 @@ ColumnLayout {
                 : root.setData.bodyweightLoadType === "Assisted" ? 2 : 0
     }
 
-    spacing: Design.Theme.space8
+    spacing: Design.Spacing.sm
 
-    GridLayout {
-        id: currentSetActions
+    RowLayout {
         Layout.fillWidth: true
-        columns: root.viewportWidth < 400 || Design.Theme.fontScale >= 1.2 ? 2 : 4
-        rowSpacing: Design.Theme.space8
-        columnSpacing: Design.Theme.space8
+        spacing: Design.Spacing.sm
 
         ItemDelegate {
             objectName: "currentSetTargetButton"
             Layout.fillWidth: true
-            Layout.columnSpan: 2
-            implicitHeight: Math.max(Design.Theme.controlHeight,
-                                     Design.Theme.typeBody + Design.Theme.typeCaption
-                                     + Design.Theme.space4)
+            implicitHeight: Design.Theme.touchTarget
             leftPadding: 0
-            rightPadding: Design.Theme.space8
+            rightPadding: 0
             enabled: root.setData !== null
             Accessible.name: root.setData
                              ? qsTr("当前第 %1 组，目标 %2 次，双击修改")
@@ -75,33 +69,36 @@ ColumnLayout {
                     root.targetRepsRequested(String(root.exercise.id), root.setData)
             }
             background: Item { }
-            contentItem: ColumnLayout {
-                spacing: 0
+            contentItem: RowLayout {
+                spacing: Design.Spacing.sm
                 Label {
                     text: root.setData
-                          ? qsTr("当前 · 第 %1 组").arg(root.setData.number)
+                          ? qsTr("第 %1 组").arg(root.setData.number)
                           : (root.allExercisesComplete
-                             ? qsTr("训练记录已完成") : qsTr("当前动作已完成"))
-                    color: Design.Theme.surfaceText
-                    font.pixelSize: Design.Theme.typeBody
+                             ? qsTr("训练已完成") : qsTr("动作已完成"))
+                    color: Design.Theme.textPrimary
+                    font.pixelSize: Design.Typography.body
                     font.weight: Font.DemiBold
                 }
                 Label {
                     visible: root.setData !== null
+                    Layout.fillWidth: true
                     text: root.setData && root.setData.targetReps !== null
-                          ? qsTr("目标 %1 次 · 点击修改").arg(root.setData.targetReps)
-                          : qsTr("设置本组目标次数")
-                    color: Design.Theme.surfaceMuted
-                    font.pixelSize: Design.Theme.typeCaption
+                          ? qsTr("目标 %1 次 · 点按修改").arg(root.setData.targetReps)
+                          : qsTr("设置目标次数")
+                    color: Design.Theme.textTertiary
+                    font.pixelSize: Design.Typography.caption
+                    elide: Text.ElideRight
                 }
             }
         }
 
         AppButton {
             objectName: "openRestTimerButton"
-            Layout.fillWidth: true
-            Layout.columnSpan: setFailure.visible ? 1 : 2
+            Layout.preferredWidth: 72
             variant: "secondary"
+            flatSecondary: true
+            cornerRadius: 14
             text: qsTr("计时")
             onClicked: root.timerRequested()
         }
@@ -109,8 +106,8 @@ ColumnLayout {
         CheckBox {
             id: setFailure
             visible: root.setData !== null
-            Layout.fillWidth: true
-            implicitHeight: Design.Theme.controlHeight
+            implicitWidth: 72
+            implicitHeight: Design.Theme.touchTarget
             text: qsTr("力竭")
         }
     }
@@ -118,29 +115,106 @@ ColumnLayout {
     RowLayout {
         visible: root.setData !== null
         Layout.fillWidth: true
-        spacing: Design.Theme.space8
+        spacing: Design.Spacing.sm
 
-        NumberField {
-            id: setWeight
-            objectName: "setWeightField"
+        Label {
+            Layout.preferredWidth: 32
+            text: qsTr("组")
+            color: Design.Theme.textTertiary
+            font.pixelSize: Design.Typography.caption
+            horizontalAlignment: Text.AlignHCenter
+        }
+        Label {
             Layout.fillWidth: true
-            label: root.pureBodyweight ? qsTr("负重") : qsTr("实际重量")
-            placeholderText: root.pureBodyweight ? qsTr("纯自重") : qsTr("0")
-            unit: root.pureBodyweight ? "" : "kg"
-            decimals: 2
-            enabled: !root.pureBodyweight
+            text: qsTr("重量")
+            color: Design.Theme.textTertiary
+            font.pixelSize: Design.Typography.caption
+        }
+        Label {
+            Layout.fillWidth: true
+            text: qsTr("次数")
+            color: Design.Theme.textTertiary
+            font.pixelSize: Design.Typography.caption
+        }
+        Label {
+            Layout.preferredWidth: 24
+            text: qsTr("状态")
+            color: Design.Theme.textTertiary
+            font.pixelSize: Design.Typography.caption
+            horizontalAlignment: Text.AlignHCenter
+        }
+    }
+
+    Rectangle {
+        visible: root.setData !== null
+        Layout.fillWidth: true
+        implicitHeight: Math.max(60, currentInputRow.implicitHeight + Design.Spacing.sm)
+        radius: 12
+        color: Design.Theme.selection
+
+        Rectangle {
+            anchors.left: parent.left
+            anchors.top: parent.top
+            anchors.bottom: parent.bottom
+            width: 3
+            radius: 2
+            color: Design.Theme.accent
         }
 
-        NumberField {
-            id: setReps
-            objectName: "setRepsField"
-            Layout.fillWidth: true
-            label: qsTr("实际次数")
-            placeholderText: root.setData && root.setData.targetReps !== null
-                             ? String(root.setData.targetReps) : qsTr("次数")
-            decimals: 0
-            keyboardHints: Qt.ImhDigitsOnly
-            onAccepted: completeSetButton.clicked()
+        RowLayout {
+            id: currentInputRow
+            anchors.fill: parent
+            anchors.leftMargin: Design.Spacing.sm
+            anchors.rightMargin: Design.Spacing.sm
+            spacing: Design.Spacing.sm
+
+            Label {
+                Layout.preferredWidth: 24
+                text: root.setData ? String(root.setData.number) : ""
+                color: Design.Theme.accent
+                font.pixelSize: Design.Typography.body
+                font.weight: Font.DemiBold
+                horizontalAlignment: Text.AlignHCenter
+            }
+
+            NumberField {
+                id: setWeight
+                objectName: "setWeightField"
+                Layout.fillWidth: true
+                Layout.minimumWidth: 88
+                accessibleName: qsTr("实际重量")
+                subtleBorder: true
+                cornerRadius: 12
+                fillColor: Design.Theme.field
+                placeholderText: root.pureBodyweight ? qsTr("自重") : qsTr("0")
+                unit: root.pureBodyweight ? "" : "kg"
+                decimals: 2
+                enabled: !root.pureBodyweight
+            }
+
+            NumberField {
+                id: setReps
+                objectName: "setRepsField"
+                Layout.fillWidth: true
+                Layout.minimumWidth: 72
+                accessibleName: qsTr("实际次数")
+                subtleBorder: true
+                cornerRadius: 12
+                fillColor: Design.Theme.field
+                placeholderText: root.setData && root.setData.targetReps !== null
+                                 ? String(root.setData.targetReps) : qsTr("次数")
+                decimals: 0
+                keyboardHints: Qt.ImhDigitsOnly
+                onAccepted: completeSetButton.clicked()
+            }
+
+            Label {
+                Layout.preferredWidth: 24
+                text: "•"
+                color: Design.Theme.accent
+                font.pixelSize: Design.Typography.sectionTitle
+                horizontalAlignment: Text.AlignHCenter
+            }
         }
     }
 
@@ -168,7 +242,15 @@ ColumnLayout {
         objectName: "completeSetButton"
         visible: root.setData !== null
         Layout.fillWidth: true
-        text: root.submitting ? qsTr("正在保存…") : qsTr("完成本组")
+        cornerRadius: 14
+        primaryColor: Design.Theme.accent
+        primaryPressedColor: Design.Theme.accentPressed
+        primaryTextColor: Design.Theme.accentForeground
+        text: root.submitting
+              ? qsTr("正在保存…")
+              : (root.setData ? qsTr("完成第 %1 组").arg(root.setData.number)
+                              : qsTr("完成本组"))
+        Accessible.name: qsTr("完成本组")
         enabled: !root.submitting
                  && Number.isFinite(setReps.numericValue)
                  && (root.pureBodyweight || Number.isFinite(setWeight.numericValue))

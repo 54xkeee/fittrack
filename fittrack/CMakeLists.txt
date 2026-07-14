@@ -95,6 +95,8 @@ qt_add_executable(fittrack
 # Keep the smaller pages cached and parse only Main.qml at runtime.
 set_source_files_properties(qml/Main.qml PROPERTIES QT_QML_SKIP_CACHEGEN TRUE)
 set_source_files_properties(qml/theme/Theme.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
+set_source_files_properties(qml/theme/Spacing.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
+set_source_files_properties(qml/theme/Typography.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
 
 qt_add_qml_module(fittrack
     URI FitTrack
@@ -102,6 +104,8 @@ qt_add_qml_module(fittrack
     QML_FILES
         qml/Main.qml
         qml/theme/Theme.qml
+        qml/theme/Spacing.qml
+        qml/theme/Typography.qml
         qml/components/ActionPill.qml
         qml/components/AppButton.qml
         qml/components/AppCard.qml

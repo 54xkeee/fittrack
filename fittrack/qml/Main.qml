@@ -49,6 +49,12 @@ ApplicationWindow {
         value: Math.max(0.85, Math.min(2.0, window.fontScale))
     }
 
+    Binding {
+        target: Design.Typography
+        property: "fontScale"
+        value: Math.max(0.85, Math.min(2.0, window.fontScale))
+    }
+
     function handleBack() {
         if (workoutController.preparing) {
             preparationPage.requestCancel()
@@ -335,17 +341,28 @@ ApplicationWindow {
         ]
 
         implicitHeight: visible
-                        ? Math.max(68,
-                                   Design.Theme.typeBody + Design.Theme.typeCaption
-                                   + Design.Theme.space12)
+                        ? (currentIndex === 2
+                           ? 64
+                           : Math.max(68,
+                                      Design.Theme.typeBody + Design.Theme.typeCaption
+                                      + Design.Theme.space12))
                           + SafeArea.margins.bottom
                         : 0
-        color: Design.Theme.surface
-        border.width: 1
+        color: currentIndex === 2 ? Design.Theme.panel : Design.Theme.surface
+        border.width: currentIndex === 2 ? 0 : 1
         border.color: Design.Theme.outline
         Keys.priority: Keys.AfterItem
         Keys.onReleased: event => window.handleBackEvent(event)
         onCurrentIndexChanged: window.ensureMainPage(currentIndex)
+
+        Rectangle {
+            visible: navigation.currentIndex === 2
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.top: parent.top
+            height: 1
+            color: Design.Theme.divider
+        }
 
         RowLayout {
             anchors.left: parent.left
@@ -387,14 +404,22 @@ ApplicationWindow {
                             Layout.alignment: Qt.AlignHCenter
                             name: navigationButton.modelData.icon
                             color: navigation.currentIndex === navigationButton.index
-                                   ? Design.Theme.primary : Design.Theme.surfaceMuted
+                                   ? (navigation.currentIndex === 2
+                                      ? Design.Theme.accent : Design.Theme.primary)
+                                   : (navigation.currentIndex === 2
+                                      ? Design.Theme.textSecondary : Design.Theme.surfaceMuted)
                         }
                         Label {
                             Layout.alignment: Qt.AlignHCenter
                             text: navigationButton.modelData.label
                             color: navigation.currentIndex === navigationButton.index
-                                   ? Design.Theme.primary : Design.Theme.surfaceMuted
-                            font.pixelSize: Design.Theme.typeCaption
+                                   ? (navigation.currentIndex === 2
+                                      ? Design.Theme.accent : Design.Theme.primary)
+                                   : (navigation.currentIndex === 2
+                                      ? Design.Theme.textSecondary : Design.Theme.surfaceMuted)
+                            font.pixelSize: navigation.currentIndex === 2
+                                            ? Design.Typography.caption
+                                            : Design.Theme.typeCaption
                             font.weight: navigation.currentIndex === navigationButton.index
                                          ? Font.DemiBold : Font.Normal
                         }
@@ -403,6 +428,7 @@ ApplicationWindow {
                     background: Rectangle {
                         radius: Design.Theme.radiusSmall
                         color: navigation.currentIndex === navigationButton.index
+                               && navigation.currentIndex !== 2
                                ? Design.Theme.primaryContainer : "transparent"
                         border.width: navigationButton.activeFocus ? 1 : 0
                         border.color: Design.Theme.primary
