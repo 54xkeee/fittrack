@@ -1,6 +1,8 @@
 # FitTrack 当前架构
 
-本文描述 2026-07-14 已在代码中存在的桌面与 Android 共用实现，不把尚未完成的真机验收写成已完成事实。
+> 本文件用于快速了解运行结构；完整分层、状态机、函数调用链和发布边界见 [`../docs/fittrack-global-architecture.md`](../docs/fittrack-global-architecture.md)。
+
+本文描述截至 2026-07-15 已在代码中存在的桌面与 Android 共用实现，不把尚未完成的真机验收写成已完成事实。
 
 ## 运行结构
 

@@ -1,6 +1,6 @@
 # FitTrack 0.1.0 全局架构
 
-> 本文基于 2026-07-14 的本地工作树编写，描述当前实现，而不是未来规划。
+> 本文基于 2026-07-15 的提交 `1234539` 核验，描述当前实现，而不是未来规划。
 > 当前应用版本仍为 `versionName 0.1.0`、`versionCode 1`。
 
 ## 1. 产品定位与架构边界
@@ -14,6 +14,34 @@ FitTrack 是一个本地优先的个人健身训练伙伴，核心目标是：
 - 在 Android 上离线运行，不依赖账号、云端或网络接口。
 
 当前架构明确不包含登录、云同步、社交、饮食管理、自动重量建议和复杂周期算法。QML 负责界面与交互编排，C++ 控制器负责业务规则和事务，SQLite 是唯一业务数据源，Java 仅承接 Android 平台能力。
+
+### 1.1 仓库边界
+
+当前仓库同时保留两个互不依赖的项目：
+
+- `fittrack/` 是当前持续开发目标，即 Android 健身训练伙伴“训迹 FitTrack”；
+- 根目录的 `StudentGradeSystem.pro`、`app/`、根目录 `tests/` 和对应构建脚本属于历史成绩管理系统，只作保留，不参与 FitTrack 的构建、运行或测试。
+
+两者不共享业务代码、数据库或发布产物。除非任务明确指向历史项目，后续架构、开发和验收均以 `fittrack/` 及 `docs/fittrack-*.md` 为范围。
+
+### 1.2 FitTrack 目录职责
+
+| 路径 | 所属层 | 职责 |
+| --- | --- | --- |
+| `fittrack/src/app/` | 组合层 | 创建数据库、模型和控制器，注入 QML，连接跨模块信号 |
+| `fittrack/src/training/` | 训练服务 | 训练准备草稿、活动会话、组记录、排序、完成和放弃 |
+| `fittrack/src/plans/` | 计划服务 | 系统/个人计划、训练日、分区、动作参数和计划有氧 |
+| `fittrack/src/exercises/` | 动作模型 | 动作检索、筛选、详情、收藏和自定义动作 |
+| `fittrack/src/history/`、`fittrack/src/analytics/`、`fittrack/src/cardio/` | 记录与分析 | 历史详情、训练统计、动作趋势和有氧记录 |
+| `fittrack/src/gyms/`、`fittrack/src/backup/`、`fittrack/src/timer/` | 支撑服务 | 场馆器械、备份恢复和休息计时 |
+| `fittrack/src/storage/` | 存储层 | SQLite v8 初始化、迁移、恢复和种子导入 |
+| `fittrack/qml/pages/` | 页面层 | 五个一级入口及训练准备、历史、有氧、管理等页面 |
+| `fittrack/qml/components/`、`fittrack/qml/theme/` | UI 基础层 | 共用控件、弹层、排序、详情、输入和设计令牌 |
+| `fittrack/resources/` | 内置内容 | 动作/计划 JSON、审核图片和提示音资源 |
+| `fittrack/android/` | Android 适配 | Manifest、资源、通知桥和前台计时服务 |
+| `fittrack/scripts/` | 工程化 | Android 构建、签名、校验、侧载打包和动作目录生成 |
+| `fittrack/tests/` | 质量层 | 15 项 CTest、QML 交互/视觉基准及集成测试 |
+| `fittrack/config/`、`fittrack/licenses/` | 发布配置 | 签名配置样例和可分发许可证材料 |
 
 ## 2. 总体架构
 
@@ -270,17 +298,36 @@ stateDiagram-v2
 
 ## 8. 计划、动作、历史和分析服务
 
-| 控制器/模型 | 核心职责 | 代表函数 |
+| 控制器/模型 | 核心职责 | 对 QML 暴露的主要函数 |
 | --- | --- | --- |
-| `ExerciseListModel` | 动作搜索、部位/器械/动作集合筛选、收藏和自定义动作 | `ensureLoaded()`、`exerciseById()`、`toggleFavorite()`、`createCustomExercise()` |
-| `PlanManagementController` | 个人计划、训练日、分区、动作和有氧目标管理 | `copyPlan()`、`addDay()`、`updateExercise()`、`reorderExercises()` |
-| `WorkoutHistoryController` | 分页历史、详情、已完成组修订和会话删除 | `loadMore()`、`selectSession()`、`updateCompletedSet()` |
-| `AnalyticsDashboardController` | 周期概览、动作趋势、肌群统计、场馆/器械筛选 | `setPeriodDays()`、`selectExercise()`、`reload()` |
-| `CardioController` | 跑步机/爬楼机记录、有氧汇总和训练后待补录目标 | `addTreadmill()`、`addStairClimber()`、`overview()` |
-| `GymManagementController` | 场馆和器械实例目录 | `addGym()`、`addEquipment()`、`reload()` |
-| `BackupService` | JSON 导出、校验、事务恢复和 SAF 文档读写 | `exportJson()`、`restoreJson()` |
+| `ExerciseListModel` | 动作搜索、部位/器械/集合筛选、收藏和自定义动作 | `ensureLoaded()`、`exerciseById()`、`toggleFavorite()`、`createCustomExercise()`、`updateCustomExercise()`、`deleteCustomExercise()`、`restoreSystemExercises()` |
+| `PlanManagementController` | 个人计划、训练日、分区、动作和计划有氧 | `createPlan()`、`copyPlan()`、`addDay()`、`setCardio()`、`addSection()`、`updateExercise()`、`replaceExercise()`、`reorderExercises()` |
+| `WorkoutHistoryController` | 分页历史、详情、已完成组修订和会话删除 | `reload()`、`loadMore()`、`selectSession()`、`updateCompletedSet()`、`deleteSession()` |
+| `AnalyticsDashboardController` | 周期概览、动作趋势、肌群统计、场馆/器械筛选 | `setPeriodDays()`、`selectExercise()`、`setGymFilter()`、`setEquipmentFilter()`、`reload()` |
+| `CardioController` | 跑步机/爬楼机记录、有氧汇总和训练后待补录目标 | `overview()`、`addTreadmill()`、`addStairClimber()`、`removeRecord()`、`clearPendingSession()` |
+| `GymManagementController` | 场馆和器械实例目录 | `selectGym()`、`createGym()`、`renameGym()`、`removeGym()`、`createEquipment()`、`updateEquipment()`、`removeEquipment()` |
+| `BackupService` | SQLite 快照、JSON 导出、校验、事务恢复和 SAF 文档读写 | `exportDatabase()`、`exportJson()`、`restoreJson()` |
 
 这些控制器目前直接使用 `QSqlDatabase`，没有额外 Repository 层。这减少了 0.1.0 的抽象成本，但意味着 SQL 查询和业务规则主要集中在各控制器内。
+
+### 8.1 用户操作到函数的调用路径
+
+| 用户操作 | QML 入口 | C++ 业务入口 | 数据结果 |
+| --- | --- | --- | --- |
+| 从首页/计划开始训练 | `Main.requestPlanDay()` / `requestSuggestedOrContinue()` | `requestPreparePlanDay()` / `requestPrepareSuggestedDay()` | 只创建内存准备草稿，不写训练表 |
+| 在准备页调整组数、次数、间歇 | `ExerciseParameterSheet` | `updatePreparedExercise()` / `restorePreparedExerciseDefaults()` | 更新 `m_preparation`，尚未落库 |
+| 在准备页添加、替换、删除动作 | `ExercisePickerSheet` | `addPreparedExercise()` / `replacePreparedExercise()` / `removePreparedExercise()` | 更新草稿动作集合 |
+| 保存准备页顺序 | `ExerciseOrderSheet.orderedIds()` | `reorderPreparedExercises()` | 按稳定草稿 ID 更新内存顺序 |
+| 确认开始训练 | `WorkoutPreparationPage` 的开始按钮 | `commitPreparation()` | 一个事务写入会话、训练动作、目标组和计划有氧快照 |
+| 查看动作做法 | 各页 `ExerciseDetailSheet.openExercise()` | `ExerciseListModel::exerciseById()` | 返回文字、肌群、步骤、本地媒体及署名 |
+| 调整计划动作顺序 | `PlanPage` 的排序弹层 | `PlanManagementController::reorderExercises()` | 事务校验完整 ID 集合并写回连续 `sort_order` |
+| 调整进行中动作顺序 | `TrainingPage` 的排序弹层 | `WorkoutSessionController::reorderExercises()` | 更新当前会话快照，不修改原计划 |
+| 完成一组 | `CurrentSetInputPanel.completeRequested` | `completeSet()` | 写入重量、次数、力竭等，并发出 `setCompleted(restSeconds)` |
+| 启动组间计时 | `TrainingPage.onSetCompleted` | `RestTimerController::start()` | 前台状态机计时，并尝试同步 Android 前台服务 |
+| 完成训练 | `TrainingPage` 完成操作 | `finishWorkout()` | 会话改为完成，触发历史/分析刷新和可选有氧补录 |
+| 恢复 JSON 备份 | `ManagementPage` | `BackupService::restoreJson()` | 校验并事务恢复，随后 `main.cpp` 刷新全部控制器 |
+
+这一调用链的共同原则是：QML 只收集输入和展示状态；C++ 负责校验、事务与错误；SQLite 只由 C++ 访问。排序和训练开始等多行写入不得在 QML 中逐条拼接。
 
 ## 9. 休息计时架构
 
@@ -389,9 +436,9 @@ QML 通过 `SafeArea.margins` 消费系统栏和刘海边距：`AppPage` 把四�
 主要命令：
 
 ```powershell
-cmake --build C:\FitTrackDev\fittrack\build -j 6
-cmake --build C:\FitTrackDev\fittrack\build --target all_qmllint -j 6
-ctest --test-dir C:\FitTrackDev\fittrack\build -j 4 --output-on-failure
+cmake --build D:\FitTrackBuild\windows-qt6.11.1 -j 6
+cmake --build D:\FitTrackBuild\windows-qt6.11.1 --target all_qmllint -j 6
+ctest --test-dir D:\FitTrackBuild\windows-qt6.11.1 -j 4 --output-on-failure
 powershell -ExecutionPolicy Bypass -File C:\FitTrackDev\fittrack\scripts\build-android.ps1
 ```
 
@@ -399,14 +446,14 @@ Android 还执行 Gradle Lint、AAPT 清单检查、APK 签名检查、ZIP 对�
 
 ## 14. 当前限制与技术风险
 
-1. **升级后产物证据**：Qt 6.11.1、包名和 API 基线已经进入源码，但对应的 arm64 APK、x86_64 模拟器包和 AAB 仍需从当前提交干净构建并逐项校验。
-2. **16 KB 页大小**：`verify-android-release.ps1` 已提供 ZIP 对齐和 ELF LOAD 段检查；只有对最终 APK/AAB 的校验完成后，才能记录具体兼容结论。
+1. **正式发布产物**：当前提交已有通过离线门禁的 arm64/x86_64 Debug APK，以及 arm64 unsigned Release APK/AAB；尚无使用长期 Direct/PlayUpload 密钥签名的正式 APK/AAB。
+2. **16 KB 页大小**：现有 Debug 与 unsigned Release 产物已通过 ZIP 16 KB 和 81/81 ELF LOAD 对齐检查；正式签名最终产物仍必须独立执行同一校验，不能从无签名产物推定。
 3. **发布身份**：仓库提供 Direct 与 PlayUpload 签名 profile、密钥生成和校验脚本，但真实长期密钥仍由用户在仓库外创建和保管；同签名覆盖升级尚无真机证据。
 4. **QML 类型安全**：上下文属性和动态 QVariant 结构便于迭代，但编译期类型约束有限。
 5. **控制器 SQL 耦合**：控制器直接访问数据库，代码路径清晰，但继续扩展时需要防止重复查询和事务规则分散。
 6. **训练页体量**：`TrainingPage.qml` 当前 1663 行；当前组输入、休息计时和器械选择已分别拆到三个组件，但页面仍承担训练正文、弹层和流程编排，是最大的 UI 维护热点。
 7. **平台差异**：`x86_64` 模拟器适合验证高版本 Android API 与窗口路径，但不能代替原生 `arm64-v8a` 真机上的 ColorOS、通知、SAF、TalkBack、字体和输入法验收。
-8. **自动化回归边界**：2026-07-14 的 Qt 6.11.1 干净构建已通过 15/15，随后聚焦 `qmlnavigation` 再次通过；桌面离屏回归不能替代 Android 真机视觉、TalkBack、通知和厂商后台策略验收。
+8. **运行证据边界**：文档中存在 API 36 模拟器回归记录，但当前仓库没有可复核的安装、启动、日志和截图证据；桌面离屏回归也不能替代 Android 真机视觉、TalkBack、通知和厂商后台策略验收。
 
 ## 15. 关键文件索引
 
