@@ -34,14 +34,14 @@ C:\FitTrackDev\fittrack\build-android-arm64\android-build\build\outputs\apk\debu
 - target/compile API：35
 - ABI：`arm64-v8a`
 
-2026-07-14 08:08 从当前源码构建并通过门禁的产物为：
+2026-07-14 14:05 从当前源码构建并通过门禁的产物为：
 
 ```text
 C:\FitTrackDev\fittrack\build-android-arm64\android-build\build\outputs\apk\debug\android-build-debug.apk
 ```
 
-- 文件大小：64,447,552 字节；
-- SHA-256：`DDD59B0DD5216696396397CC8204977631DE0A0EC7D024576D7EF330C42EFCC1`；
+- 文件大小：64,480,320 字节；
+- SHA-256：`069FEFC769284E6609C18CED34A2C7198DFC3CB1D1BA09CF1DFFD7E4AA4AE191`；
 - Android Lint：0 issue；
 - 签名：Android Debug 证书，APK Signature Scheme v2 校验通过；
 - 包内 ABI：仅 `arm64-v8a`；
@@ -156,6 +156,7 @@ Get-FileHash $apk -Algorithm SHA256
 7. 返回键依次关闭详情、返回分析主页、返回首页，首页再返回退出。
 8. 活动训练中强制结束进程，重启后可恢复已完成组且不丢数据。
 9. 使用 `adb install -r` 覆盖安装新包，数据库可以继续打开。
+10. 分别放入可追溯的真实 v1–v7 数据库副本和损坏测试副本：旧库升级后关键记录仍在；损坏库启动后显示 `.corrupt-*` 保留路径，主库及现存 sidecar 字节不变，恢复替换期间强制结束进程后再次启动可以续完。
 
 出现崩溃时收集：
 
@@ -167,6 +168,7 @@ Get-FileHash $apk -Algorithm SHA256
 ## 直接侧载分享前仍需完成
 
 - 在一加 Ace 5 Pro 上完成首次安装、完整训练、后台计时、通知允许/拒绝、备份恢复、返回键、真实 TalkBack、系统大字体和数字键盘验收。
+- 使用真实历史数据库和损坏副本完成升级、原文件保留、启动提示及中断续跑验收；桌面合成夹具不能替代这一步。
 - 分享时同时提供版本号、SHA-256、第三方许可和媒体来源清单，并明确这是 Debug 签名测试版。
 - R6 冻结包名，在仓库外创建并备份长期 Release keystore，再用同签名 Release APK 验证覆盖升级。
 

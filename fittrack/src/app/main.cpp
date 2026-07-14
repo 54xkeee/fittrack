@@ -34,7 +34,8 @@ QByteArray readResource(const QString &path)
     return file.open(QIODevice::ReadOnly) ? file.readAll() : QByteArray{};
 }
 
-bool initializeDatabase(fittrack::DatabaseManager &databaseManager)
+bool initializeDatabase(fittrack::DatabaseManager &databaseManager,
+                        QString *recoveredDatabasePath)
 {
     const QString dataDirectory = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
     if (!QDir().mkpath(dataDirectory)) {
@@ -43,9 +44,22 @@ bool initializeDatabase(fittrack::DatabaseManager &databaseManager)
     }
 
     QString error;
-    if (!databaseManager.initialize(dataDirectory + QStringLiteral("/fittrack.sqlite"), &error)) {
-        qCritical() << "数据库初始化失败" << error;
-        return false;
+    const QString databasePath = dataDirectory + QStringLiteral("/fittrack.sqlite");
+    if (!databaseManager.initialize(databasePath, &error)) {
+        if (!databaseManager.corruptionDetected()) {
+            qCritical() << "数据库初始化失败" << error;
+            return false;
+        }
+        QString backupPath;
+        QString recoveryError;
+        if (!databaseManager.recoverCorruptDatabase(
+                databasePath, &backupPath, &recoveryError)) {
+            qCritical() << "数据库损坏且安全恢复失败" << recoveryError;
+            return false;
+        }
+        if (recoveredDatabasePath)
+            *recoveredDatabasePath = backupPath;
+        qWarning() << "检测到损坏数据库，原文件已保留" << backupPath;
     }
 
     const QList<QByteArray> exerciseDocuments{
@@ -109,7 +123,8 @@ int main(int argc, char *argv[])
     QQuickStyle::setStyle(QStringLiteral("Material"));
 
     fittrack::DatabaseManager databaseManager;
-    if (!initializeDatabase(databaseManager)) {
+    QString recoveredDatabasePath;
+    if (!initializeDatabase(databaseManager, &recoveredDatabasePath)) {
         return -1;
     }
 
@@ -144,6 +159,9 @@ int main(int argc, char *argv[])
     engine.rootContext()->setContextProperty(QStringLiteral("cardioController"), &cardioController);
     engine.rootContext()->setContextProperty(QStringLiteral("gymManagement"), &gymManagement);
     engine.rootContext()->setContextProperty(QStringLiteral("backupService"), &backupService);
+    engine.setInitialProperties({
+        {QStringLiteral("databaseRecoveryBackupPath"), recoveredDatabasePath},
+    });
     QObject::connect(
         &exerciseModel, &fittrack::ExerciseListModel::catalogChanged,
         &planExerciseModel, &fittrack::ExerciseListModel::reload);

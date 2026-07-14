@@ -21,7 +21,13 @@ ApplicationWindow {
     Material.primary: Design.Theme.surface
     property var pendingWorkoutRequest: ({})
     property int pendingInsightsTab: 0
+    property string databaseRecoveryBackupPath: ""
     readonly property var loadedInsights: insightsLoader.item
+
+    Component.onCompleted: {
+        if (databaseRecoveryBackupPath.length > 0)
+            Qt.callLater(databaseRecoveryDialog.open)
+    }
 
     function ensureMainPage(index, insightsTab) {
         if (index === 1)
@@ -265,6 +271,23 @@ ApplicationWindow {
             workoutHistory.reload()
             analyticsDashboard.reload()
             navigation.currentIndex = 2
+        }
+    }
+
+    AppDialog {
+        id: databaseRecoveryDialog
+        objectName: "databaseRecoveryDialog"
+        title: qsTr("数据库已安全恢复")
+        primaryText: qsTr("知道了")
+        secondaryVisible: false
+
+        contentItem: Label {
+            text: qsTr("检测到原数据库损坏。为避免覆盖数据，原文件已保留在：\n%1\n\nFitTrack 已创建全新数据库。若有 JSON 备份，可在“管理—备份与恢复”中导入。")
+                  .arg(window.databaseRecoveryBackupPath)
+            color: Design.Theme.surfaceMuted
+            font.pixelSize: Design.Theme.typeBody
+            wrapMode: Text.Wrap
+            Accessible.name: text
         }
     }
 

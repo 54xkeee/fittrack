@@ -1,9 +1,36 @@
 #include "storage/databasemanager.h"
 
+#include <QDateTime>
+#include <QFile>
+#include <QFileInfo>
+#include <QSaveFile>
 #include <QSqlError>
 #include <QSqlQuery>
 #include <QStringList>
 #include <QUuid>
+
+#include <utility>
+
+namespace {
+
+constexpr int kCurrentSchemaVersion = 8;
+
+bool isCorruptionError(const QSqlError &error)
+{
+    bool codeOk = false;
+    const int nativeCode = error.nativeErrorCode().toInt(&codeOk);
+    if (codeOk) {
+        const int primaryCode = nativeCode & 0xff;
+        if (primaryCode == 11 || primaryCode == 26)
+            return true;
+    }
+    const QString text = error.text().toLower();
+    return text.contains(QStringLiteral("malformed"))
+           || text.contains(QStringLiteral("not a database"))
+           || text.contains(QStringLiteral("file is encrypted"));
+}
+
+} // namespace
 
 namespace fittrack {
 
@@ -28,9 +55,20 @@ DatabaseManager::~DatabaseManager()
 
 bool DatabaseManager::initialize(const QString &databasePath, QString *errorMessage)
 {
+    m_corruptionDetected = false;
+    m_databasePath = databasePath == QStringLiteral(":memory:")
+        ? databasePath : QFileInfo(databasePath).absoluteFilePath();
     auto db = QSqlDatabase::addDatabase(QStringLiteral("QSQLITE"), m_connectionName);
     db.setDatabaseName(databasePath);
+    if (databasePath != QStringLiteral(":memory:")
+        && QFileInfo::exists(m_databasePath + QStringLiteral(".recovery-pending"))) {
+        m_corruptionDetected = true;
+        if (errorMessage)
+            *errorMessage = QStringLiteral("检测到上次未完成的数据库恢复");
+        return false;
+    }
     if (!db.open()) {
+        m_corruptionDetected = isCorruptionError(db.lastError());
         if (errorMessage) {
             *errorMessage = db.lastError().text();
         }
@@ -40,13 +78,429 @@ bool DatabaseManager::initialize(const QString &databasePath, QString *errorMess
     if (!execute(QStringLiteral("PRAGMA foreign_keys = ON"), errorMessage)) {
         return false;
     }
+    int schemaVersion = 0;
+    bool hasSchemaVersion = false;
     QSqlQuery version(db);
     if (version.exec(QStringLiteral(
-            "SELECT value FROM app_meta WHERE key='schema_version'"))
-        && version.next() && version.value(0).toString() == QStringLiteral("8")) {
-        return true;
+            "SELECT value FROM app_meta WHERE key='schema_version'"))) {
+        if (version.next()) {
+            hasSchemaVersion = true;
+            bool versionOk = false;
+            schemaVersion = version.value(0).toString().toInt(&versionOk);
+            if (!versionOk || schemaVersion < 1) {
+                if (errorMessage)
+                    *errorMessage = QStringLiteral("数据库版本信息无效");
+                return false;
+            }
+            if (schemaVersion > kCurrentSchemaVersion) {
+                if (errorMessage) {
+                    *errorMessage = QStringLiteral("数据库版本 %1 高于当前应用支持的版本 %2")
+                                        .arg(schemaVersion)
+                                        .arg(kCurrentSchemaVersion);
+                }
+                return false;
+            }
+        }
+    } else if (isCorruptionError(version.lastError())) {
+        m_corruptionDetected = true;
+        if (errorMessage)
+            *errorMessage = version.lastError().text();
+        return false;
+    }
+    version.finish();
+
+    QSqlQuery integrity(db);
+    if (!integrity.exec(QStringLiteral("PRAGMA quick_check(1)")) || !integrity.next()) {
+        m_corruptionDetected = m_corruptionDetected || isCorruptionError(integrity.lastError());
+        if (errorMessage)
+            *errorMessage = integrity.lastError().text();
+        return false;
+    }
+    const QString integrityResult = integrity.value(0).toString();
+    integrity.finish();
+    if (integrityResult != QStringLiteral("ok")) {
+        m_corruptionDetected = true;
+        if (errorMessage) {
+            *errorMessage = QStringLiteral("数据库完整性检查失败：%1")
+                                .arg(integrityResult);
+        }
+        return false;
+    }
+
+    if (hasSchemaVersion && schemaVersion == kCurrentSchemaVersion) {
+        QSqlQuery columns(db);
+        if (!columns.exec(QStringLiteral("PRAGMA table_info(cardio_record)"))) {
+            m_corruptionDetected = m_corruptionDetected
+                || isCorruptionError(columns.lastError());
+            if (errorMessage)
+                *errorMessage = columns.lastError().text();
+            return false;
+        }
+        while (columns.next()) {
+            if (columns.value(1).toString() == QStringLiteral("performed_at")
+                && columns.value(3).toBool()) {
+                return true;
+            }
+        }
+        columns.finish();
     }
     return createSchema(errorMessage);
+}
+
+bool DatabaseManager::recoverCorruptDatabase(
+    const QString &databasePath, QString *backupPath, QString *errorMessage)
+{
+    if (backupPath)
+        backupPath->clear();
+    const QString targetDatabasePath = QFileInfo(databasePath).absoluteFilePath();
+    if (!m_corruptionDetected || databasePath.isEmpty()
+        || databasePath == QStringLiteral(":memory:")
+        || targetDatabasePath != m_databasePath) {
+        if (errorMessage)
+            *errorMessage = QStringLiteral("当前数据库不满足安全恢复条件");
+        return false;
+    }
+
+    auto db = database();
+    db.close();
+    const QStringList sidecarSuffixes{QString{}, QStringLiteral("-journal"),
+                                      QStringLiteral("-wal"), QStringLiteral("-shm")};
+    const QString pendingPath = targetDatabasePath
+        + QStringLiteral(".recovery-pending");
+    const bool resumingPendingRecovery = QFileInfo::exists(pendingPath);
+    QString backupDatabasePath;
+    QString freshDatabasePath;
+    QStringList backedUpSuffixes;
+
+    const auto removeFileSet = [&](const QString &prefix) {
+        QStringList failures;
+        for (const QString &sidecarSuffix : sidecarSuffixes) {
+            const QString path = prefix + sidecarSuffix;
+            if (QFileInfo::exists(path) && !QFile::remove(path))
+                failures.append(path);
+        }
+        return failures;
+    };
+    const auto restoreOriginal = [&] {
+        db.close();
+        QStringList failures = removeFileSet(targetDatabasePath);
+        for (const QString &sidecarSuffix : std::as_const(backedUpSuffixes)) {
+            const QString original = targetDatabasePath + sidecarSuffix;
+            if (QFileInfo::exists(original))
+                continue;
+            if (!QFile::copy(backupDatabasePath + sidecarSuffix, original))
+                failures.append(original);
+        }
+        db.setDatabaseName(targetDatabasePath);
+        m_corruptionDetected = true;
+        return failures;
+    };
+    const auto verifyCurrentDatabase = [&](const QString &path, bool leaveOpen,
+                                           QString *verificationError) {
+        db.close();
+        db.setDatabaseName(path);
+        if (!db.open()) {
+            if (verificationError)
+                *verificationError = db.lastError().text();
+            return false;
+        }
+        QSqlQuery version(db);
+        if (!version.exec(QStringLiteral(
+                "SELECT value FROM app_meta WHERE key='schema_version'"))
+            || !version.next()
+            || version.value(0).toInt() != kCurrentSchemaVersion) {
+            if (verificationError) {
+                *verificationError = version.lastError().isValid()
+                    ? version.lastError().text()
+                    : QStringLiteral("恢复数据库版本无效");
+            }
+            db.close();
+            return false;
+        }
+        version.finish();
+        QSqlQuery integrity(db);
+        if (!integrity.exec(QStringLiteral("PRAGMA quick_check(1)"))
+            || !integrity.next()
+            || integrity.value(0).toString() != QStringLiteral("ok")) {
+            if (verificationError) {
+                *verificationError = integrity.lastError().isValid()
+                    ? integrity.lastError().text()
+                    : integrity.value(0).toString();
+            }
+            db.close();
+            return false;
+        }
+        integrity.finish();
+        QSqlQuery foreignKeys(db);
+        if (!foreignKeys.exec(QStringLiteral("PRAGMA foreign_keys = ON"))) {
+            if (verificationError)
+                *verificationError = foreignKeys.lastError().text();
+            db.close();
+            return false;
+        }
+        if (!leaveOpen)
+            db.close();
+        return true;
+    };
+    const auto createFreshDatabase = [&](QString *creationError) {
+        db.close();
+        db.setDatabaseName(freshDatabasePath);
+        if (!db.open()) {
+            if (creationError)
+                *creationError = db.lastError().text();
+            return false;
+        }
+        if (!execute(QStringLiteral("PRAGMA foreign_keys = ON"), creationError)
+            || !createSchema(creationError)) {
+            db.close();
+            return false;
+        }
+        db.close();
+        return verifyCurrentDatabase(freshDatabasePath, false, creationError);
+    };
+
+    if (resumingPendingRecovery) {
+        QFile pendingFile(pendingPath);
+        if (!pendingFile.open(QIODevice::ReadOnly)) {
+            if (errorMessage)
+                *errorMessage = QStringLiteral("无法读取数据库恢复标记：%1")
+                                    .arg(pendingFile.errorString());
+            return false;
+        }
+        const QList<QByteArray> markerLines = pendingFile.readAll().split('\n');
+        pendingFile.close();
+        if (markerLines.size() < 2) {
+            if (errorMessage)
+                *errorMessage = QStringLiteral("数据库恢复标记格式无效");
+            return false;
+        }
+        backupDatabasePath = QFileInfo(
+            QString::fromUtf8(markerLines.at(0))).absoluteFilePath();
+        freshDatabasePath = QFileInfo(
+            QString::fromUtf8(markerLines.at(1))).absoluteFilePath();
+        const QFileInfo targetInfo(targetDatabasePath);
+        const QFileInfo backupInfo(backupDatabasePath);
+        const QFileInfo freshInfo(freshDatabasePath);
+        const bool validBackupPath = backupInfo.absolutePath() == targetInfo.absolutePath()
+            && backupInfo.fileName().startsWith(
+                targetInfo.fileName() + QStringLiteral(".corrupt-"));
+        const bool validFreshPath = freshInfo.absolutePath() == targetInfo.absolutePath()
+            && freshInfo.fileName().startsWith(
+                targetInfo.fileName() + QStringLiteral(".recovery-"))
+            && freshInfo.fileName().endsWith(QStringLiteral(".tmp"));
+        if (!validBackupPath || !validFreshPath
+            || !QFileInfo::exists(backupDatabasePath)) {
+            if (errorMessage)
+                *errorMessage = QStringLiteral("数据库恢复标记引用的文件无效");
+            return false;
+        }
+        for (const QString &sidecarSuffix : sidecarSuffixes) {
+            if (QFileInfo::exists(backupDatabasePath + sidecarSuffix))
+                backedUpSuffixes.append(sidecarSuffix);
+        }
+    } else {
+        if (!QFileInfo::exists(targetDatabasePath)) {
+            if (errorMessage)
+                *errorMessage = QStringLiteral("找不到需要保留的损坏数据库");
+            return false;
+        }
+        const QString stamp = QDateTime::currentDateTimeUtc().toString(
+            QStringLiteral("yyyyMMdd-HHmmsszzz"));
+        bool backupCollision = false;
+        do {
+            backupDatabasePath = targetDatabasePath
+                + QStringLiteral(".corrupt-%1-%2")
+                      .arg(stamp, QUuid::createUuid()
+                                      .toString(QUuid::WithoutBraces));
+            backupCollision = false;
+            for (const QString &sidecarSuffix : sidecarSuffixes) {
+                if (QFileInfo::exists(backupDatabasePath + sidecarSuffix)) {
+                    backupCollision = true;
+                    break;
+                }
+            }
+        } while (backupCollision);
+
+        QStringList createdBackupFiles;
+        for (const QString &sidecarSuffix : sidecarSuffixes) {
+            const QString source = targetDatabasePath + sidecarSuffix;
+            if (!QFileInfo::exists(source))
+                continue;
+            const QString destination = backupDatabasePath + sidecarSuffix;
+            const qint64 sourceSize = QFileInfo(source).size();
+            const bool copied = QFile::copy(source, destination);
+            if (QFileInfo::exists(destination))
+                createdBackupFiles.append(destination);
+            if (!copied || QFileInfo(destination).size() != sourceSize) {
+                QStringList cleanupFailures;
+                for (const QString &createdPath : std::as_const(createdBackupFiles)) {
+                    if (QFileInfo::exists(createdPath) && !QFile::remove(createdPath))
+                        cleanupFailures.append(createdPath);
+                }
+                if (!cleanupFailures.isEmpty() && backupPath)
+                    *backupPath = backupDatabasePath;
+                if (errorMessage) {
+                    *errorMessage = QStringLiteral("无法完整备份损坏数据库文件：%1")
+                                        .arg(source);
+                    if (!cleanupFailures.isEmpty()) {
+                        *errorMessage += QStringLiteral("；以下本次备份未能清理：%1")
+                                             .arg(cleanupFailures.join(QStringLiteral("、")));
+                    }
+                }
+                return false;
+            }
+            backedUpSuffixes.append(sidecarSuffix);
+        }
+
+        bool freshCollision = false;
+        do {
+            freshDatabasePath = targetDatabasePath
+                + QStringLiteral(".recovery-%1.tmp")
+                      .arg(QUuid::createUuid().toString(QUuid::WithoutBraces));
+            freshCollision = false;
+            for (const QString &sidecarSuffix : sidecarSuffixes) {
+                if (QFileInfo::exists(freshDatabasePath + sidecarSuffix)) {
+                    freshCollision = true;
+                    break;
+                }
+            }
+        } while (freshCollision);
+    }
+
+    if (backupPath)
+        *backupPath = backupDatabasePath;
+
+    QString recoveryError;
+    if (resumingPendingRecovery && !QFileInfo::exists(freshDatabasePath)) {
+        if (QFileInfo::exists(targetDatabasePath)
+            && verifyCurrentDatabase(targetDatabasePath, true, &recoveryError)) {
+            if (QFile::remove(pendingPath)) {
+                m_corruptionDetected = false;
+                return true;
+            }
+            db.close();
+            m_corruptionDetected = true;
+            if (errorMessage) {
+                *errorMessage = QStringLiteral("恢复已完成，但无法清理恢复标记：%1")
+                                    .arg(pendingPath);
+            }
+            return false;
+        }
+    }
+
+    if (QFileInfo::exists(freshDatabasePath)
+        && !verifyCurrentDatabase(freshDatabasePath, false, &recoveryError)) {
+        const QStringList cleanupFailures = removeFileSet(freshDatabasePath);
+        if (!cleanupFailures.isEmpty()) {
+            if (errorMessage) {
+                *errorMessage = QStringLiteral("无法清理无效的恢复数据库：%1")
+                                    .arg(cleanupFailures.join(QStringLiteral("、")));
+            }
+            return false;
+        }
+    }
+    if (!QFileInfo::exists(freshDatabasePath)
+        && !createFreshDatabase(&recoveryError)) {
+        const QStringList cleanupFailures = removeFileSet(freshDatabasePath);
+        db.setDatabaseName(targetDatabasePath);
+        m_corruptionDetected = true;
+        if (errorMessage) {
+            *errorMessage = QStringLiteral("无法创建恢复数据库：%1；原库备份位于：%2")
+                                .arg(recoveryError, backupDatabasePath);
+            if (!cleanupFailures.isEmpty()) {
+                *errorMessage += QStringLiteral("；临时文件未能清理：%1")
+                                     .arg(cleanupFailures.join(QStringLiteral("、")));
+            }
+        }
+        return false;
+    }
+
+    if (!resumingPendingRecovery) {
+        QSaveFile pendingFile(pendingPath);
+        const QByteArray markerContents = backupDatabasePath.toUtf8() + '\n'
+            + freshDatabasePath.toUtf8() + '\n';
+        bool markerSaved = pendingFile.open(QIODevice::WriteOnly);
+        if (markerSaved) {
+            markerSaved = pendingFile.write(markerContents) == markerContents.size();
+            if (markerSaved)
+                markerSaved = pendingFile.commit();
+            else
+                pendingFile.cancelWriting();
+        }
+        if (!markerSaved) {
+            const QString markerError = pendingFile.errorString();
+            const QStringList cleanupFailures = removeFileSet(freshDatabasePath);
+            db.setDatabaseName(targetDatabasePath);
+            if (errorMessage) {
+                *errorMessage = QStringLiteral("无法写入数据库恢复标记：%1；原库备份位于：%2")
+                                    .arg(markerError, backupDatabasePath);
+                if (!cleanupFailures.isEmpty()) {
+                    *errorMessage += QStringLiteral("；临时文件未能清理：%1")
+                                         .arg(cleanupFailures.join(QStringLiteral("、")));
+                }
+            }
+            return false;
+        }
+    }
+
+    for (const QString &sidecarSuffix : sidecarSuffixes) {
+        const QString original = targetDatabasePath + sidecarSuffix;
+        if (QFileInfo::exists(original) && !QFile::remove(original)) {
+            const QStringList restoreFailures = restoreOriginal();
+            if (errorMessage) {
+                *errorMessage = QStringLiteral("无法替换损坏数据库文件：%1；原库备份位于：%2")
+                                    .arg(original, backupDatabasePath);
+                if (!restoreFailures.isEmpty()) {
+                    *errorMessage += QStringLiteral("；回滚失败：%1")
+                                         .arg(restoreFailures.join(QStringLiteral("、")));
+                }
+            }
+            return false;
+        }
+    }
+
+    if (!QFile::rename(freshDatabasePath, targetDatabasePath)) {
+        const QStringList restoreFailures = restoreOriginal();
+        if (errorMessage) {
+            *errorMessage = QStringLiteral("无法启用恢复数据库；原库备份位于：%1")
+                                .arg(backupDatabasePath);
+            if (!restoreFailures.isEmpty()) {
+                *errorMessage += QStringLiteral("；回滚失败：%1")
+                                     .arg(restoreFailures.join(QStringLiteral("、")));
+            }
+        }
+        return false;
+    }
+
+    if (!verifyCurrentDatabase(targetDatabasePath, true, &recoveryError)) {
+        const QStringList restoreFailures = restoreOriginal();
+        if (errorMessage) {
+            *errorMessage = QStringLiteral("恢复数据库校验失败：%1；原库备份位于：%2")
+                                .arg(recoveryError, backupDatabasePath);
+            if (!restoreFailures.isEmpty()) {
+                *errorMessage += QStringLiteral("；回滚失败：%1")
+                                     .arg(restoreFailures.join(QStringLiteral("、")));
+            }
+        }
+        return false;
+    }
+    if (!QFile::remove(pendingPath)) {
+        db.close();
+        m_corruptionDetected = true;
+        if (errorMessage) {
+            *errorMessage = QStringLiteral("恢复已完成，但无法清理恢复标记：%1")
+                                .arg(pendingPath);
+        }
+        return false;
+    }
+
+    m_corruptionDetected = false;
+    return true;
+}
+
+bool DatabaseManager::corruptionDetected() const
+{
+    return m_corruptionDetected;
 }
 
 QSqlDatabase DatabaseManager::database() const
@@ -63,6 +517,7 @@ bool DatabaseManager::execute(const QString &statement, QString *errorMessage)
     if (errorMessage) {
         *errorMessage = query.lastError().text();
     }
+    m_corruptionDetected = m_corruptionDetected || isCorruptionError(query.lastError());
     return false;
 }
 
@@ -103,6 +558,7 @@ bool DatabaseManager::createSchema(QString *errorMessage)
 
     auto db = database();
     if (!db.transaction()) {
+        m_corruptionDetected = m_corruptionDetected || isCorruptionError(db.lastError());
         if (errorMessage) {
             *errorMessage = db.lastError().text();
         }
@@ -126,6 +582,16 @@ bool DatabaseManager::createSchema(QString *errorMessage)
         }
         return false;
     };
+    const auto columnIsNotNull = [&db](const QString &table, const QString &column) {
+        QSqlQuery columns(db);
+        if (!columns.exec(QStringLiteral("PRAGMA table_info(%1)").arg(table)))
+            return false;
+        while (columns.next()) {
+            if (columns.value(1).toString() == column)
+                return columns.value(3).toBool();
+        }
+        return false;
+    };
     if (!hasColumn(QStringLiteral("set_record"), QStringLiteral("bodyweight_load_type"))
         && !execute(QStringLiteral(
             "ALTER TABLE set_record ADD COLUMN bodyweight_load_type TEXT NOT NULL DEFAULT 'Bodyweight'"),
@@ -133,12 +599,40 @@ bool DatabaseManager::createSchema(QString *errorMessage)
         db.rollback();
         return false;
     }
-    if (!hasColumn(QStringLiteral("cardio_record"), QStringLiteral("performed_at"))) {
-        if (!execute(QStringLiteral("ALTER TABLE cardio_record ADD COLUMN performed_at TEXT"), errorMessage)
+    const bool hasPerformedAt = hasColumn(
+        QStringLiteral("cardio_record"), QStringLiteral("performed_at"));
+    if (!hasPerformedAt
+        || !columnIsNotNull(QStringLiteral("cardio_record"),
+                            QStringLiteral("performed_at"))) {
+        const QString performedAtSource = hasPerformedAt
+            ? QStringLiteral(
+                  "COALESCE(performed_at,(SELECT ended_at FROM workout_session "
+                  "WHERE id=cardio_record_legacy_v8.session_id),"
+                  "strftime('%Y-%m-%dT%H:%M:%SZ','now'))")
+            : QStringLiteral(
+                  "COALESCE((SELECT ended_at FROM workout_session "
+                  "WHERE id=cardio_record_legacy_v8.session_id),"
+                  "strftime('%Y-%m-%dT%H:%M:%SZ','now'))");
+        if (!execute(QStringLiteral(
+                "ALTER TABLE cardio_record RENAME TO cardio_record_legacy_v8"),
+                errorMessage)
             || !execute(QStringLiteral(
-                "UPDATE cardio_record SET performed_at=COALESCE("
-                "(SELECT ended_at FROM workout_session WHERE id=cardio_record.session_id),"
-                "strftime('%Y-%m-%dT%H:%M:%SZ','now')) WHERE performed_at IS NULL"), errorMessage)) {
+                "CREATE TABLE cardio_record (id TEXT PRIMARY KEY, session_id TEXT "
+                "REFERENCES workout_session(id) ON DELETE CASCADE, cardio_type TEXT NOT NULL, "
+                "performed_at TEXT NOT NULL, duration_seconds INTEGER NOT NULL, incline REAL, "
+                "speed_kmh REAL, distance_km REAL, machine_level REAL, floors INTEGER, "
+                "steps INTEGER, average_heart_rate INTEGER, notes TEXT NOT NULL DEFAULT '')"),
+                errorMessage)
+            || !execute(QStringLiteral(
+                "INSERT INTO cardio_record(id,session_id,cardio_type,performed_at,"
+                "duration_seconds,incline,speed_kmh,distance_km,machine_level,floors,steps,"
+                "average_heart_rate,notes) SELECT id,session_id,cardio_type,%1,"
+                "duration_seconds,incline,speed_kmh,distance_km,machine_level,floors,steps,"
+                "average_heart_rate,notes FROM cardio_record_legacy_v8")
+                            .arg(performedAtSource),
+                errorMessage)
+            || !execute(QStringLiteral("DROP TABLE cardio_record_legacy_v8"),
+                        errorMessage)) {
             db.rollback();
             return false;
         }
@@ -208,6 +702,7 @@ bool DatabaseManager::createSchema(QString *errorMessage)
     }
 
     if (!db.commit()) {
+        m_corruptionDetected = m_corruptionDetected || isCorruptionError(db.lastError());
         if (errorMessage) {
             *errorMessage = db.lastError().text();
         }

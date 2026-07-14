@@ -223,11 +223,34 @@ void QmlNavigationTest::loadsAndSwitchesEveryPrimaryPage()
     engine.rootContext()->setContextProperty(QStringLiteral("cardioController"), &cardioController);
     engine.rootContext()->setContextProperty(QStringLiteral("gymManagement"), &gymManagement);
     engine.rootContext()->setContextProperty(QStringLiteral("backupService"), &backupService);
+    const QString recoveryProbePath = QStringLiteral("C:/FitTrack/recovery-probe.sqlite");
+    engine.setInitialProperties({
+        {QStringLiteral("databaseRecoveryBackupPath"), recoveryProbePath},
+    });
     engine.load(QUrl::fromLocalFile(QStringLiteral(FITTRACK_SOURCE_DIR "/qml/Main.qml")));
     QCOMPARE(engine.rootObjects().size(), 1);
     QObject *root = engine.rootObjects().first();
     auto *window = qobject_cast<QQuickWindow *>(root);
     QVERIFY(window);
+    window->resize(360, 800);
+    window->update();
+    QObject *databaseRecoveryDialog = root->findChild<QObject *>(
+        QStringLiteral("databaseRecoveryDialog"));
+    QVERIFY(databaseRecoveryDialog);
+    QTRY_VERIFY(databaseRecoveryDialog->property("visible").toBool());
+    QObject *databaseRecoveryContent = databaseRecoveryDialog->property(
+        "contentItem").value<QObject *>();
+    QVERIFY(databaseRecoveryContent);
+    QVERIFY(databaseRecoveryContent->property("text").toString().contains(recoveryProbePath));
+    const QString recoveryScreenshotDirectory = QStringLiteral(FITTRACK_SCREENSHOT_DIR);
+    QVERIFY(QDir().mkpath(recoveryScreenshotDirectory));
+    window->update();
+    QTest::qWait(100);
+    QVERIFY(window->grabWindow().save(QDir(recoveryScreenshotDirectory).filePath(
+        QStringLiteral("database-recovery-dialog-360x800.png"))));
+    QVERIFY(QMetaObject::invokeMethod(databaseRecoveryDialog, "close"));
+    QTRY_VERIFY(!databaseRecoveryDialog->property("visible").toBool());
+    QVERIFY(root->setProperty("databaseRecoveryBackupPath", QString{}));
     QVERIFY2(!QGuiApplication::font().family().isEmpty(),
              "应用必须继承可用的系统字体");
     const QByteArray mainSource = readFile(
