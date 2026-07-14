@@ -12,13 +12,13 @@ FitTrack 是一个全新的 Android 个人健身训练记录应用，位于现�
 
 ## 2. 技术基线
 
-- UI：Qt 6.9、Qt Quick/QML、Qt Quick Controls Material
+- UI：Qt 6.11.1、Qt Quick/QML、Qt Quick Controls Material
 - 业务逻辑：C++17
 - 构建：CMake + Ninja
 - 数据库：SQLite（Qt SQL）
 - 测试：Qt Test；核心计算与仓储优先自动化测试
-- Android：`arm64-v8a`，以一加 Ace 5 Pro 等现代竖屏手机为主测设备
-- Android 包名：`com.fittrack.app`
+- Android：手机包 `arm64-v8a`、模拟器包 `x86_64`，以一加 Ace 5 Pro 等现代竖屏手机为最终验收设备
+- Android：应用名“训迹”，包名 `com.xuke.fittrack`，min API 29，target/compile API 36
 - 数据策略：离线优先，动作与模板由版本化 JSON 种子导入 SQLite
 - 媒体策略：58 个系统动作各使用 1 张已审核的可分发图片；42 张为开放许可/公共领域素材，16 张为 FitTrack 原创 CC0。国内视频平台截图、MuscleDB 授权不明图片和旧图片目录不进入 APK
 
@@ -63,17 +63,17 @@ fittrack/
 - M6 已完成首页与分析页的训练次数、正式组、容量、最高重量、对应次数/组数、e1RM、肌群分布、单动作趋势和有氧时长统计。
 - M7 桌面能力已完成：跑步机爬坡、爬楼机、力量训练后附加有氧、个人训练日单段有氧目标及训练快照、健身房/器械管理、JSON 事务恢复和 SQLite 快照导出。
 - Graphite & Lime 已形成语义 `Theme` 单例和移动端组件库，底部导航、首页、训练、计划、动作库、趋势、历史、有氧和管理均已统一；`AppIcon` 使用 `PathSvg` 提供统一线性图标，准备/训练长标题可响应换行，计划/训练动作预览至少 48dp，训练动作卡提供可见焦点。Windows 固定环境已对 5 个静态关键状态建立像素容差基准门禁；Android 真机视觉仍待验收。
-- 已完成 Qt 6.9 Safe Area 接入、已完成组与组备注修正、历史训练删除和训练完成总结；生产应用直接使用系统字体，不再打包 Inter。
-- 当前共有 15 项自动化测试，包含五个主入口、训练准备零写入、共享动作详情、参数保存/恢复、可编辑个人计划、训练进行中、训练完成总结、带真实数据的历史详情、非空分析、有氧、管理和性能 SQL 门禁，全部通过。QML 额外覆盖字符图标门禁、1.0/1.3/1.5/2.0 四档字体、标题完整换行、计划/训练动作预览 48dp、训练动作卡焦点、当前动作详情真实打开、TalkBack 语义和真实 `QTouchEvent`。
-- Android 工具链已安装在 `D:\FitTrackToolchains`，`arm64-v8a` 调试 APK 已完成干净构建，并通过 Android Lint（0 issue）、API/ABI/包名检查、V2 调试签名和包内媒体白名单校验。
+- 已完成 Qt 6.11.1 `SafeArea.margins` 接入、组与组备注修正、历史训练删除和训练完成总结；生产应用直接使用系统字体，不再打包 Inter。`TrainingPage.qml` 当前 1663 行，当前组输入、休息计时和器械选择已分别拆到 `CurrentSetInputPanel`、`TrainingRestTimer` 和 `EquipmentChoiceDialog`。
+- 当前共有 15 项自动化测试，包含五个主入口、训练准备零写入、共享动作详情、参数保存/恢复、可编辑个人计划、训练进行中、训练完成总结、带真实数据的历史详情、非空分析、有氧、管理和性能 SQL 门禁。QML 额外覆盖字符图标门禁、1.0/1.3/1.5/2.0 四档字体、标题完整换行、计划/训练动作预览 48dp、训练动作卡焦点、当前动作详情真实打开、TalkBack 语义和真实 `QTouchEvent`。2026-07-14 的 Qt 6.11.1 干净构建已通过 15/15，随后聚焦 `qmlnavigation` 再次通过。
+- Android 工具链已安装在 `D:\FitTrackToolchains`：Qt 6.11.1、JDK 21、SDK/Build Tools 36、NDK 27.2.12479018，并已具备 `arm64-v8a` 手机包与 `x86_64` 模拟器包构建入口。迁移后的最终 APK/AAB 仍需重新完成 Lint、API/ABI/包名、签名、对齐和媒体白名单校验。
 - Debug 侧载包已改为脚本化生成：输出只含 1 个 APK，并附 26 份许可正文、3 份实际 Qt SBOM、NDK NOTICE、媒体署名、源码/重新链接说明和逐文件 SHA-256；`dist/` 不进入 Git，待发布提交后需再生成一次。
-- Android 前台计时服务、运行中通知与一次完成提示、系统返回层级、`content://` SAF 备份恢复、Adaptive Icon 和启动页已经落地；当前没有连接真机，因此一加 Ace 5 Pro 的安装、ColorOS 后台、锁屏通知和 SAF 兼容性尚未验收。
-- Debug/Release APK 与 AAB 的分离构建、最小权限和外部环境变量签名流程已经验证；Debug APK 可用于直接侧载分享。长期发布密钥、同签名覆盖升级和真机运行仍未完成，不得描述为商店级 Release 版本。
+- Android 前台计时服务、运行中通知与一次完成提示、系统返回层级、`content://` SAF 备份恢复、Adaptive Icon 和启动页已经落地；升级后的最终包尚未完成一加 Ace 5 Pro 安装、ColorOS 后台、锁屏通知和 SAF 兼容性回归。
+- Debug/Release APK 与 AAB 的分离构建、最小权限、Direct/PlayUpload 签名 profile 和发布校验脚本已经进入仓库。真实长期密钥、最终签名 APK/AAB、同签名覆盖升级和真机运行仍未完成，不得描述为已正式发布。
 
 ### M0：工具链与空应用
 
 - 安装 CMake、Ninja、Qt Declarative/Quick、Qt Android 套件、Android SDK/NDK/JDK。
-- 创建 CMake/QML/C++ 项目，桌面调试版和 Android `arm64-v8a` 均可构建。
+- 创建 CMake/QML/C++ 项目，桌面调试版、Android `arm64-v8a` 手机包和 `x86_64` 模拟器包均有独立构建入口。
 - 显示 Material 深色空首页，并建立统一日志输出。
 
 验收：桌面调试程序启动；一加 Ace 5 Pro 安装 APK 并进入首页。
@@ -154,11 +154,11 @@ fittrack/
 - 实现 Android 前台计时服务、通知、SAF 备份恢复、系统返回键和应用生命周期适配。
 - 执行单元测试、SQLite 集成测试、QML 页面测试、升级迁移测试和 Android 真机回归。
 - 准备简明隐私说明、医疗免责声明、第三方许可和媒体来源清单；当前仓库已提供完整许可正文与自动打包入口，正式分享时必须使用脚本生成的配套材料。
-- 使用长期密钥生成签名 Release APK，并准备版本说明、安装说明和 SHA-256；AAB 与商店物料留作可选后续工作。
+- 使用长期 Direct 密钥生成签名 Release APK，使用独立 PlayUpload 密钥生成 AAB，并准备版本说明、安装说明和 SHA-256；商店文案与截图物料留作后续工作。
 
 验收：一加 Ace 5 Pro 完整训练流程、后台计时、备份恢复和升级安装通过；核心演示无崩溃、无数据丢失、无未授权内置媒体，发布材料与应用真实行为一致。
 
-截至 2026-07-14，M8 已具备视觉系统、空状态、Safe Area、启动页、Adaptive Icon、Android 前台计时、通知、SAF、返回键、`arm64-v8a` Debug/Release 构建、最小权限检查、调试签名验证、58/58 可分发媒体、许可正文与侧载打包脚本；桌面自动化、5 状态视觉差异门禁、截图和 Debug 构建通过。12 动作/48 组训练恢复已达到固定 5 条 SQL 门槛；合成 v1–v7 迁移、旧 v8 约束修复、未来版本拒绝、损坏库原文件保留、恢复中断续跑和 360×800 启动提示已有自动化证据。真实历史安装包数据库与真机损坏恢复、长期发布密钥与同签名升级仍待完成。Android 构建和真机验收步骤见 [`fittrack-android-build.md`](fittrack-android-build.md)。
+截至 2026-07-14，M8 已具备视觉系统、空状态、Qt Safe Area、启动页、Adaptive Icon、Android 前台计时、通知、SAF、返回键、双 ABI 构建脚本、Direct/PlayUpload 签名 profile、发布校验脚本、58/58 可分发媒体、许可正文与侧载打包脚本。12 动作/48 组训练恢复已达到固定 5 条 SQL 门槛；合成 v1–v7 迁移、旧 v8 约束修复、未来版本拒绝、损坏库原文件保留和恢复中断续跑已有自动化证据。Qt 6.11.1 下桌面 15/15 已全绿；arm64/x86_64 Debug 和 arm64 unsigned Release APK/AAB 已通过包结构与 16 KB 门禁。真实历史安装包数据库、真机损坏恢复、长期发布密钥与同签名升级仍待完成。Android 构建和真机验收步骤见 [`fittrack-android-build.md`](fittrack-android-build.md)。
 
 ## 5. 动作资料并行流水线
 
@@ -188,4 +188,4 @@ fittrack/
 
 只有用户确认后才能开始该阶段开发。完成当前阶段不代表可以自动进入下一阶段。
 
-当前阶段为 R6 完成度审计与真机验收，不新增训练建议等业务边界。训练恢复 ≤5 SQL、合成旧库迁移与损坏恢复、5 状态视觉基准和许可侧载包的桌面门槛已经关闭；剩余项目为一加 Ace 5 Pro 的安装、后台计时、通知、SAF、返回键、异常恢复、真实 TalkBack、系统大字体和数字键盘，以及真实历史 v1–v7 数据库升级与损坏库恢复、发布签名和覆盖升级证据。58 个动作目前各有 1 张可分发图；最初“两张 MuscleDB 起止图”目标仍需用户在接受单图与提供分发授权之间明确选择。
+当前阶段为 R6 完成度审计与真机验收，不新增训练建议等业务边界。训练恢复 ≤5 SQL、合成旧库迁移与损坏恢复的桌面门槛已经关闭；当前先修复 Qt 6.11.1 下训练冲突弹层 48dp 回归，再重新生成并校验 `arm64-v8a` APK、`x86_64` 模拟器包和 PlayUpload AAB。随后仍需一加 Ace 5 Pro 的安装、后台计时、通知、SAF、返回键、异常恢复、真实 TalkBack、系统大字体、数字键盘、真实历史 v1–v7 数据库升级与损坏库恢复、16 KB 结论、正式签名和覆盖升级证据。58 个动作目前各有 1 张可分发图；最初“两张 MuscleDB 起止图”目标仍需用户在接受单图与提供分发授权之间明确选择。

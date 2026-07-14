@@ -171,8 +171,8 @@ const QStringList &visualBaselineFiles()
 QString visualBaselineEnvironmentError(QQuickWindow *window)
 {
     QStringList errors;
-    if (QString::fromLatin1(qVersion()) != QStringLiteral("6.9.1"))
-        errors.append(QStringLiteral("Qt 版本必须为 6.9.1，实际为 %1").arg(qVersion()));
+    if (QString::fromLatin1(qVersion()) != QStringLiteral("6.11.1"))
+        errors.append(QStringLiteral("Qt 版本必须为 6.11.1，实际为 %1").arg(qVersion()));
     if (QGuiApplication::platformName() != QStringLiteral("offscreen")) {
         errors.append(QStringLiteral("QPA 必须为 offscreen，实际为 %1")
                           .arg(QGuiApplication::platformName()));
@@ -500,6 +500,7 @@ void QmlNavigationTest::loadsAndSwitchesEveryPrimaryPage()
     QVERIFY(preparationPage);
     QVERIFY(commitPreparation);
     QTRY_VERIFY(preparationPage->property("visible").toBool());
+    QTRY_VERIFY(!navigation->property("visible").toBool());
     QSqlQuery preparationCount(databaseManager.database());
     QVERIFY(preparationCount.exec(QStringLiteral("SELECT COUNT(*) FROM workout_session")));
     QVERIFY(preparationCount.next());
@@ -577,6 +578,21 @@ void QmlNavigationTest::loadsAndSwitchesEveryPrimaryPage()
     QVERIFY(repsInput);
     QVERIFY(restInput);
     QTRY_VERIFY(parameterSheet->property("visible").toBool());
+    QVERIFY(setsInput->setProperty("value", 4));
+    QVERIFY(repsInput->setProperty("text", QStringLiteral("12,10,8,6")));
+    QVERIFY(restInput->setProperty("value", 45));
+    QAccessibleInterface *restorePendingParameters = findAccessibleByObjectName(
+        accessibleRoot, QStringLiteral("parameterRestoreDefaultsButton"));
+    QVERIFY(restorePendingParameters);
+    QVERIFY(!restorePendingParameters->state().disabled);
+    restorePendingParameters->actionInterface()->doAction(
+        QAccessibleActionInterface::pressAction());
+    QTRY_COMPARE(setsInput->property("value").toInt(),
+                 preparedExercise.value(QStringLiteral("sets")).toInt());
+    QTRY_COMPARE(repsInput->property("text").toString(),
+                 preparedExercise.value(QStringLiteral("reps")).toString());
+    QTRY_COMPARE(restInput->property("value").toInt(),
+                 preparedExercise.value(QStringLiteral("restSeconds")).toInt());
     QVERIFY(setsInput->setProperty("value", 4));
     QVERIFY(repsInput->setProperty("text", QStringLiteral("12,10,8,6")));
     QVERIFY(restInput->setProperty("value", 45));
@@ -688,13 +704,18 @@ void QmlNavigationTest::loadsAndSwitchesEveryPrimaryPage()
     QAccessibleInterface *cancelPreparation = findAccessibleByName(
         accessibleRoot, QStringLiteral("取消训练准备"), QAccessible::Button);
     QVERIFY(cancelPreparation);
-    cancelPreparation->actionInterface()->doAction(QAccessibleActionInterface::pressAction());
+    QQuickItem *cancelPreparationItem = qobject_cast<QQuickItem *>(cancelPreparation->object());
+    QVERIFY(cancelPreparationItem);
+    cancelPreparationItem->forceActiveFocus();
+    QTRY_VERIFY(cancelPreparationItem->hasActiveFocus());
+    QTest::keyRelease(window, Qt::Key_Back);
     QObject *cancelPreparationConfirm = root->findChild<QObject *>(
         QStringLiteral("cancelPreparationConfirmDialog"));
     QVERIFY(cancelPreparationConfirm);
     QTRY_VERIFY(cancelPreparationConfirm->property("visible").toBool());
     QVERIFY(QMetaObject::invokeMethod(cancelPreparationConfirm, "accept"));
     QTRY_VERIFY(!workoutController.preparing());
+    QTRY_VERIFY(navigation->property("visible").toBool());
     QVERIFY(preparationCount.exec(QStringLiteral("SELECT COUNT(*) FROM workout_session")));
     QVERIFY(preparationCount.next());
     QCOMPARE(preparationCount.value(0).toInt(), 0);
@@ -1379,6 +1400,10 @@ void QmlNavigationTest::loadsAndSwitchesEveryPrimaryPage()
     QVERIFY(touchTap(window, touchDevice, twoMinuteTimer));
     QTRY_COMPARE(restTimer.state(), fittrack::RestTimerController::State::Running);
     QTRY_VERIFY(!restTimerDialog->property("visible").toBool());
+    QObject *backgroundAlertFeedback = root->findChild<QObject *>(
+        QStringLiteral("backgroundAlertFeedback"));
+    QVERIFY(backgroundAlertFeedback);
+    QVERIFY(!backgroundAlertFeedback->property("visible").toBool());
 
     QVERIFY(root->setProperty("fontScale", 1.0));
     qunsetenv("FITTRACK_FONT_SCALE");
@@ -1507,20 +1532,23 @@ void QmlNavigationTest::loadsAndSwitchesEveryPrimaryPage()
             QVERIFY(capture(name, viewport));
     }
 
+    QQuickItem *homeTabItem = qobject_cast<QQuickItem *>(homeTab->object());
+    QVERIFY(homeTabItem);
+    homeTabItem->forceActiveFocus();
+    QTRY_VERIFY(homeTabItem->hasActiveFocus());
+    QTest::keyRelease(window, Qt::Key_Back);
+    QTRY_COMPARE(insightsTabs->property("currentIndex").toInt(), 0);
+    QCOMPARE(navigation->property("currentIndex").toInt(), 4);
+    QTest::keyRelease(window, Qt::Key_Back);
+    QTRY_COMPARE(navigation->property("currentIndex").toInt(), 0);
     QVariant handled;
-    QVERIFY(QMetaObject::invokeMethod(root, "handleBack", Q_RETURN_ARG(QVariant, handled)));
-    QVERIFY(handled.toBool());
-    QCOMPARE(insightsTabs->property("currentIndex").toInt(), 0);
-    QVERIFY(QMetaObject::invokeMethod(root, "handleBack", Q_RETURN_ARG(QVariant, handled)));
-    QVERIFY(handled.toBool());
-    QCOMPARE(navigation->property("currentIndex").toInt(), 0);
     QVERIFY(QMetaObject::invokeMethod(root, "handleBack", Q_RETURN_ARG(QVariant, handled)));
     QVERIFY(!handled.toBool());
 
 #ifdef Q_OS_WIN
     const QString baselineDirectory = QStringLiteral(
         FITTRACK_SOURCE_DIR
-        "/tests/visual/baselines/windows-qt6.9.1-offscreen-software-material-zh_CN-dpr1");
+        "/tests/visual/baselines/windows-qt6.11.1-offscreen-software-material-zh_CN-dpr1");
     const QString diffDirectory = QDir(screenshotDirectory).filePath(QStringLiteral("diff"));
     QStringList visualFailures;
     for (const QString &fileName : visualBaselineFiles()) {

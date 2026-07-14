@@ -44,6 +44,7 @@ class WorkoutSessionControllerTest final : public QObject
 
 private slots:
     void createsPersistsAndResumesWorkout();
+    void rollsBackExerciseReplacementWhenSetCreationFails();
     void suggestsNextTanDay();
     void reportsConflictWithoutCreatingAnotherWorkout();
     void switchesWorkoutAtomically();
@@ -230,6 +231,66 @@ void WorkoutSessionControllerTest::createsPersistsAndResumesWorkout()
     QVERIFY(recoveryController.hasUnfinished());
     QVERIFY(recoveryController.finishUnfinished());
     QVERIFY(!recoveryController.hasUnfinished());
+}
+
+void WorkoutSessionControllerTest::rollsBackExerciseReplacementWhenSetCreationFails()
+{
+    fittrack::DatabaseManager manager;
+    QString error;
+    QVERIFY2(manager.initialize(QStringLiteral(":memory:"), &error), qPrintable(error));
+    auto database = manager.database();
+
+    QSqlQuery setup(database);
+    QVERIFY(setup.exec(QStringLiteral(
+        "INSERT INTO exercise(id,name_zh,body_part,movement,load_mode,recommended_sets,"
+        "recommended_reps,rest_seconds) VALUES"
+        "('bench','杠铃卧推','胸部','水平推','Standard',2,'10',120),"
+        "('row','坐姿划船','背部','水平拉','Standard',3,'8',90)")));
+
+    fittrack::WorkoutSessionController controller(database);
+    QVERIFY(controller.startFreeWorkout(QStringLiteral("替换回滚测试")));
+    QVERIFY(controller.addExercise(QStringLiteral("bench"), 2, QStringLiteral("10")));
+    const QString workoutExerciseId = controller.exercises().first().toMap()
+                                          .value(QStringLiteral("id")).toString();
+
+    QSqlQuery originalSets(database);
+    originalSets.prepare(QStringLiteral(
+        "SELECT id FROM set_record WHERE workout_exercise_id=? ORDER BY set_order"));
+    originalSets.addBindValue(workoutExerciseId);
+    QVERIFY(originalSets.exec());
+    QStringList originalSetIds;
+    while (originalSets.next()) {
+        originalSetIds.append(originalSets.value(0).toString());
+    }
+    QCOMPARE(originalSetIds.size(), 2);
+
+    QVERIFY(setup.exec(QStringLiteral(
+        "CREATE TRIGGER reject_replacement_set BEFORE INSERT ON set_record "
+        "BEGIN SELECT RAISE(ABORT,'forced replacement failure'); END")));
+    QVERIFY(!controller.replaceExercise(0, QStringLiteral("row")));
+    QVERIFY(controller.errorMessage().contains(QStringLiteral("forced replacement failure")));
+
+    QSqlQuery persistedExercise(database);
+    persistedExercise.prepare(QStringLiteral(
+        "SELECT exercise_id,rest_seconds FROM workout_exercise WHERE id=?"));
+    persistedExercise.addBindValue(workoutExerciseId);
+    QVERIFY(persistedExercise.exec());
+    QVERIFY(persistedExercise.next());
+    QCOMPARE(persistedExercise.value(0).toString(), QStringLiteral("bench"));
+    QCOMPARE(persistedExercise.value(1).toInt(), 120);
+
+    QSqlQuery persistedSets(database);
+    persistedSets.prepare(QStringLiteral(
+        "SELECT id FROM set_record WHERE workout_exercise_id=? ORDER BY set_order"));
+    persistedSets.addBindValue(workoutExerciseId);
+    QVERIFY(persistedSets.exec());
+    QStringList persistedSetIds;
+    while (persistedSets.next()) {
+        persistedSetIds.append(persistedSets.value(0).toString());
+    }
+    QCOMPARE(persistedSetIds, originalSetIds);
+    QCOMPARE(controller.exercises().first().toMap().value(QStringLiteral("exerciseId")).toString(),
+             QStringLiteral("bench"));
 }
 
 void WorkoutSessionControllerTest::suggestsNextTanDay()

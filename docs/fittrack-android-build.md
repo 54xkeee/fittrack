@@ -1,193 +1,174 @@
-# FitTrack Android 构建与真机验收
+# FitTrack Android 构建、发布门禁与设备验收
 
-本文记录 2026-07-14 已验证的 Android 构建基线，以及尚需在一加 Ace 5 Pro 上完成的检查。当前交付目标是自用并可把 APK 直接分享给其他用户侧载安装；长期 Release 密钥与同签名覆盖升级属于 R6，AAB、应用商店签名及商店材料不属于当前范围。
+本文记录 2026-07-14 的 Android 构建基线。FitTrack 当前支持直接侧载 APK，以及为将来商店上传生成 AAB；正式可升级的 APK/AAB 必须由发布者在仓库外创建并长期保管签名密钥。商店图文材料不属于当前开发范围。
 
-## 工具链
+## 当前基线
 
-开发机使用以下本地目录，不提交到 Git：
+- 应用 ID：`com.xuke.fittrack`
+- 应用名：训迹
+- 版本：`0.1.0`，默认 versionCode 1
+- min/target/compile API：29/36/36
+- ABI：`arm64-v8a`、`x86_64`，每个 APK 只包含所选单一 ABI
+- Qt：6.11.1
+- JDK：21.0.11
+- Android SDK / Build Tools：36 / 36.0.0
+- Android NDK：27.2.12479018（r27c）
+- AGP / Gradle：9.0.0 / 9.3.1
 
-- Qt Android：`D:\FitTrackToolchains\Qt\6.9.1\android_arm64_v8a`
-- Qt Host：`D:\FitTrackToolchains\Qt\6.9.1\mingw_64`
-- JDK：`D:\FitTrackToolchains\jdk17\jdk-17.0.19+10`
-- Android SDK：`D:\FitTrackToolchains\AndroidSdk`
-- NDK：`D:\FitTrackToolchains\AndroidSdk\ndk\27.2.12479018`
+本机工具链默认位于 `D:\FitTrackToolchains`，源码通过英文联接路径 `C:\FitTrackDev\fittrack` 构建。工具链、构建目录、签名配置和 keystore 均不得提交到 Git。
 
-源码从纯英文联接路径 `C:\FitTrackDev\fittrack` 构建，避免 Qt QML 工具处理中文路径时失败。
+## Debug APK
 
-## 构建调试 APK
-
-```powershell
-powershell -ExecutionPolicy Bypass -File C:\FitTrackDev\fittrack\scripts\build-android.ps1
-```
-
-脚本会清理且只清理 `build-android-arm64/android-build`，然后配置和构建 `arm64-v8a` 调试包。输出：
-
-```text
-C:\FitTrackDev\fittrack\build-android-arm64\android-build\build\outputs\apk\debug\android-build-debug.apk
-```
-
-当前配置：
-
-- 包名：`com.fittrack.app`（发布前待冻结）
-- 版本：`0.1.0`，versionCode 1
-- min API：28
-- target/compile API：35
-- ABI：`arm64-v8a`
-
-2026-07-14 15:11 从当前源码构建并通过门禁的产物为：
-
-```text
-C:\FitTrackDev\fittrack\build-android-arm64\android-build\build\outputs\apk\debug\android-build-debug.apk
-```
-
-- 文件大小：64,480,320 字节；
-- SHA-256：`0DA757DC586153004EEB01D9ABFFB5C37B3CF2AC5EA62CC05AE4D3F90CF91315`；
-- Android Lint：0 issue；
-- 签名：Android Debug 证书，APK Signature Scheme v2 校验通过；
-- 包内 ABI：仅 `arm64-v8a`；
-- 媒体：58/58 张 shareable JPEG 已嵌入，116 张 MuscleDB 图片、旧图片目录和 Inter 字体均未进入 APK。
-
-旧 `dist\FitTrack` 目录不代表当前提交，不得继续手工复制其中 APK 或 unsigned AAB。正式分享只使用下节脚本从待发布提交重新生成的 `FitTrack-sideload` 目录或 ZIP。
-
-Debug 证书适合直接侧载测试，但不能作为应用商店发布签名。若不同构建机使用不同 Debug 证书，后续包不能覆盖安装，需先卸载旧版。
-
-## 生成 Debug 侧载包
-
-完成 Debug 构建和 Android Lint 后运行：
-
-```powershell
-powershell -ExecutionPolicy Bypass -File C:\FitTrackDev\fittrack\scripts\package-side-load.ps1
-```
-
-脚本不会把 unsigned AAB 混入分发物，并会硬性检查包名、版本、仅 `arm64-v8a`、Android Debug 证书、APK Signature Scheme v2、复制前后 APK SHA-256，以及 Lint 生成的实际 Android 运行时依赖证据。任一工具或证据缺失都会失败，不会降级为未验签包。输出为：
-
-```text
-C:\FitTrackDev\dist\FitTrack-sideload\
-C:\FitTrackDev\dist\FitTrack-0.1.0-debug-arm64-v8a.zip
-C:\FitTrackDev\dist\FitTrack-0.1.0-debug-arm64-v8a.zip.sha256
-```
-
-目录内恰好包含 1 个 APK，并附安装说明、26 份实际所需许可正文、第三方通知、媒体逐项署名、Qt 对应源码与重新链接说明、`qtbase`/`qtdeclarative`/`qtsvg` 三份 Qt 6.9.1 SBOM、Android NDK LLVM NOTICE 和 `SHA256SUMS.txt`。当前 `dist/` 被 Git 忽略；提交并推送待发布源码后必须再运行一次脚本，使包内 Git SHA 指向最终提交。
-
-## 构建 Release 包
-
-构建无签名 Release APK：
+构建 arm64 调试包：
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File C:\FitTrackDev\fittrack\scripts\build-android.ps1 `
-  -Configuration Release
+  -Abi arm64-v8a -Configuration Debug
 ```
 
-输出到：
-
-```text
-C:\FitTrackDev\fittrack\build-android-arm64-release\android-build\build\outputs\apk\release\android-build-release-unsigned.apk
-```
-
-构建无签名 Release AAB：
+构建模拟器用 x86_64 调试包：
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File C:\FitTrackDev\fittrack\scripts\build-android.ps1 `
-  -Configuration Release -Bundle
+  -Abi x86_64 -Configuration Debug
 ```
 
-输出到：
+默认输出分别为：
 
 ```text
-C:\FitTrackDev\fittrack\build-android-arm64-release\android-build\build\outputs\bundle\release\android-build-release.aab
+C:\FitTrackDev\fittrack\build-android-arm64-debug\android-build\fittrack.apk
+C:\FitTrackDev\fittrack\build-android-x86_64-debug\android-build\fittrack.apk
 ```
 
-无签名产物只用于构建和结构检查，不能作为正式分发包。`dist\FitTrack` 中的 `FitTrack-0.1.0-release-unsigned-arm64-v8a.aab` 同样明确是未签名检查产物。
+可通过 `-SourceDirectory` 和 `-BuildDirectory` 使用独立源码或构建目录。脚本只清理目标构建目录中的 `android-build`，不会清理仓库外的其他目录。
 
-## 使用发布密钥签名
+2026-07-14 的无设备验证产物：
 
-正式 keystore 必须保存在仓库外并至少备份两份。直接分享 APK 后，后续版本必须继续使用同一个包名和同一把密钥，否则用户无法覆盖升级。
+| ABI | SHA-256 |
+| --- | --- |
+| arm64-v8a | `286307D2C74399077567CD94BFCEB1C36443B5E683B6AC28C55E85E882912FB7` |
+| x86_64 | `6EEF0CC89B35B8A7615293C6A9F38A49D0E76E31DC4A2B03106CAC5877D7EC6B` |
 
-脚本从当前进程的四个环境变量读取签名参数，不把密码写入仓库：
+两者均通过包名、API、精确单 ABI、APK V2 Debug 签名、ZIP 16 KB 和 81/81 ELF LOAD `p_align` 检查。arm64 Android Lint 为 0 error、2 warning：API 29 以上已无效的存储权限声明，以及 API 29–32 会忽略的预测返回属性；二者不阻塞运行。
+
+## Release APK 和 AAB
+
+无签名 Release APK：
 
 ```powershell
-$env:QT_ANDROID_KEYSTORE_PATH = "D:\FitTrackSecrets\fittrack-release.p12"
-$env:QT_ANDROID_KEYSTORE_ALIAS = "fittrack-release"
-$env:QT_ANDROID_KEYSTORE_STORE_PASS = Read-Host "Keystore password"
-$env:QT_ANDROID_KEYSTORE_KEY_PASS = $env:QT_ANDROID_KEYSTORE_STORE_PASS
-
 powershell -ExecutionPolicy Bypass -File C:\FitTrackDev\fittrack\scripts\build-android.ps1 `
-  -Configuration Release -Sign
+  -Abi arm64-v8a -Configuration Release
 ```
 
-如以后需要发布 AAB，将最后一条命令增加 `-Bundle`。脚本会在清理构建目录前检查四个环境变量是否齐全，并显式关闭未选择的签名模式，避免 CMake 缓存沿用旧的签名状态。
-
-当前已用一次性测试密钥验证 Release APK 的 V3 签名链路；测试 keystore 已删除，测试签名 APK 未进入交付目录。当前侧载测试使用 Debug APK；R6 要完成稳定覆盖升级，必须由用户创建并保管长期 Release 密钥，并使用同一包名和密钥验证覆盖安装。
-
-## 离线质量门禁
-
-先设置环境：
+无签名 Release AAB：
 
 ```powershell
-$env:JAVA_HOME = "D:\FitTrackToolchains\jdk17\jdk-17.0.19+10"
+powershell -ExecutionPolicy Bypass -File C:\FitTrackDev\fittrack\scripts\build-android.ps1 `
+  -Abi arm64-v8a -Configuration Release -Bundle
+```
+
+APK 位于 `build-android-arm64-release\android-build\fittrack.apk`，AAB 位于同一 `android-build\build\outputs\bundle\release` 下。无签名产物只能用于结构检查，不能安装、上传或分发。
+
+2026-07-14 的无签名基准：
+
+| 产物 | SHA-256 |
+| --- | --- |
+| arm64 Release APK | `F988B72B4A5EA7D90DADFC5EDE59B90D056DD248486DB1690BC3115344C7A87A` |
+| arm64 Release AAB | `FEF12127E886A87743C0B1E4337067D2EE5E0933352A6DED740107359F8FCF7E` |
+
+原始产物按设计无法通过签名校验。审计过程只在系统临时目录创建一次性签名副本；APK 和 AAB 经 bundletool 生成的 universal APK 均通过包名/API/ABI、ZIP 16 KB 和 81/81 ELF 对齐检查，临时副本随后删除，原始哈希未改变。
+
+## 正式签名
+
+直接分发 APK 使用 `Direct` 密钥；上传商店的 AAB 使用独立的 `PlayUpload` 密钥。不要混用两种 profile。
+
+首次创建密钥：
+
+```powershell
+$env:JAVA_HOME = "D:\FitTrackToolchains\jdk21\jdk-21.0.11+10"
+powershell -ExecutionPolicy Bypass -File C:\FitTrackDev\fittrack\scripts\new-android-signing-keys.ps1 `
+  -OutputDirectory D:\FitTrackSecrets
+
+Copy-Item C:\FitTrackDev\fittrack\config\android-signing.example.ps1 `
+  C:\FitTrackDev\fittrack\config\android-signing.local.ps1
+```
+
+`android-signing.local.ps1` 只保存仓库外路径，密码在每个 PowerShell 进程中交互输入。至少离线备份两份 keystore；丢失 Direct 密钥后，已安装用户无法继续覆盖升级。
+
+构建已签名 Direct APK：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File C:\FitTrackDev\fittrack\scripts\build-android.ps1 `
+  -Configuration Release -Abi arm64-v8a -Sign -SigningProfile Direct
+```
+
+构建已签名 PlayUpload AAB：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File C:\FitTrackDev\fittrack\scripts\build-android.ps1 `
+  -Configuration Release -Abi arm64-v8a -Bundle -Sign -SigningProfile PlayUpload
+```
+
+Release 签名完成后，构建脚本会自动调用发布验证器。正式密钥目前尚未由发布者创建，因此当前不存在可安装的正式 Release 交付物。
+
+## 发布验证器
+
+对 APK 或已签名 AAB 运行：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File C:\FitTrackDev\fittrack\scripts\verify-android-release.ps1 `
+  -ArtifactPath <APK或AAB绝对路径> `
+  -ExpectedPackageName com.xuke.fittrack `
+  -ExpectedMinSdk 29 -ExpectedTargetSdk 36 -ExpectedCompileSdk 36 `
+  -ExpectedAbis arm64-v8a
+```
+
+验证器检查：
+
+- APK/AAB 签名；AAB 还检查 bundletool 结构并生成 universal APK；
+- 应用 ID、min/target/compile API 和精确 ABI；
+- APK ZIP 16 KB 对齐；
+- 包内每个 `.so` 的 ELF LOAD `p_align >= 16384`。
+
+Android Lint：
+
+```powershell
+$env:JAVA_HOME = "D:\FitTrackToolchains\jdk21\jdk-21.0.11+10"
 $env:ANDROID_SDK_ROOT = "D:\FitTrackToolchains\AndroidSdk"
-```
-
-运行 Android Lint：
-
-```powershell
-Push-Location C:\FitTrackDev\fittrack\build-android-arm64\android-build
+Push-Location C:\FitTrackDev\fittrack\build-android-arm64-debug\android-build
 .\gradlew.bat lintDebug --no-daemon
 Pop-Location
 ```
 
-检查包名、API、标签和 ABI：
+## Debug 侧载包
+
+`package-side-load.ps1` 只接收 arm64 Debug APK，并要求最新 Lint 依赖证据：
 
 ```powershell
-$apk = "C:\FitTrackDev\fittrack\build-android-arm64\android-build\build\outputs\apk\debug\android-build-debug.apk"
-& "D:\FitTrackToolchains\AndroidSdk\build-tools\35.0.0\aapt.exe" dump badging $apk
-& "D:\FitTrackToolchains\AndroidSdk\build-tools\35.0.0\apksigner.bat" verify --verbose --print-certs $apk
-Get-FileHash $apk -Algorithm SHA256
+powershell -ExecutionPolicy Bypass -File C:\FitTrackDev\fittrack\scripts\package-side-load.ps1 `
+  -ApkPath C:\FitTrackDev\fittrack\build-android-arm64-debug\android-build\fittrack.apk
 ```
 
-调试包使用 Android Debug 证书，只用于开发安装，不得上传商店。
+输出 `dist\FitTrack-sideload`、ZIP 和 `.sha256`。目录中恰好有一个 Debug APK，并附 26 份许可正文、第三方通知、58 项媒体署名、Qt 6.11.1 的 `qtbase`/`qtdeclarative`/`qtsvg` SBOM、NDK NOTICE 和逐文件 SHA-256。正式分享前必须从已提交并推送的源码重新生成，确保清单中的 Git SHA 对应发布提交。
 
-当前最终打包权限只有通知、前台服务和 AndroidX 动态广播接收器权限；`WRITE_EXTERNAL_STORAGE` 仅声明到 API 27，而应用最低 API 为 28。应用不执行内置网络请求，最终 APK/AAB 不包含 `INTERNET` 或 `ACCESS_NETWORK_STATE` 权限。动作资料不提供教学视频或媒体外链入口。
+Debug 证书只适合测试；不同开发机的 Debug 密钥可能导致无法覆盖安装。
 
-## 一加 Ace 5 Pro 真机回归
+## 模拟器与真机边界
 
-开启开发者选项和 USB 调试，连接后先确认设备：
+2026-07-14 的本轮发布审计没有调用 ADB，也没有连接用户手机。后续仅使用指定模拟器时，所有命令必须显式限定序列号：
 
 ```powershell
-& "D:\FitTrackToolchains\AndroidSdk\platform-tools\adb.exe" devices -l
+$adb = "D:\FitTrackToolchains\AndroidSdk\platform-tools\adb.exe"
+& $adb -s emulator-5556 install -r <x86_64-debug-apk>
 ```
 
-设备状态为 `device` 后安装：
+真机可用后再完成以下非阻塞验收：
 
-```powershell
-& "D:\FitTrackToolchains\AndroidSdk\platform-tools\adb.exe" install -r $apk
-```
+1. 首次安装、Safe Area、深色状态栏、中文字体、系统大字体和数字键盘。
+2. 完整训练流程、动作详情、参数恢复默认、添加预览、动作排序和训练冲突弹窗层级。
+3. 后台/锁屏倒计时、通知允许与拒绝、ColorOS 电池策略。
+4. JSON/SQLite 导出恢复、进程中断恢复、历史数据库迁移与损坏数据库保留。
+5. TalkBack 语义、48dp 触控区、返回键层级。
+6. 使用相同 Direct 签名的 Release APK 做覆盖升级，并先备份训练数据。
 
-必须逐项验证：
-
-1. 首次启动、中文字体、竖屏 Safe Area、底部导航和所有主要页面。
-2. 开始 2 分钟倒计时，切后台和锁屏，通知剩余时间继续递减且只在结束时提醒一次。
-3. 拒绝通知权限时应用不崩溃；重新允许后完成提示可用。
-4. 暂停、继续、重置和提前结束不会留下错误的前台通知。
-5. ColorOS 默认电池策略和允许后台活动两种设置下分别记录结果。
-6. 通过系统文档选择器导出 JSON/SQLite，再从 JSON 恢复；恢复后动作、计划、历史、分析、有氧和场馆同步刷新。
-7. 返回键依次关闭详情、返回分析主页、返回首页，首页再返回退出。
-8. 活动训练中强制结束进程，重启后可恢复已完成组且不丢数据。
-9. 使用 `adb install -r` 覆盖安装新包，数据库可以继续打开。
-10. 分别放入可追溯的真实 v1–v7 数据库副本和损坏测试副本：旧库升级后关键记录仍在；损坏库启动后显示 `.corrupt-*` 保留路径，主库及现存 sidecar 字节不变，恢复替换期间强制结束进程后再次启动可以续完。
-
-出现崩溃时收集：
-
-```powershell
-& "D:\FitTrackToolchains\AndroidSdk\platform-tools\adb.exe" logcat -c
-& "D:\FitTrackToolchains\AndroidSdk\platform-tools\adb.exe" logcat | Select-String -Pattern "fittrack|AndroidRuntime|Qt"
-```
-
-## 直接侧载分享前仍需完成
-
-- 在一加 Ace 5 Pro 上完成首次安装、完整训练、后台计时、通知允许/拒绝、备份恢复、返回键、真实 TalkBack、系统大字体和数字键盘验收。
-- 使用真实历史数据库和损坏副本完成升级、原文件保留、启动提示及中断续跑验收；桌面合成夹具不能替代这一步。
-- 从待发布提交运行 `package-side-load.ps1`，分享其 ZIP 与 `.sha256`，并明确这是 Debug 签名测试版。
-- R6 冻结包名，在仓库外创建并备份长期 Release keystore，再用同签名 Release APK 验证覆盖升级。
-
-如以后决定进入应用商店，再补签名 AAB、公开隐私政策 URL、Health Apps 声明、商店截图、Feature Graphic 和商店版本说明；这些不阻塞当前自用与直接分享目标。
+应用不申请网络权限；`WRITE_EXTERNAL_STORAGE` 仅保留到 API 27，而应用最低 API 为 29。动作媒体只打包 58 张可再分发图片，不包含 MuscleDB 图片、旧动作图片目录或自定义字体。

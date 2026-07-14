@@ -1,6 +1,6 @@
 # 训迹 FitTrack
 
-FitTrack 是一个面向 Android 的个人健身训练记录与分析应用，当前交付目标是供用户本人长期使用，并可把 APK 直接分享给其他用户侧载安装。源码已完成训练记录闭环、谭成义三分化与自由训练、个人计划管理、训练历史、容量与 e1RM 分析、有氧记录、健身房/器械区分、备份恢复，以及 58 个动作的离线资料库，并能构建 Windows 调试版和 Android `arm64-v8a` Debug/Release 包。
+FitTrack 是一个面向 Android 的个人健身训练记录与分析应用，当前交付目标是供用户本人长期使用，并可把 APK 直接分享给其他用户侧载安装。源码已完成训练记录闭环、谭成义三分化与自由训练、个人计划管理、训练历史、容量与 e1RM 分析、有氧记录、健身房/器械区分、备份恢复，以及 58 个动作的离线资料库，并能构建 Windows 调试版、Android `arm64-v8a` Debug/Release 包和 `x86_64` 模拟器调试包。
 
 ## 当前可用能力
 
@@ -11,7 +11,7 @@ FitTrack 是一个面向 Android 的个人健身训练记录与分析应用，�
 - 自重动作明确区分纯自重、附加负重和辅助重量；只有附加负重计入外加负重容量，三者均不计算 e1RM。
 - 训练中的已完成组和历史详情中的组都可以修正重量、次数、力竭与自重负荷类型；历史训练支持二次确认后整次删除，统计会立即刷新。
 - 完成力量训练后先展示正式组、容量、最高重量、e1RM 和肌群总结，再由用户选择完成或继续添加有氧，不强制跳转。
-- 休息倒计时支持 2/3/5 分钟、自定义、暂停、继续、重置和提前结束；桌面端按绝对截止时间校准并播放一次程序生成的提示音，Android 端使用前台服务显示后台倒计时并在自然结束时发送一次系统提示音通知。
+- 休息倒计时支持 2/3/5 分钟、自定义、暂停、继续、重置和提前结束；桌面端按单调时钟截止时间校准并播放一次程序生成的提示音，Android 端使用前台服务显示后台倒计时并在自然结束时发送一次系统提示音通知。
 - 首页和分析页显示 7 天、30 天、全部历史的训练次数、正式组、容量、最高重量、对应次数与组数、e1RM 和肌群分布。
 - 有氧页支持跑步机爬坡与爬楼机记录；首页只读取最新记录，进入有氧页首批加载 50 条并可继续分页，趋势固定展示最近 30 次。跑步机默认模板为坡度 9、速度 5 km/h、30 分钟。有氧可单独记录，也可附加到刚完成的力量训练。
 - 场馆管理支持健身房与具体器械的新增、重命名和删除；被历史记录引用的条目会归档而不是破坏历史数据。
@@ -20,7 +20,7 @@ FitTrack 是一个面向 Android 的个人健身训练记录与分析应用，�
 - 动作库提供 58 个目标动作的简介、主要/次要肌群、步骤、注意事项和训练参数；其中 29 个核心动作额外提供发力要点和常见错误，其余为标准资料。每项展示 1 张经过动作对应性审核的本地图片，并在详情中显示素材标题、来源和许可证；42 张来自开放许可或公共领域，16 张为 FitTrack 原创 CC0。内置动作可收藏和恢复默认，用户可创建、编辑及删除自定义动作；应用不提供教学视频或媒体外链入口。
 - 底部导航固定为首页、计划、训练、动作和分析五个入口；历史、有氧和管理合并在分析入口内。
 - Graphite & Lime 设计系统已经提取为语义主题与通用组件，统一线性图标由 `AppIcon` 使用 `PathSvg` 绘制，不再依赖 Unicode 字符图标。底部导航、首页、训练、计划、动作库、趋势、历史、有氧和管理页面均已纳入移动单列体系；准备页与训练页长标题可响应换行，计划/训练动作预览保持至少 48 logical px，训练动作卡提供可见键盘焦点。
-- 应用不再内置字体，直接继承 Android、Windows 等平台的系统字体；Android 字体缩放会统一映射到设计令牌，训练主流程和弹层已自动化验证 1.0、1.3、1.5 和 2.0 倍字体。
+- 应用不再内置字体，直接继承 Android、Windows 等平台的系统字体；Android 字体缩放会统一映射到设计令牌，自动化覆盖 1.0、1.3、1.5 和 2.0 倍字体。2026-07-14 的 Qt 6.11.1 干净构建已通过 15/15，随后聚焦 `qmlnavigation` 再次通过。
 
 当前自动化测试共 15 项，覆盖统计规则、SQLite、种子导入、训练会话、历史、分析、计划管理、动作库管理、有氧、健身房/器械、备份恢复、性能 SQL 门禁、倒计时状态和真实 QML 页面加载。数据库用例额外覆盖合成 v1–v7 迁移、旧 v8 约束修复、损坏原字节与 sidecar 保留、恢复中断续跑及损坏 v9 拒绝；QML 回归覆盖恢复提示、训练准备零写入、动作详情真实打开、参数保存/恢复、稳定 ID 排序、字符图标门禁、TalkBack 语义、计划/训练动作预览 48dp、训练动作卡焦点、长标题不截断、1.0/1.3/1.5/2.0 四档字体和真实触摸输入。Windows 固定离屏环境还会把恢复提示、计划页、200% 字体训练准备、200% 字体排序和动作详情共 5 个关键状态与受控基准图做像素容差比较，退化会直接使测试失败并输出差异图。
 
@@ -30,34 +30,37 @@ FitTrack 是一个面向 Android 的个人健身训练记录与分析应用，�
 
 ## 当前桌面构建环境
 
-- Qt 6.9.1（MSYS2 MinGW 64-bit）
+- Qt 6.11.1（MinGW 64-bit）
 - Qt Multimedia（倒计时提示音）
 - CMake 4.1
 - Ninja 1.13
 - C++17
 
-MSYS2 Qt 的 QML 扫描器无法正确处理当前工作区的中文路径。开发机使用目录联接 `C:\FitTrackDev` 指向仓库根目录，从英文路径构建；源文件仍只保存在本仓库。
+Qt 的 QML 工具处理当前工作区中文路径时仍可能失败。开发机使用目录联接 `C:\FitTrackDev` 指向仓库根目录，从英文路径构建；源文件仍只保存在本仓库。当前 Windows 构建目录与 Qt 运行库路径如下：
 
 ```powershell
-cmake -S C:\FitTrackDev\fittrack -B C:\FitTrackDev\fittrack\build -G Ninja `
+$env:PATH = "D:\FitTrackToolchains\Qt\6.11.1\mingw_64\bin;D:\FitTrackToolchains\Qt\Tools\mingw1310_64\bin;$env:PATH"
+& "D:\FitTrackToolchains\Qt\6.11.1\mingw_64\bin\qt-cmake.bat" `
+  -S C:\FitTrackDev\fittrack -B D:\FitTrackBuild\windows-qt6.11.1 -G Ninja `
   -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=ON
-cmake --build C:\FitTrackDev\fittrack\build
-ctest --test-dir C:\FitTrackDev\fittrack\build --output-on-failure
+cmake --build D:\FitTrackBuild\windows-qt6.11.1
+ctest --test-dir D:\FitTrackBuild\windows-qt6.11.1 --output-on-failure
 ```
 
-QML 导航测试会把五个主页面、可编辑个人计划、训练日有氧弹层、训练进行中、目标次数弹层、训练完成总结、历史详情、有氧、管理和带真实训练数据的分析页分别按 360×800、420×920、480×1056 写入 `C:\FitTrackDev\fittrack\build\visual`。受控基准位于 `tests/visual/baselines/`；Windows 门禁固定 Qt 6.9.1、`offscreen`、软件渲染、Material、`zh_CN`、DPR 1、96 DPI 和指定微软雅黑文件，视觉差异超限时写入 `build/visual/diff/`。如需人工检查本机图形后端，应直接运行应用；视觉基准测试不会接受外部后端覆盖。
+QML 导航测试会把五个主页面、可编辑个人计划、训练日有氧弹层、训练进行中、目标次数弹层、训练完成总结、历史详情、有氧、管理和带真实训练数据的分析页分别按 360×800、420×920、480×1056 写入构建目录下的 `visual/`。受控基准位于 `tests/visual/baselines/windows-qt6.11.1-offscreen-software-material-zh_CN-dpr1/`；Windows 门禁固定 Qt 6.11.1、`offscreen`、软件渲染、Material、`zh_CN`、DPR 1、96 DPI 和指定微软雅黑文件，视觉差异超限时写入 `visual/diff/`。如需人工检查本机图形后端，应直接运行应用；视觉基准测试不会接受外部后端覆盖。
 
 ## Android 状态
 
-本机已经配置 Qt 6.9.1 Android `arm64-v8a`、JDK 17、Android SDK 35、Build Tools 35.0.0 和 NDK r27c。统一构建入口：
+本机已经配置 Qt 6.11.1 Android `arm64-v8a`/`x86_64`、JDK 21、Android SDK 36、Build Tools 36.0.0 和 NDK r27c。统一构建入口：
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File C:\FitTrackDev\fittrack\scripts\build-android.ps1
+powershell -ExecutionPolicy Bypass -File C:\FitTrackDev\fittrack\scripts\build-android.ps1 -Abi x86_64
 powershell -ExecutionPolicy Bypass -File C:\FitTrackDev\fittrack\scripts\build-android.ps1 -Configuration Release
 powershell -ExecutionPolicy Bypass -File C:\FitTrackDev\fittrack\scripts\build-android.ps1 -Configuration Release -Bundle
 ```
 
-脚本分别输出 Debug APK、无签名 Release APK 或无签名 Release AAB。当前包名为 `com.fittrack.app`，min API 28，target/compile API 35，仅包含 `arm64-v8a`；当前源码的 Debug APK 已通过 Android Lint（0 issue）、清单/ABI/最小权限检查、V2 调试签名验证和包内媒体白名单检查。完成 Debug 构建和 `lintDebug` 后运行 `scripts/package-side-load.ps1`，会硬性复核 APK 元数据与签名，并在 `dist/` 生成仅含一个 Debug APK 的 ZIP、安装说明、逐文件 SHA-256、实际 Qt SBOM、NDK NOTICE、媒体署名及完整许可正文。`dist` 不提交 Git，正式分享前必须从待发布提交重新生成。Release APK/AAB 的外部环境变量签名流程已用一次性测试密钥验证；若要保证跨版本覆盖升级，仍需创建并长期保管发布密钥。
+脚本分别输出 Debug APK、Release APK 或 Release AAB，并可用 `Direct` 与 `PlayUpload` 两个签名 profile 生成正式签名产物。当前包名为 `com.xuke.fittrack`，min API 29，target/compile API 36；手机包使用 `arm64-v8a`，模拟器包使用 `x86_64`。完成 Debug 构建和 `lintDebug` 后运行 `scripts/package-side-load.ps1`，会硬性复核 APK 元数据与签名，并在 `dist/` 生成仅含一个 Debug APK 的 ZIP、安装说明、逐文件 SHA-256、实际 Qt SBOM、NDK NOTICE、媒体署名及完整许可正文。`dist` 不提交 Git，正式分享前必须从待发布提交重新生成。仓库只提供密钥生成、配置示例、签名和校验能力；真实 keystore 与密码必须在仓库外创建并长期保管。
 
 完整工具链、Lint、APK 检查和真机命令见 [`../docs/fittrack-android-build.md`](../docs/fittrack-android-build.md)。
 
@@ -77,4 +80,4 @@ powershell -ExecutionPolicy Bypass -File C:\FitTrackDev\fittrack\scripts\build-a
 
 ## 已知平台边界
 
-Android 前台服务、完成通知、系统返回层级、SAF 文档 URI、Adaptive Icon 和启动页已进入代码并通过离线构建检查。当前 Debug APK 可作为侧载测试版分享，但尚未在一加 Ace 5 Pro 上完成安装和运行回归；ColorOS 后台限制、通知允许/拒绝、锁屏完成提醒、SAF 导入导出、返回键、真实 TalkBack 和系统大字体仍不能写成真机已验收。无签名 Release 产物不能安装；长期分发与覆盖升级需要固定发布密钥。
+Android 前台服务、完成通知、系统返回层级、SAF 文档 URI、Adaptive Icon 和启动页已进入代码。应用已迁移到 Qt 6.11.1、`com.xuke.fittrack` 和 API 29/36；升级后的最终包仍需完成一加 Ace 5 Pro 上的完整训练、ColorOS 后台限制、通知允许/拒绝、锁屏完成提醒、SAF 导入导出、返回键、真实 TalkBack、系统大字体及同签名覆盖升级回归。正式分发只能使用用户长期保管的 Direct Release 密钥；Play AAB 使用独立上传密钥。

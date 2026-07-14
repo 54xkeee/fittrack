@@ -2,23 +2,23 @@
 
 更新时间：2026-07-14
 
-本文记录 FitTrack 可侧载分享版本涉及的第三方组件。当前目标包含直接分享 APK，不包含应用商店上架；每次分发前仍需以实际 APK 和所用 Qt 版本重新核对依赖与媒体清单。
+本文记录 FitTrack 可侧载分享版本涉及的第三方组件。当前支持直接分享 APK 和生成待签名 AAB；每次分发前仍需以实际 APK/AAB 和所用 Qt 版本重新核对依赖与媒体清单。
 
-## Qt 6.9.1
+## Qt 6.11.1
 
-FitTrack Android 包实际包含 Qt `qtbase`、`qtdeclarative`、`qtsvg` 6.9.1：Core、Gui、Network、OpenGL、SQL、QML、Quick、Quick Controls 2、Layouts、Dialogs、Effects、Shapes 和 SVG 等运行库及插件。Qt 以共享库形式部署，项目没有修改 Qt 源码；桌面调试会使用的 Multimedia 没有进入当前 Android APK。
+FitTrack Android 包实际包含 Qt `qtbase`、`qtdeclarative`、`qtsvg` 6.11.1：Core、Gui、Network、OpenGL、SQL、QML、Quick、Quick Controls 2、Layouts、Dialogs、Effects、Shapes 和 SVG 等运行库及插件。Qt 以共享库形式部署，项目没有修改 Qt 源码；桌面调试会使用的 Multimedia 没有进入当前 Android APK。
 
-开发环境中的 Qt 6.9.1 SBOM 将这些 Qt 模块声明为商业许可或 LGPL/GPL 许可组合。当前项目按 Qt 开源许可的 LGPL 3.0 路径分发，正式分发时必须保留 Qt 版权与许可通知、提供 LGPL 3.0 全文，并为接收者提供获取对应 Qt 6.9.1 源码和替换/重新链接 Qt 共享库所需的信息。
+开发环境中的 Qt 6.11.1 SBOM 将这些 Qt 模块声明为商业许可或 LGPL/GPL 许可组合。当前项目按 Qt 开源许可的 LGPL 3.0 路径分发，正式分发时必须保留 Qt 版权与许可通知、提供 LGPL 3.0 全文，并为接收者提供获取对应 Qt 6.11.1 源码和替换/重新链接 Qt 共享库所需的信息。
 
-- [Qt 6.9 开源许可说明](https://doc.qt.io/qt-6.9/licensing.html)
-- [Qt 6.9.1 源码归档](https://download.qt.io/archive/qt/6.9/6.9.1/submodules/)
+- [Qt 6.11 开源许可说明](https://doc.qt.io/qt-6.11/licensing.html)
+- [Qt 6.11.1 源码归档](https://download.qt.io/archive/qt/6.11/6.11.1/submodules/)
 - [GNU LGPL 3.0](https://www.gnu.org/licenses/lgpl-3.0.html)
 
-Qt 自身还包含 PCRE2 10.45、libpng 1.6.48、libjpeg-turbo 3.1.0、FreeType 2.13.3、HarfBuzz 11.2.1、SQLite 3.49.2、QML MASM、Material shadow 等第三方代码。准确组件、版权和许可证表达式以随侧载包提供的 `qtbase`、`qtdeclarative`、`qtsvg` 三份 Qt 6.9.1 SPDX SBOM 为准；许可正文位于同包 `licenses/texts/`，不能只依赖本摘要。
+Qt 自身还包含 PCRE2 10.47、libpng 1.6.58、libjpeg-turbo 3.1.4、FreeType 2.14.3、HarfBuzz 14.2.0、QML MASM、Material shadow 等第三方代码。准确组件、版权和许可证表达式以随侧载包提供的 `qtbase`、`qtdeclarative`、`qtsvg` 三份 Qt 6.11.1 SPDX SBOM 为准；许可正文位于同包 `licenses/texts/`，不能只依赖本摘要。
 
 ## AndroidX 与 Kotlin 运行时
 
-Qt Android 打包当前解析到 AndroidX Core 1.13.1、VersionedParcelable 1.1.1、Lifecycle 2.6.2、Arch Core 2.2.0、Profile Installer 1.3.0、Startup 1.1.1、Tracing 1.0.0、Annotation 1.6.0/Experimental 1.4.0，以及 Kotlin 1.8.22、kotlinx.coroutines 1.6.4、ListenableFuture 1.0 和 JetBrains Annotations 13.0。这些 Gradle 运行时依赖按 Apache License 2.0 提供；侧载包包含该许可全文。
+Qt Android 打包当前解析到 AndroidX Core 1.17.0、VersionedParcelable 1.1.1、Lifecycle 2.6.2、Arch Core 2.2.0、Profile Installer 1.3.0、Startup 1.1.1、Tracing 1.2.0、Annotation 1.8.1/Experimental 1.4.1，以及 Kotlin 2.3.0、kotlinx.coroutines 1.8.1、ListenableFuture 1.0、JetBrains Annotations 23.0.0 和 JSpecify 1.0.0。这些 Gradle 运行时依赖按各自许可提供；侧载包附带 Android Lint 生成的实际依赖清单和所需许可正文。
 
 - [AndroidX 源码与许可](https://source.android.com/docs/setup/about/licenses)
 - [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0)

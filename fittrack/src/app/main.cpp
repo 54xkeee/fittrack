@@ -22,6 +22,7 @@
 #include <QQuickStyle>
 #include <QResource>
 #include <QStandardPaths>
+#include <QStyleHints>
 #ifdef Q_OS_ANDROID
 #include <QJniObject>
 #endif
@@ -118,6 +119,9 @@ int main(int argc, char *argv[])
 {
     Q_INIT_RESOURCE(action_images);
     QGuiApplication app(argc, argv);
+#ifdef Q_OS_ANDROID
+    QGuiApplication::styleHints()->setColorScheme(Qt::ColorScheme::Dark);
+#endif
     QGuiApplication::setApplicationName(QStringLiteral("FitTrack"));
     QGuiApplication::setOrganizationName(QStringLiteral("FitTrack"));
     QQuickStyle::setStyle(QStringLiteral("Material"));
@@ -149,6 +153,7 @@ int main(int argc, char *argv[])
     fittrack::CardioController cardioController(databaseManager.database());
     fittrack::GymManagementController gymManagement(databaseManager.database());
     fittrack::BackupService backupService(databaseManager.database());
+    QString timerSessionId = workoutController.sessionId();
     engine.rootContext()->setContextProperty(QStringLiteral("exerciseModel"), &exerciseModel);
     engine.rootContext()->setContextProperty(QStringLiteral("planExerciseModel"), &planExerciseModel);
     engine.rootContext()->setContextProperty(QStringLiteral("restTimer"), &restTimer);
@@ -171,6 +176,15 @@ int main(int argc, char *argv[])
     QObject::connect(
         &gymManagement, &fittrack::GymManagementController::catalogChanged,
         &workoutController, &fittrack::WorkoutSessionController::reloadGymData);
+    QObject::connect(
+        &workoutController, &fittrack::WorkoutSessionController::sessionChanged,
+        &restTimer, [&workoutController, &restTimer, &timerSessionId] {
+            const QString currentSessionId = workoutController.sessionId();
+            if (currentSessionId == timerSessionId)
+                return;
+            restTimer.reset();
+            timerSessionId = currentSessionId;
+        });
     QObject::connect(&backupService, &fittrack::BackupService::restored, [&] {
         restTimer.reset();
         exerciseModel.reload();
@@ -195,7 +209,9 @@ int main(int argc, char *argv[])
     QObject::connect(
         &app, &QGuiApplication::applicationStateChanged,
         &restTimer, [&restTimer](Qt::ApplicationState state) {
-            if (state == Qt::ApplicationActive) restTimer.synchronize();
+            if (state != Qt::ApplicationActive) return;
+            restTimer.synchronize();
+            restTimer.refreshBackgroundAlertState();
         });
     QObject::connect(
         &engine,

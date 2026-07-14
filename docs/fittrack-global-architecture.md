@@ -49,10 +49,11 @@ flowchart TB
     end
 
     subgraph ANDROID["Android 平台层"]
-        Activity["FitTrackActivity\n系统栏 / 刘海 / IME Insets"]
+        Activity["QtActivity（Qt 默认）\n窗口 / 应用生命周期"]
+        SafeArea["Qt SafeArea.margins\n系统栏 / 刘海安全区"]
         Bridge["RestTimerBridge\n通知权限与 JNI 命令桥"]
         Service["RestTimerService\n前台计时服务"]
-        OS["NotificationManager / WindowInsets / WakeLock"]
+        OS["NotificationManager / WakeLock / SAF"]
     end
 
     Main --> Pages
@@ -65,6 +66,7 @@ flowchart TB
     Resources --> Storage
     Timer --> Bridge
     Bridge --> Service
+    Main --> SafeArea
     Activity --> OS
     Service --> OS
 ```
@@ -93,14 +95,18 @@ QML 不直接执行 SQL，Java 不保存训练业务模型，Android 平台代�
 
 Android 当前配置：
 
-- 包名：`com.fittrack.app`；
-- minSdk：28；
-- compileSdk / targetSdk：35；
-- ABI：`arm64-v8a`；
-- Qt：6.9.1；
+- 应用名：“训迹”；
+- 包名：`com.xuke.fittrack`；
+- minSdk：29；
+- compileSdk / targetSdk：36；
+- ABI：手机包 `arm64-v8a`，模拟器包 `x86_64`，每个产物只包含一个 ABI；
+- Qt：6.11.1；
+- JDK：21；
+- Build Tools：36.0.0；
+- NDK：27.2.12479018；
 - C++：C++17。
 
-应用可以在 Android 16 / API 36 上运行和调试，但这不等于已经切换到 `targetSdk 36`。
+Manifest 使用 Qt 默认 `org.qtproject.qt.android.bindings.QtActivity`，项目不再维护自定义 Activity 或原生 WindowInsets 补丁。
 
 ## 4. 启动与依赖注入
 
@@ -172,9 +178,10 @@ sequenceDiagram
 共用组件集中在 `qml/components/`：
 
 - `AppPage`、`AppDialog`、`ConfirmDialog` 统一页面和弹窗边界；
-- `ExerciseDetailSheet`、`ExercisePickerSheet`、`ExerciseOrderSheet` 复用动作预览、选择和排序；
+- `ExerciseDetailSheet`、共享的 `ExercisePickerSheet`、`ExerciseOrderSheet` 复用动作预览、选择和排序；
 - `NumberField`、`AppButton`、`IconButton` 统一触控尺寸与无障碍语义；
-- `RestTimerBar`、`InlineFeedback` 显示计时和后台提醒状态。
+- `CurrentSetInputPanel` 承担当前组输入与提交，`TrainingRestTimer` 封装计时弹层、`RestTimerBar` 和后台提醒状态，`EquipmentChoiceDialog` 承担训练器械选择；
+- `TrainingPage` 保留训练流程、弹层和三个已拆组件之间的总体编排。
 
 ## 6. SQLite 数据架构
 
@@ -281,7 +288,7 @@ stateDiagram-v2
 
 ```mermaid
 flowchart LR
-    QML["TrainingPage / RestTimerBar"] --> Cpp["RestTimerController"]
+    QML["TrainingPage / TrainingRestTimer"] --> Cpp["RestTimerController"]
     Cpp --> JNI["androidresttimerbridge.cpp"]
     JNI --> Java["RestTimerBridge.java"]
     Java --> Service["RestTimerService"]
@@ -333,20 +340,13 @@ C++ 使用 `QElapsedTimer`，Android 服务使用 `SystemClock.elapsedRealtime()
 
 WakeLock 的持有时间为剩余休息时间加 5 秒，并在暂停、停止、完成和服务销毁时释放。
 
-## 10. Android 16 窗口与键盘适配
+## 10. 高版本 Android 窗口与键盘适配
 
-Android 15+ 强制 edge-to-edge，而 Qt 6.9.1 在当前 API 36 设备上没有向 QML 提供可靠的系统栏 SafeArea。当前方案由 [`FitTrackActivity`](../fittrack/android/src/com/fittrack/app/FitTrackActivity.java) 接管：
+Android 清单直接使用 Qt 6.11.1 提供的默认 `QtActivity`。项目已经删除自定义 Activity、原生 `WindowInsets` 分发和 `adjustNothing` 软键盘补丁，窗口与输入法行为回到 Qt 支持路径。
 
-1. 仅在 API 35+ 安装 Insets 处理器；
-2. 从 `systemBars | displayCutout` 读取顶部、左右和底部安全区；
-3. 从 `WindowInsets.Type.ime()` 读取真实键盘高度；
-4. 将 `max(系统底栏, IME bottom)` 写为原生 content bottom padding；
-5. 只向 Qt 子树清零系统栏/刘海 Insets，保留 IME 信息；
-6. Manifest 固定 `windowSoftInputMode="adjustNothing"`，避免 Qt 动态切换 `adjustResize/adjustPan` 后把窗口起点移到屏幕 y=0。
+QML 通过 `SafeArea.margins` 消费系统栏和刘海边距：`AppPage` 把四向安全区叠加到页面 padding，`Main.qml` 把左右和底部安全区叠加到底部导航。键盘显示时，`Main.qml` 隐藏主导航；`TrainingPage` 的固定 footer 以页面高度为上限，并在内部使用 `ScrollView` 承载 `TrainingRestTimer` 和 `CurrentSetInputPanel`。这样大字体或键盘压缩可用高度时，当前组输入区仍可滚动访问，而不需要 Java 层推算 IME 高度。
 
-键盘显示时，`Main.qml` 隐藏主导航；训练输入页脚限制最大高度并允许滚动。这样顶部状态栏不会覆盖内容，重量、次数和“完成本组”能够保持在键盘上方。
-
-API 28–34 不安装这套 Activity Insets 补丁，继续使用 Qt 原有行为。
+此方案减少了应用自维护的 Android 窗口代码，但 Qt 6.11.1、API 36 和不同厂商输入法的最终表现仍必须通过模拟器与真机回归确认。
 
 ## 11. 跨模块同步
 
@@ -399,13 +399,14 @@ Android 还执行 Gradle Lint、AAPT 清单检查、APK 签名检查、ZIP 对�
 
 ## 14. 当前限制与技术风险
 
-1. **SDK 边界**：当前仍是 compile/target 35，API 36 只作为运行环境验证。
-2. **16 KB 页大小**：APK ZIP 层可以 16 KB 对齐，但当前 Qt 6.9.1 和大多数 `.so` 的 ELF `p_align` 仍为 `0x1000`，不能声明完整 16 KB 兼容。
-3. **发布身份**：当前 APK 使用 Debug 签名，不能作为长期覆盖升级的正式签名。
+1. **升级后产物证据**：Qt 6.11.1、包名和 API 基线已经进入源码，但对应的 arm64 APK、x86_64 模拟器包和 AAB 仍需从当前提交干净构建并逐项校验。
+2. **16 KB 页大小**：`verify-android-release.ps1` 已提供 ZIP 对齐和 ELF LOAD 段检查；只有对最终 APK/AAB 的校验完成后，才能记录具体兼容结论。
+3. **发布身份**：仓库提供 Direct 与 PlayUpload 签名 profile、密钥生成和校验脚本，但真实长期密钥仍由用户在仓库外创建和保管；同签名覆盖升级尚无真机证据。
 4. **QML 类型安全**：上下文属性和动态 QVariant 结构便于迭代，但编译期类型约束有限。
 5. **控制器 SQL 耦合**：控制器直接访问数据库，代码路径清晰，但继续扩展时需要防止重复查询和事务规则分散。
-6. **训练页体量**：`TrainingPage.qml` 同时承担训练正文、固定输入区和大量弹窗，是当前最大的 UI 编排热点；新增交互应优先复用现有组件，避免继续堆叠页面内状态。
-7. **平台差异**：API 36 模拟器存在 arm64 转译渲染伪影，视觉布局应以原生 arm64 实机和 UI 坐标为主。
+6. **训练页体量**：`TrainingPage.qml` 当前 1663 行；当前组输入、休息计时和器械选择已分别拆到三个组件，但页面仍承担训练正文、弹层和流程编排，是最大的 UI 维护热点。
+7. **平台差异**：`x86_64` 模拟器适合验证高版本 Android API 与窗口路径，但不能代替原生 `arm64-v8a` 真机上的 ColorOS、通知、SAF、TalkBack、字体和输入法验收。
+8. **自动化回归边界**：2026-07-14 的 Qt 6.11.1 干净构建已通过 15/15，随后聚焦 `qmlnavigation` 再次通过；桌面离屏回归不能替代 Android 真机视觉、TalkBack、通知和厂商后台策略验收。
 
 ## 15. 关键文件索引
 
@@ -421,9 +422,12 @@ Android 还执行 Gradle Lint、AAPT 清单检查、APK 签名检查、ZIP 对�
 | 主导航 | [`fittrack/qml/Main.qml`](../fittrack/qml/Main.qml) |
 | 训练准备页 | [`fittrack/qml/pages/WorkoutPreparationPage.qml`](../fittrack/qml/pages/WorkoutPreparationPage.qml) |
 | 训练页 | [`fittrack/qml/pages/TrainingPage.qml`](../fittrack/qml/pages/TrainingPage.qml) |
-| Android Activity | [`fittrack/android/src/com/fittrack/app/FitTrackActivity.java`](../fittrack/android/src/com/fittrack/app/FitTrackActivity.java) |
-| Android 计时桥 | [`fittrack/android/src/com/fittrack/app/RestTimerBridge.java`](../fittrack/android/src/com/fittrack/app/RestTimerBridge.java) |
-| Android 前台服务 | [`fittrack/android/src/com/fittrack/app/RestTimerService.java`](../fittrack/android/src/com/fittrack/app/RestTimerService.java) |
+| 当前组输入组件 | [`fittrack/qml/components/CurrentSetInputPanel.qml`](../fittrack/qml/components/CurrentSetInputPanel.qml) |
+| 训练计时组件 | [`fittrack/qml/components/TrainingRestTimer.qml`](../fittrack/qml/components/TrainingRestTimer.qml) |
+| 器械选择组件 | [`fittrack/qml/components/EquipmentChoiceDialog.qml`](../fittrack/qml/components/EquipmentChoiceDialog.qml) |
+| Android 清单 / QtActivity 配置 | [`fittrack/android/AndroidManifest.xml`](../fittrack/android/AndroidManifest.xml) |
+| Android 计时桥 | [`fittrack/android/src/com/xuke/fittrack/RestTimerBridge.java`](../fittrack/android/src/com/xuke/fittrack/RestTimerBridge.java) |
+| Android 前台服务 | [`fittrack/android/src/com/xuke/fittrack/RestTimerService.java`](../fittrack/android/src/com/xuke/fittrack/RestTimerService.java) |
 | 测试清单 | [`fittrack/tests/CMakeLists.txt`](../fittrack/tests/CMakeLists.txt) |
 
 ---

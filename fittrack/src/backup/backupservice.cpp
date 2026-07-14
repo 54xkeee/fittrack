@@ -7,6 +7,7 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QSaveFile>
+#include <QSet>
 #include <QSqlError>
 #include <QSqlQuery>
 #include <QSqlRecord>
@@ -47,6 +48,12 @@ QString localPath(const QString &input)
 bool isContentUri(const QString &input)
 {
     return QUrl(input).scheme().compare(QStringLiteral("content"), Qt::CaseInsensitive) == 0;
+}
+
+QString quotedIdentifier(QString value)
+{
+    value.replace(QLatin1Char('"'), QStringLiteral("\"\""));
+    return QStringLiteral("\"") + value + QStringLiteral("\"");
 }
 
 bool copyFileToDocument(const QString &sourcePath, const QString &targetPath, QString *error)
@@ -181,6 +188,29 @@ bool BackupService::restoreJson(const QString &filePath)
             return fail(QStringLiteral("备份缺少数据表：%1").arg(table));
     }
 
+    for (const QString &table : tables()) {
+        QSqlQuery schema(m_database);
+        if (!schema.exec(QStringLiteral("PRAGMA table_info(%1)").arg(quotedIdentifier(table))))
+            return fail(schema.lastError().text());
+        QSet<QString> allowedColumns;
+        while (schema.next())
+            allowedColumns.insert(schema.value(1).toString());
+        if (allowedColumns.isEmpty())
+            return fail(QStringLiteral("数据库缺少数据表：%1").arg(table));
+
+        const QJsonArray rows = tableData.value(table).toArray();
+        for (const QJsonValue &value : rows) {
+            if (!value.isObject())
+                return fail(QStringLiteral("备份行格式错误"));
+            for (const QString &column : value.toObject().keys()) {
+                if (!allowedColumns.contains(column)) {
+                    return fail(QStringLiteral("备份包含未知字段：%1.%2")
+                                    .arg(table, column));
+                }
+            }
+        }
+    }
+
     if (!m_database.transaction()) return fail(m_database.lastError().text());
     auto rollback = [this](const QString &message) {
         m_database.rollback();
@@ -198,12 +228,17 @@ bool BackupService::restoreJson(const QString &filePath)
             const QJsonObject row = value.toObject();
             const QStringList columns = row.keys();
             if (columns.isEmpty()) continue;
+            QStringList quotedColumns;
+            quotedColumns.reserve(columns.size());
+            for (const QString &column : columns)
+                quotedColumns.append(quotedIdentifier(column));
             QStringList placeholders;
             placeholders.fill(QStringLiteral("?"), columns.size());
             QSqlQuery insert(m_database);
             insert.prepare(QStringLiteral("INSERT INTO %1(%2) VALUES(%3)")
-                               .arg(table, columns.join(QLatin1Char(',')),
-                                    placeholders.join(QLatin1Char(','))));
+                               .arg(quotedIdentifier(table),
+                                     quotedColumns.join(QLatin1Char(',')),
+                                     placeholders.join(QLatin1Char(','))));
             for (const QString &column : columns) {
                 const QJsonValue cell = row.value(column);
                 insert.addBindValue(cell.isNull() ? QVariant{} : cell.toVariant());

@@ -15,13 +15,13 @@ set(FITTRACK_QT_COMPONENTS Core Gui Qml Quick QuickControls2 Sql)
 if(NOT ANDROID)
     list(APPEND FITTRACK_QT_COMPONENTS Multimedia)
 endif()
-find_package(Qt6 6.9 REQUIRED COMPONENTS ${FITTRACK_QT_COMPONENTS})
+find_package(Qt6 6.11.1 REQUIRED COMPONENTS ${FITTRACK_QT_COMPONENTS})
 if(BUILD_TESTING)
-    find_package(Qt6 6.9 REQUIRED COMPONENTS Test)
+    find_package(Qt6 6.11.1 REQUIRED COMPONENTS Test)
     find_package(SQLite3 REQUIRED)
 endif()
 
-qt_standard_project_setup(REQUIRES 6.9)
+qt_standard_project_setup(REQUIRES 6.11.1)
 
 add_library(fittrack_domain STATIC
     src/analytics/traininganalytics.cpp
@@ -90,8 +90,9 @@ qt_add_executable(fittrack
     src/app/main.cpp
 )
 
-# MSYS2 Qt 6.9.1 qmlcachegen crashes on the root file after resolving the
-# navigation page graph. Keep all pages cached and parse only Main.qml at runtime.
+# Caching the root navigation graph makes the Qt 6.11.1 MinGW link step emit
+# a nested temporary response file that GNU ld cannot consume on Windows.
+# Keep the smaller pages cached and parse only Main.qml at runtime.
 set_source_files_properties(qml/Main.qml PROPERTIES QT_QML_SKIP_CACHEGEN TRUE)
 set_source_files_properties(qml/theme/Theme.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
 
@@ -112,6 +113,9 @@ qt_add_qml_module(fittrack
         qml/components/InlineFeedback.qml
         qml/components/NumberField.qml
         qml/components/RestTimerBar.qml
+        qml/components/CurrentSetInputPanel.qml
+        qml/components/TrainingRestTimer.qml
+        qml/components/EquipmentChoiceDialog.qml
         qml/components/SectionHeader.qml
         qml/components/SetRow.qml
         qml/components/StatCard.qml
@@ -171,18 +175,20 @@ target_link_libraries(fittrack PRIVATE
 )
 
 if(ANDROID)
+    set(FITTRACK_ANDROID_VERSION_CODE "1" CACHE STRING
+        "Android versionCode used for APK and AAB builds")
     qt_add_android_permission(fittrack
         NAME android.permission.WRITE_EXTERNAL_STORAGE
         ATTRIBUTES maxSdkVersion 27
     )
     set_target_properties(fittrack PROPERTIES
-        QT_ANDROID_PACKAGE_NAME "com.fittrack.app"
-        QT_ANDROID_APP_NAME "训迹 FitTrack"
+        QT_ANDROID_PACKAGE_NAME "com.xuke.fittrack"
+        QT_ANDROID_APP_NAME "训迹"
         QT_ANDROID_VERSION_NAME "${PROJECT_VERSION}"
-        QT_ANDROID_VERSION_CODE 1
-        QT_ANDROID_MIN_SDK_VERSION 28
-        QT_ANDROID_TARGET_SDK_VERSION 35
-        QT_ANDROID_COMPILE_SDK_VERSION 35
+        QT_ANDROID_VERSION_CODE "${FITTRACK_ANDROID_VERSION_CODE}"
+        QT_ANDROID_MIN_SDK_VERSION 29
+        QT_ANDROID_TARGET_SDK_VERSION 36
+        QT_ANDROID_COMPILE_SDK_VERSION 36
         QT_ANDROID_PACKAGE_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/android"
     )
 endif()

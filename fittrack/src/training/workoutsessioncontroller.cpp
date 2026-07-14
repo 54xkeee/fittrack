@@ -1510,7 +1510,9 @@ bool WorkoutSessionController::replaceExercise(int exerciseIndex, const QString 
         }
     }
     if (!m_database.commit()) {
-        return fail(m_database.lastError().text());
+        const QString message = m_database.lastError().text();
+        m_database.rollback();
+        return fail(message);
     }
     return loadSession(m_sessionId);
 }

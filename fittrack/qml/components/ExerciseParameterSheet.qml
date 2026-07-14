@@ -68,10 +68,19 @@ AppDialog {
             Accessible.name: qsTr("组间休息秒数")
         }
         AppButton {
+            objectName: "parameterRestoreDefaultsButton"
             Layout.fillWidth: true
             text: qsTr("恢复进入准备时的默认值")
             variant: "secondary"
             enabled: Boolean(root.exercise.modified)
+                     || setsInput.value !== Number(root.exercise.defaultSets
+                                                   || root.exercise.sets || 1)
+                     || repsInput.text.trim() !== String(root.exercise.defaultReps
+                                                         || root.exercise.reps || "")
+                     || restInput.value !== Number(
+                         root.exercise.defaultRestSeconds === undefined
+                         ? (root.exercise.restSeconds || 0)
+                         : root.exercise.defaultRestSeconds)
             onClicked: root.restoreRequested(String(root.exercise.draftId || root.exercise.id || ""))
         }
     }

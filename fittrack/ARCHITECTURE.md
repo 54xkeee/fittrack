@@ -23,7 +23,7 @@ SQLite v8
 - `history/`：已完成力量训练详情、已完成组修正和整次训练删除。
 - `cardio/`：跑步机爬坡、爬楼机和有氧历史。
 - `gyms/`：健身房和具体器械实例；被历史引用时归档。
-- `timer/`：绝对截止时间倒计时、桌面提示音，以及 Android 前台服务和完成通知桥接。
+- `timer/`：单调时钟截止时间倒计时、桌面提示音，以及 Android 前台服务和完成通知桥接。
 - `backup/`：JSON 事务恢复、SQLite 快照导出和 Android `content://` 文档 URI 访问。
 - `storage/`：数据库版本守卫、完整性检查、损坏恢复、结构升级和种子导入。
 
@@ -70,16 +70,16 @@ SQLite v8
 
 - QML/C++ 计时器仍负责前台显示和状态机；每次开始、暂停、继续、重置或提前结束都会通过 JNI 同步 `RestTimerService`。
 - Android 服务使用单调时钟保存截止时间，并以前台通知显示倒计时；自然结束时发送一次系统提示音通知，提前结束不会误报完成。
-- Android 13 及以上首次开始倒计时时请求通知权限。服务不使用精确闹钟，也不申请传感器或健康数据权限。
+- Android 13 及以上开始倒计时时不会自动请求通知权限；只有用户点击“开启后台提醒”才请求一次，拒绝后改为提供系统通知设置入口。服务不使用精确闹钟，也不申请传感器或健康数据权限。
 - 系统返回键先关闭历史详情或分析子页，再返回首页；只有首页再次返回才交给系统退出。
 
 ### Android 打包
 
 - `android/` 提供 Manifest、Java 服务、Adaptive Icon、主题图标、启动页和备份排除规则。
-- CMake 在 Android 上默认关闭测试和 Qt Multimedia，只部署 `arm64-v8a` 所需库；桌面端继续使用 Qt Multimedia 播放程序生成的提示音。
-- `scripts/build-android.ps1` 将 Debug 与 Release 构建目录分离，可生成 APK 或 AAB；签名时只从进程环境读取 keystore 路径、别名和密码，并显式重置未选择的签名模式，避免复用旧 CMake 缓存。
+- CMake 在 Android 上默认关闭测试和 Qt Multimedia，并按构建参数部署单一 ABI；手机包使用 `arm64-v8a`，模拟器调试包使用 `x86_64`。桌面端继续使用 Qt Multimedia 播放程序生成的提示音。
+- `scripts/build-android.ps1` 将 Debug 与 Release、`arm64-v8a` 与 `x86_64` 构建目录分离，可生成 APK 或 AAB。正式签名分为 Direct APK 和 PlayUpload AAB 两个 profile；本地配置只负责把仓库外的 keystore 信息加载到进程环境，构建脚本再从环境变量读取路径、别名和密码，并显式重置未选择的签名模式，避免复用旧 CMake 缓存。
 - `scripts/package-side-load.ps1` 只接受已通过包名、单 ABI、Debug 证书和 v2 签名校验的 APK；输出一个可分享 ZIP，并附带许可正文、实际 Qt SBOM、NDK NOTICE、媒体署名和逐文件 SHA-256。分发产物位于忽略提交的 `dist/`，不会污染源码历史。
-- 当前配置为包名 `com.fittrack.app`、版本 `0.1.0`/1、min API 28、target/compile API 35。最终包不含 `INTERNET` 或 `ACCESS_NETWORK_STATE` 权限。直接分享前必须冻结包名并改用长期发布签名。
+- 当前应用名为“训迹”，包名 `com.xuke.fittrack`，版本 `0.1.0`/1，min API 29，target/compile API 36，Qt 6.11.1，JDK 21，Build Tools 36.0.0，NDK 27.2.12479018。最终包不含 `INTERNET` 或 `ACCESS_NETWORK_STATE` 权限；正式分发必须使用仓库外长期保管的 Direct 或 PlayUpload 密钥。
 
 ## SQLite v8
 
@@ -117,10 +117,10 @@ Graphite & Lime 视觉令牌集中在 `qml/theme/Theme.qml`，页面通过 `AppP
 ## 验证基线
 
 ```powershell
-cmake --build C:\FitTrackDev\fittrack\build -j 6
-ctest --test-dir C:\FitTrackDev\fittrack\build -j 4 --output-on-failure
+cmake --build D:\FitTrackBuild\windows-qt6.11.1 -j 6
+ctest --test-dir D:\FitTrackBuild\windows-qt6.11.1 -j 4 --output-on-failure
 ```
 
 当前 15 项测试覆盖计算、数据库、种子导入、动作、计划、训练、历史、分析、有氧、场馆、备份、性能 SQL 门禁、倒计时和 QML 导航。数据库用例以数据驱动夹具覆盖合成 v1–v7、旧 v8 约束修复、v9 拒绝、主库与三类 sidecar 原字节保留，以及替换前后两种中断续跑；真实历史安装包数据库仍需真机验收。计划和训练测试覆盖逐组目标次数、训练日有氧增删改、计划复制、准备草稿与训练快照，以及稳定 ID 排序、事务回滚、删除归一化和重新实例化持久化；备份测试覆盖旧版 JSON 兼容；QML 测试在 360×800、420×920、480×1056 三档生成主页面和关键流程截图，并额外检查 1.0/1.3/1.5/2.0 四档字体、字符图标门禁、准备与训练标题不截断、计划/训练动作预览 48dp、训练动作卡可见焦点、当前动作详情真实打开、TalkBack 角色/名称及真实 `QTouchEvent` 拖动输入。Windows 固定环境还对 5 个静态关键状态执行尺寸、坏点比例与 RGB 平均误差门禁，失败时保留 actual、expected 和 diff 证据；这不能替代 Android 真机视觉与 TalkBack 验收。
 
-Android `arm64-v8a` Debug APK 与无签名 Release APK/AAB 已完成构建；Debug APK 通过零问题 Android Lint、API/ABI/包名/权限检查和 V2 调试签名校验。包内探针确认 58 张 shareable 图片全部嵌入，116 张本地 MuscleDB 图片、旧图片目录和 Inter 字体均未进入 APK。一次性测试密钥验证了 Release APK 的 V3 签名链路，随后已恢复为无签名构建状态。Android 自动化尚未覆盖设备生命周期、系统通知策略、真实 TalkBack、SAF 提供方差异和同签名覆盖升级，这些仍属于一加 Ace 5 Pro 真机验收范围。
+Android 构建脚本支持 `arm64-v8a` 手机包、`x86_64` 模拟器包、Debug/Release APK、Release AAB，以及 Direct/PlayUpload 两套正式签名。`verify-android-release.ps1` 会检查包名、API、ABI、签名、ZIP 对齐和 ELF LOAD 段，`package-side-load.ps1` 继续检查 Debug 侧载包及 58 张 shareable 图片白名单。2026-07-14 的 arm64/x86_64 Debug 和 arm64 unsigned Release APK/AAB 已完成对应离线门禁；真实长期密钥、同签名覆盖升级和一加 Ace 5 Pro 真机回归均不得写成已经通过。

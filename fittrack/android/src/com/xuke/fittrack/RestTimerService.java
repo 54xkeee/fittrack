@@ -1,4 +1,4 @@
-package com.fittrack.app;
+package com.xuke.fittrack;
 
 import android.app.Notification;
 import android.app.NotificationChannel;
@@ -12,19 +12,20 @@ import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
+import android.os.PowerManager;
 import android.os.SystemClock;
 
 import java.util.Locale;
 
 public final class RestTimerService extends Service {
-    public static final String ACTION_START = "com.fittrack.app.timer.START";
-    public static final String ACTION_PAUSE = "com.fittrack.app.timer.PAUSE";
-    public static final String ACTION_RESUME = "com.fittrack.app.timer.RESUME";
-    public static final String ACTION_STOP = "com.fittrack.app.timer.STOP";
+    public static final String ACTION_START = "com.xuke.fittrack.timer.START";
+    public static final String ACTION_PAUSE = "com.xuke.fittrack.timer.PAUSE";
+    public static final String ACTION_RESUME = "com.xuke.fittrack.timer.RESUME";
+    public static final String ACTION_STOP = "com.xuke.fittrack.timer.STOP";
     public static final String EXTRA_REMAINING_MS = "remaining_ms";
 
     private static final String ACTIVE_CHANNEL_ID = "rest_timer_active";
-    private static final String COMPLETE_CHANNEL_ID = "rest_timer_complete";
+    static final String COMPLETE_CHANNEL_ID = "rest_timer_complete";
     private static final int ACTIVE_NOTIFICATION_ID = 2001;
     private static final int COMPLETE_NOTIFICATION_ID = 2002;
 
@@ -32,6 +33,7 @@ public final class RestTimerService extends Service {
     private long deadlineElapsedMs;
     private long pausedRemainingMs;
     private boolean running;
+    private PowerManager.WakeLock wakeLock;
 
     private final Runnable completionTask = this::complete;
 
@@ -75,6 +77,7 @@ public final class RestTimerService extends Service {
     @Override
     public void onDestroy() {
         handler.removeCallbacks(completionTask);
+        releaseWakeLock();
         super.onDestroy();
     }
 
@@ -86,16 +89,23 @@ public final class RestTimerService extends Service {
         running = true;
         pausedRemainingMs = 0L;
         deadlineElapsedMs = SystemClock.elapsedRealtime() + remainingMs;
+        notificationManager().cancel(COMPLETE_NOTIFICATION_ID);
+        acquireWakeLock(remainingMs);
         handler.removeCallbacks(completionTask);
         handler.postDelayed(completionTask, remainingMs);
         showForegroundNotification(remainingMs, false);
     }
 
     private void pauseTimer(long remainingMs) {
+        if (remainingMs <= 0L) {
+            stopTimer();
+            return;
+        }
         running = false;
         deadlineElapsedMs = 0L;
         pausedRemainingMs = remainingMs;
         handler.removeCallbacks(completionTask);
+        releaseWakeLock();
         showForegroundNotification(remainingMs, true);
     }
 
@@ -104,6 +114,8 @@ public final class RestTimerService extends Service {
         deadlineElapsedMs = 0L;
         pausedRemainingMs = 0L;
         handler.removeCallbacks(completionTask);
+        releaseWakeLock();
+        notificationManager().cancel(COMPLETE_NOTIFICATION_ID);
         stopForeground(STOP_FOREGROUND_REMOVE);
         stopSelf();
     }
@@ -113,16 +125,19 @@ public final class RestTimerService extends Service {
             return;
         }
         running = false;
+        releaseWakeLock();
         stopForeground(STOP_FOREGROUND_REMOVE);
-        Notification notification = new Notification.Builder(this, COMPLETE_CHANNEL_ID)
-                .setSmallIcon(R.drawable.ic_stat_fittrack)
-                .setContentTitle("休息结束")
-                .setContentText("可以开始下一组了")
-                .setContentIntent(openAppIntent())
-                .setAutoCancel(true)
-                .setCategory(Notification.CATEGORY_ALARM)
-                .build();
-        notificationManager().notify(COMPLETE_NOTIFICATION_ID, notification);
+        if (notificationsEnabled()) {
+            Notification notification = new Notification.Builder(this, COMPLETE_CHANNEL_ID)
+                    .setSmallIcon(R.drawable.ic_stat_fittrack)
+                    .setContentTitle("休息结束")
+                    .setContentText("可以开始下一组了")
+                    .setContentIntent(openAppIntent())
+                    .setAutoCancel(true)
+                    .setCategory(Notification.CATEGORY_ALARM)
+                    .build();
+            notificationManager().notify(COMPLETE_NOTIFICATION_ID, notification);
+        }
         stopSelf();
     }
 
@@ -176,6 +191,29 @@ public final class RestTimerService extends Service {
 
     private NotificationManager notificationManager() {
         return (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+    }
+
+    private boolean notificationsEnabled() {
+        return RestTimerBridge.completionAlertsEnabled(this);
+    }
+
+    private void acquireWakeLock(long remainingMs) {
+        if (wakeLock == null) {
+            PowerManager powerManager = (PowerManager) getSystemService(Context.POWER_SERVICE);
+            wakeLock = powerManager.newWakeLock(
+                    PowerManager.PARTIAL_WAKE_LOCK, "Xunji:RestTimer");
+            wakeLock.setReferenceCounted(false);
+        }
+        if (wakeLock.isHeld()) {
+            wakeLock.release();
+        }
+        wakeLock.acquire(remainingMs + 5000L);
+    }
+
+    private void releaseWakeLock() {
+        if (wakeLock != null && wakeLock.isHeld()) {
+            wakeLock.release();
+        }
     }
 
     private static String formatDuration(long milliseconds) {

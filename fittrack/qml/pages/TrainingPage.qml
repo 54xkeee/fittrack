@@ -14,6 +14,7 @@ AppPage {
     signal freeStartRequested(string name)
     property string selectedExerciseId: ""
     property bool submittingSet: false
+    readonly property var trainingExerciseModel: exerciseModel
 
     ExerciseDetailSheet {
         id: sharedExerciseDetail
@@ -101,22 +102,7 @@ AppPage {
     }
 
     function loadCurrentSetInputs() {
-        const exercise = currentExercise
-        const setData = currentSet
-        if (!exercise || !setData) {
-            setWeight.text = ""
-            setReps.text = ""
-            setFailure.checked = false
-            bodyweightMode.currentIndex = 0
-            return
-        }
-        const hasWeight = setData.weightKg !== undefined && setData.weightKg !== null
-                && Number.isFinite(Number(setData.weightKg))
-        setWeight.text = hasWeight ? String(Number(setData.weightKg)) : ""
-        setReps.text = ""
-        setFailure.checked = false
-        bodyweightMode.currentIndex = setData.bodyweightLoadType === "Added" ? 1
-                : setData.bodyweightLoadType === "Assisted" ? 2 : 0
+        currentSetInput.loadInputs()
     }
 
     function gymIndex(gymId) {
@@ -127,12 +113,12 @@ AppPage {
         return -1
     }
 
-    function equipmentIndex(equipmentId) {
-        for (let i = 0; i < workoutController.equipment.length; ++i) {
-            if (workoutController.equipment[i].id === equipmentId)
-                return i
-        }
-        return -1
+    function openEquipmentChoice(exerciseId) {
+        const index = exerciseIndexById(exerciseId)
+        if (index < 0)
+            return
+        equipmentChoiceDialog.openForExercise(
+                    exerciseId, String(workoutController.exercises[index].equipmentId || ""))
     }
 
     function previousText(sets) {
@@ -152,8 +138,6 @@ AppPage {
             ? currentExercise.sets[currentSetIndex] : null
     readonly property bool currentIsBodyweight: currentExercise
             && currentExercise.loadMode === "Bodyweight"
-    readonly property bool pureBodyweight: currentIsBodyweight
-            && bodyweightMode.currentIndex === 0
     readonly property bool allExercisesComplete: workoutController.active
             && workoutController.exercises.length > 0
             && nextIncompleteExerciseId(-1).length === 0
@@ -313,7 +297,7 @@ AppPage {
                 onClicked: {
                     exerciseActions.close()
                     Qt.callLater(function() {
-                        equipmentChoiceDialog.openForExercise(exerciseActions.targetExerciseId)
+                        page.openEquipmentChoice(exerciseActions.targetExerciseId)
                     })
                 }
             }
@@ -381,11 +365,11 @@ AppPage {
         }
     }
 
-    AppDialog {
+    ExercisePickerSheet {
         id: exercisePicker
         objectName: "exercisePickerDialog"
+        exerciseModel: page.trainingExerciseModel
         property string replaceExerciseId: ""
-        property string oldSearch: ""
         property string oldBodyPart: ""
         property string oldMovement: ""
         property string oldEquipment: ""
@@ -393,95 +377,43 @@ AppPage {
 
         function openForExercise(exerciseId) {
             replaceExerciseId = exerciseId
-            oldSearch = exerciseModel.searchText
-            oldBodyPart = exerciseModel.bodyPart
-            oldMovement = exerciseModel.movementFilter
-            oldEquipment = exerciseModel.equipmentFilter
-            oldFavoritesOnly = exerciseModel.favoritesOnly
-            exerciseModel.searchText = ""
-            exerciseModel.bodyPart = ""
-            exerciseModel.movementFilter = ""
-            exerciseModel.equipmentFilter = ""
-            exerciseModel.favoritesOnly = false
-            open()
+            oldBodyPart = page.trainingExerciseModel.bodyPart
+            oldMovement = page.trainingExerciseModel.movementFilter
+            oldEquipment = page.trainingExerciseModel.equipmentFilter
+            oldFavoritesOnly = page.trainingExerciseModel.favoritesOnly
+            page.trainingExerciseModel.bodyPart = ""
+            page.trainingExerciseModel.movementFilter = ""
+            page.trainingExerciseModel.equipmentFilter = ""
+            page.trainingExerciseModel.favoritesOnly = false
+            openPicker(replaceExerciseId.length > 0 ? "replace" : "add")
         }
 
-        width: Math.min(520, safeAvailableWidth)
-        height: Math.min(680, safeAvailableHeight)
-        title: replaceExerciseId.length > 0 ? qsTr("替换动作") : qsTr("添加动作")
-        primaryText: qsTr("关闭")
-        primaryVariant: "secondary"
-        secondaryVisible: false
-        initialFocusItem: exerciseSearch
-
-        onClosed: {
-            exerciseModel.searchText = oldSearch
-            exerciseModel.bodyPart = oldBodyPart
-            exerciseModel.movementFilter = oldMovement
-            exerciseModel.equipmentFilter = oldEquipment
-            exerciseModel.favoritesOnly = oldFavoritesOnly
+        onDismissed: {
+            page.trainingExerciseModel.bodyPart = oldBodyPart
+            page.trainingExerciseModel.movementFilter = oldMovement
+            page.trainingExerciseModel.equipmentFilter = oldEquipment
+            page.trainingExerciseModel.favoritesOnly = oldFavoritesOnly
         }
-
-        ColumnLayout {
-            anchors.fill: parent
-            spacing: Design.Theme.space8
-
-            TextField {
-                id: exerciseSearch
-                Layout.fillWidth: true
-                implicitHeight: Design.Theme.controlHeight
-                placeholderText: qsTr("搜索动作")
-                Accessible.name: qsTr("搜索动作")
-                onTextChanged: exerciseModel.searchText = text
+        onPreviewRequested: exerciseId => sharedExerciseDetail.openExercise(
+                                page.trainingExerciseModel.exerciseById(exerciseId))
+        onExerciseSelected: exerciseId => {
+            let success = false
+            if (replaceExerciseId.length > 0) {
+                const index = page.exerciseIndexById(replaceExerciseId)
+                success = index >= 0 && workoutController.replaceExercise(index, exerciseId)
+            } else {
+                const exercise = page.trainingExerciseModel.exerciseById(exerciseId)
+                success = workoutController.addExercise(
+                            exerciseId,
+                            Number(exercise.recommendedSets || 1),
+                            String(exercise.recommendedReps || "8-12"))
             }
-
-            ListView {
-                Layout.fillWidth: true
-                Layout.fillHeight: true
-                clip: true
-                spacing: Design.Theme.space4
-                model: exerciseModel
-
-                delegate: ItemDelegate {
-                    required property string exerciseId
-                    required property string name
-                    required property string bodyPart
-                    required property int recommendedSets
-                    required property string recommendedReps
-
-                    width: ListView.view.width
-                    implicitHeight: 56
-                    rightPadding: 64
-                    text: name + "  ·  " + bodyPart
-                    Accessible.name: qsTr("选择%1，%2").arg(name).arg(bodyPart)
-                    onClicked: {
-                        let success = false
-                        if (exercisePicker.replaceExerciseId.length > 0) {
-                            const index = page.exerciseIndexById(exercisePicker.replaceExerciseId)
-                            success = index >= 0 && workoutController.replaceExercise(index, exerciseId)
-                        } else {
-                            success = workoutController.addExercise(
-                                        exerciseId, recommendedSets, recommendedReps)
-                        }
-                        if (success)
-                            exercisePicker.close()
-                        else
-                            exercisePicker.showError(
-                                        workoutController.errorMessage.length > 0
-                                        ? workoutController.errorMessage
-                                        : qsTr("动作更新失败，请重试。"))
-                    }
-                    IconButton {
-                        anchors.right: parent.right
-                        anchors.rightMargin: Design.Theme.space8
-                        anchors.verticalCenter: parent.verticalCenter
-                        iconName: "forward"
-                        accessibleName: qsTr("预览 %1").arg(name)
-                        onClicked: sharedExerciseDetail.openExercise(
-                                       exerciseModel.exerciseById(exerciseId))
-                    }
-                }
-            }
+            if (success)
+                close()
+            else
+                showError(workoutController.errorMessage.length > 0
+                          ? workoutController.errorMessage
+                          : qsTr("动作更新失败，请重试。"))
         }
     }
 
@@ -850,146 +782,15 @@ AppPage {
         }
     }
 
-    AppDialog {
-        id: timerDialog
-        objectName: "restTimerDialog"
-        width: Math.min(380, safeAvailableWidth)
-        title: qsTr("休息计时")
-        primaryText: qsTr("关闭")
-        primaryVariant: "secondary"
-        secondaryVisible: false
-        initialFocusItem: timerMinutes
-
-        ColumnLayout {
-            anchors.fill: parent
-            spacing: Design.Theme.space12
-            GridLayout {
-                id: timerPresetGrid
-                Layout.fillWidth: true
-                columns: Design.Theme.fontScale >= 1.3 ? 2 : 3
-                columnSpacing: Design.Theme.space8
-                rowSpacing: Design.Theme.space8
-                AppButton {
-                    objectName: "twoMinuteTimerButton"
-                    Layout.fillWidth: true
-                    Layout.minimumWidth: 0
-                    text: qsTr("2 分钟")
-                    onClicked: {
-                        restTimer.start(120)
-                        timerDialog.close()
-                    }
-                }
-                AppButton {
-                    objectName: "threeMinuteTimerButton"
-                    Layout.fillWidth: true
-                    Layout.minimumWidth: 0
-                    text: qsTr("3 分钟")
-                    onClicked: {
-                        restTimer.start(180)
-                        timerDialog.close()
-                    }
-                }
-                AppButton {
-                    objectName: "fiveMinuteTimerButton"
-                    Layout.fillWidth: true
-                    Layout.columnSpan: timerPresetGrid.columns === 2 ? 2 : 1
-                    Layout.minimumWidth: 0
-                    text: qsTr("5 分钟")
-                    onClicked: {
-                        restTimer.start(300)
-                        timerDialog.close()
-                    }
-                }
-            }
-            Label {
-                Layout.fillWidth: true
-                text: qsTr("自定义时长")
-                color: Design.Theme.surfaceMuted
-                font.pixelSize: Design.Theme.typeLabel
-            }
-            RowLayout {
-                Layout.fillWidth: true
-                spacing: Design.Theme.space8
-
-                ColumnLayout {
-                    Layout.fillWidth: true
-                    spacing: Design.Theme.space4
-                    Label {
-                        text: qsTr("分钟")
-                        color: Design.Theme.surfaceMuted
-                        font.pixelSize: Design.Theme.typeCaption
-                    }
-                    SpinBox {
-                        id: timerMinutes
-                        Layout.fillWidth: true
-                        from: 0
-                        to: 59
-                        value: 2
-                        editable: true
-                        implicitHeight: Design.Theme.controlHeight
-                        Accessible.name: qsTr("自定义分钟")
-                    }
-                }
-                ColumnLayout {
-                    Layout.fillWidth: true
-                    spacing: Design.Theme.space4
-                    Label {
-                        text: qsTr("秒数")
-                        color: Design.Theme.surfaceMuted
-                        font.pixelSize: Design.Theme.typeCaption
-                    }
-                    SpinBox {
-                        id: timerSeconds
-                        Layout.fillWidth: true
-                        from: 0
-                        to: 59
-                        value: 0
-                        editable: true
-                        implicitHeight: Design.Theme.controlHeight
-                        Accessible.name: qsTr("自定义秒数")
-                    }
-                }
-            }
-            AppButton {
-                Layout.fillWidth: true
-                text: qsTr("开始计时")
-                enabled: timerMinutes.value > 0 || timerSeconds.value > 0
-                onClicked: {
-                    restTimer.start(timerMinutes.value * 60 + timerSeconds.value)
-                    timerDialog.close()
-                }
-            }
-        }
-    }
-
-    AppDialog {
+    EquipmentChoiceDialog {
         id: equipmentChoiceDialog
         objectName: "equipmentChoiceDialog"
-        property string targetExerciseId: ""
-
-        function openForExercise(exerciseId) {
-            targetExerciseId = exerciseId
+        equipmentModel: workoutController.equipment
+        canCreate: workoutController.selectedGymId.length > 0
+        onSaveRequested: (exerciseId, equipmentId) => {
             const index = page.exerciseIndexById(exerciseId)
-            if (index < 0)
-                return
-            const exercise = workoutController.exercises[index]
-            equipmentChoice.currentIndex = page.equipmentIndex(exercise.equipmentId)
-            open()
-        }
-
-        width: Math.min(400, safeAvailableWidth)
-        title: qsTr("本次使用器械")
-        primaryText: qsTr("保存器械")
-        autoAccept: false
-        initialFocusItem: equipmentChoice
-        onPrimaryRequested: {
-            const index = page.exerciseIndexById(targetExerciseId)
-            let succeeded = false
-            if (index >= 0) {
-                const equipmentId = equipmentChoice.currentIndex >= 0
-                        ? workoutController.equipment[equipmentChoice.currentIndex].id : ""
-                succeeded = workoutController.setExerciseEquipment(index, equipmentId)
-            }
+            const succeeded = index >= 0
+                    && workoutController.setExerciseEquipment(index, equipmentId)
             if (succeeded)
                 accept()
             else
@@ -997,31 +798,11 @@ AppPage {
                           ? workoutController.errorMessage
                           : qsTr("器械选择保存失败，请重试。"))
         }
-
-        ColumnLayout {
-            anchors.fill: parent
-            spacing: Design.Theme.space12
-            ComboBox {
-                id: equipmentChoice
-                Layout.fillWidth: true
-                implicitHeight: Design.Theme.controlHeight
-                model: workoutController.equipment
-                textRole: "displayName"
-                displayText: currentIndex >= 0 ? currentText : qsTr("不指定具体器械")
-                Accessible.name: qsTr("本次使用器械")
-            }
-            AppButton {
-                Layout.fillWidth: true
-                variant: "secondary"
-                text: qsTr("新建器械")
-                enabled: workoutController.selectedGymId.length > 0
-                onClicked: {
-                    equipmentName.text = ""
-                    equipmentCode.text = ""
-                    equipmentNotes.text = ""
-                    equipmentDialog.open()
-                }
-            }
+        onCreateRequested: {
+            equipmentName.text = ""
+            equipmentCode.text = ""
+            equipmentNotes.text = ""
+            equipmentDialog.open()
         }
     }
 
@@ -1535,7 +1316,7 @@ AppPage {
                                 Layout.preferredWidth: 88
                                 variant: "secondary"
                                 text: qsTr("选择")
-                                onClicked: equipmentChoiceDialog.openForExercise(page.selectedExerciseId)
+                                onClicked: page.openEquipmentChoice(page.selectedExerciseId)
                             }
                         }
 
@@ -1808,184 +1589,73 @@ AppPage {
 
     footer: Rectangle {
         visible: workoutController.active
-        implicitHeight: visible ? inputFooterColumn.implicitHeight + Design.Theme.space16 : 0
+        implicitHeight: visible
+                        ? Math.min(inputFooterColumn.implicitHeight + Design.Theme.space16,
+                                   page.height)
+                        : 0
         color: Design.Theme.background
         border.width: visible ? 1 : 0
         border.color: Design.Theme.outline
 
-        ColumnLayout {
-            id: inputFooterColumn
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.bottom: parent.bottom
+        ScrollView {
+            id: inputFooterScroll
+            anchors.fill: parent
             anchors.margins: Design.Theme.space8
-            spacing: Design.Theme.space8
+            clip: true
+            contentWidth: availableWidth
+            ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
 
-            RestTimerBar {
-                visible: restTimer.state === 1 || restTimer.state === 2
-                Layout.fillWidth: true
-                remainingSeconds: restTimer.remainingSeconds
-                paused: restTimer.state === 2
-                onPauseRequested: restTimer.pause()
-                onResumeRequested: restTimer.resume()
-                onStopRequested: restTimer.reset()
-            }
-
-            InlineFeedback {
-                visible: restTimer.state === 3
-                Layout.fillWidth: true
-                tone: "success"
-                message: qsTr("休息结束，可以开始下一组。")
-                actionText: qsTr("知道了")
-                onActionTriggered: restTimer.reset()
-            }
-
-            GridLayout {
-                id: currentSetActions
-                Layout.fillWidth: true
-                columns: page.width < 400 || Design.Theme.fontScale >= 1.2 ? 2 : 4
-                rowSpacing: Design.Theme.space8
-                columnSpacing: Design.Theme.space8
-                ItemDelegate {
-                    objectName: "currentSetTargetButton"
-                    Layout.fillWidth: true
-                    Layout.columnSpan: 2
-                    implicitHeight: Math.max(Design.Theme.controlHeight,
-                                             Design.Theme.typeBody + Design.Theme.typeCaption
-                                             + Design.Theme.space4)
-                    leftPadding: 0
-                    rightPadding: Design.Theme.space8
-                    enabled: page.currentSet !== null
-                    Accessible.name: page.currentSet
-                                     ? qsTr("当前第 %1 组，目标 %2 次，双击修改")
-                                       .arg(page.currentSet.number)
-                                       .arg(page.currentSet.targetReps !== null
-                                            ? page.currentSet.targetReps : qsTr("未设置"))
-                                     : qsTr("当前动作已完成")
-                    onClicked: targetRepsDialog.openForSet(page.currentExercise.id, page.currentSet)
-                    background: Item { }
-                    contentItem: ColumnLayout {
-                        spacing: 0
-                        Label {
-                            text: page.currentSet
-                                  ? qsTr("当前 · 第 %1 组").arg(page.currentSet.number)
-                                  : (page.allExercisesComplete ? qsTr("训练记录已完成") : qsTr("当前动作已完成"))
-                            color: Design.Theme.surfaceText
-                            font.pixelSize: Design.Theme.typeBody
-                            font.weight: Font.DemiBold
-                        }
-                        Label {
-                            visible: page.currentSet !== null
-                            text: page.currentSet && page.currentSet.targetReps !== null
-                                  ? qsTr("目标 %1 次 · 点击修改").arg(page.currentSet.targetReps)
-                                  : qsTr("设置本组目标次数")
-                            color: Design.Theme.surfaceMuted
-                            font.pixelSize: Design.Theme.typeCaption
-                        }
-                    }
-                }
-                AppButton {
-                    objectName: "openRestTimerButton"
-                    Layout.fillWidth: true
-                    Layout.columnSpan: setFailure.visible ? 1 : 2
-                    variant: "secondary"
-                    text: qsTr("计时")
-                    onClicked: timerDialog.open()
-                }
-                CheckBox {
-                    id: setFailure
-                    visible: page.currentSet !== null
-                    Layout.fillWidth: true
-                    implicitHeight: Design.Theme.controlHeight
-                    text: qsTr("力竭")
-                }
-            }
-
-            RowLayout {
-                visible: page.currentSet !== null
-                Layout.fillWidth: true
+            ColumnLayout {
+                id: inputFooterColumn
+                width: inputFooterScroll.availableWidth
                 spacing: Design.Theme.space8
-                NumberField {
-                    id: setWeight
-                    objectName: "setWeightField"
+
+                TrainingRestTimer {
+                    id: trainingRestTimer
                     Layout.fillWidth: true
-                    label: page.pureBodyweight ? qsTr("负重") : qsTr("实际重量")
-                    placeholderText: page.pureBodyweight ? qsTr("纯自重") : qsTr("0")
-                    unit: page.pureBodyweight ? "" : "kg"
-                    decimals: 2
-                    enabled: !page.pureBodyweight
+                    timerState: restTimer.state
+                    remainingSeconds: restTimer.remainingSeconds
+                    backgroundAlertState: restTimer.backgroundAlertState
+                    onStartRequested: seconds => restTimer.start(seconds)
+                    onPauseRequested: restTimer.pause()
+                    onResumeRequested: restTimer.resume()
+                    onStopRequested: restTimer.reset()
+                    onPermissionRequested: restTimer.requestBackgroundAlertPermission()
+                    onSettingsRequested: restTimer.openBackgroundAlertSettings()
                 }
-                NumberField {
-                    id: setReps
-                    objectName: "setRepsField"
+
+                CurrentSetInputPanel {
+                    id: currentSetInput
                     Layout.fillWidth: true
-                    label: qsTr("实际次数")
-                    placeholderText: page.currentSet && page.currentSet.targetReps !== null
-                                     ? String(page.currentSet.targetReps) : qsTr("次数")
-                    decimals: 0
-                    keyboardHints: Qt.ImhDigitsOnly
-                    onAccepted: completeSetButton.clicked()
-                }
-            }
-
-            ComboBox {
-                id: bodyweightMode
-                objectName: "bodyweightModeSelector"
-                visible: page.currentSet !== null && page.currentIsBodyweight
-                Layout.fillWidth: true
-                implicitHeight: Design.Theme.controlHeight
-                textRole: "label"
-                model: [
-                    {"label": qsTr("纯自重，只记录次数"), "value": "Bodyweight"},
-                    {"label": qsTr("附加负重"), "value": "Added"},
-                    {"label": qsTr("辅助重量"), "value": "Assisted"}
-                ]
-                Accessible.name: qsTr("自重动作负荷方式")
-                onCurrentIndexChanged: {
-                    if (currentIndex === 0)
-                        setWeight.text = ""
-                }
-            }
-
-            AppButton {
-                id: completeSetButton
-                objectName: "completeSetButton"
-                visible: page.currentSet !== null
-                Layout.fillWidth: true
-                text: page.submittingSet ? qsTr("正在保存…") : qsTr("完成本组")
-                enabled: !page.submittingSet
-                         && Number.isFinite(setReps.numericValue)
-                         && (page.pureBodyweight || Number.isFinite(setWeight.numericValue))
-                onClicked: {
-                    if (!enabled || page.currentExerciseIndex < 0 || page.currentSetIndex < 0)
-                        return
-                    page.submittingSet = true
-                    const loadType = page.currentIsBodyweight
-                            ? bodyweightMode.model[bodyweightMode.currentIndex].value : "Bodyweight"
-                    const success = workoutController.completeSet(
-                                page.currentExerciseIndex,
-                                page.currentSetIndex,
-                                page.pureBodyweight ? 0 : setWeight.numericValue,
-                                setReps.numericValue,
-                                setFailure.checked,
-                                loadType)
-                    if (!success)
-                        page.submittingSet = false
-                }
-            }
-
-            AppButton {
-                visible: page.currentSet === null && workoutController.exercises.length > 0
-                Layout.fillWidth: true
-                text: page.allExercisesComplete ? qsTr("完成本次训练") : qsTr("进入下一个动作")
-                onClicked: {
-                    if (page.allExercisesComplete) {
-                        workoutController.finishWorkout()
-                    } else {
+                    exercise: page.currentExercise
+                    setData: page.currentSet
+                    exerciseIndex: page.currentExerciseIndex
+                    setIndex: page.currentSetIndex
+                    allExercisesComplete: page.allExercisesComplete
+                    exerciseCount: workoutController.exercises.length
+                    submitting: page.submittingSet
+                    viewportWidth: page.width
+                    onTargetRepsRequested: (exerciseId, setData) =>
+                                               targetRepsDialog.openForSet(exerciseId, setData)
+                    onTimerRequested: trainingRestTimer.open()
+                    onCompleteRequested: (weightKg, reps, toFailure, loadType) => {
+                        page.submittingSet = true
+                        const success = workoutController.completeSet(
+                                          page.currentExerciseIndex,
+                                          page.currentSetIndex,
+                                          weightKg,
+                                          reps,
+                                          toFailure,
+                                          loadType)
+                        if (!success)
+                            page.submittingSet = false
+                    }
+                    onAdvanceRequested: {
                         const nextId = page.nextIncompleteExerciseId(page.currentExerciseIndex)
                         if (nextId.length > 0)
                             page.selectExercise(nextId)
                     }
+                    onFinishRequested: workoutController.finishWorkout()
                 }
             }
         }

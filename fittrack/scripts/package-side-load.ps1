@@ -1,8 +1,8 @@
 ﻿param(
     [string]$ApkPath = "",
     [string]$ToolchainRoot = "D:\FitTrackToolchains",
-    [string]$BuildToolsVersion = "35.0.0",
-    [string]$QtVersion = "6.9.1",
+    [string]$BuildToolsVersion = "36.0.0",
+    [string]$QtVersion = "6.11.1",
     [string]$NdkVersion = "27.2.12479018"
 )
 
@@ -11,12 +11,19 @@ $ErrorActionPreference = "Stop"
 $projectDirectory = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
 $repositoryDirectory = (Resolve-Path (Join-Path $projectDirectory "..")).Path
 if ([string]::IsNullOrWhiteSpace($ApkPath)) {
-    $ApkPath = Join-Path $projectDirectory "build-android-arm64\android-build\build\outputs\apk\debug\android-build-debug.apk"
+    $ApkPath = Join-Path $projectDirectory "build-android-arm64-debug\android-build\fittrack.apk"
 }
 
 $resolvedApk = (Resolve-Path -LiteralPath $ApkPath -ErrorAction Stop).Path
 if ([System.IO.Path]::GetExtension($resolvedApk) -ne ".apk") {
     throw "Side-load package input must be an APK: $resolvedApk"
+}
+$androidPackageDirectory = Get-Item -LiteralPath (Split-Path -Parent $resolvedApk)
+while ($androidPackageDirectory -and $androidPackageDirectory.Name -ne "android-build") {
+    $androidPackageDirectory = $androidPackageDirectory.Parent
+}
+if (-not $androidPackageDirectory) {
+    throw "APK must come from an android-build directory so Lint evidence can be verified"
 }
 
 $buildToolsDirectory = Join-Path $ToolchainRoot "AndroidSdk\build-tools\$BuildToolsVersion"
@@ -42,13 +49,16 @@ if ($packageLine -notmatch "package: name='([^']+)' versionCode='([^']+)' versio
 $packageName = $Matches[1]
 $versionCode = $Matches[2]
 $versionName = $Matches[3]
-if ($packageName -ne "com.fittrack.app") {
+if ($packageName -ne "com.xuke.fittrack") {
     throw "Unexpected APK package name: $packageName"
+}
+if ($packageLine -notmatch "compileSdkVersion='36'") {
+    throw "Expected compile SDK 36, got: $packageLine"
 }
 $minSdkLine = $badging | Where-Object { $_ -like "minSdkVersion:*" } | Select-Object -First 1
 $targetSdkLine = $badging | Where-Object { $_ -like "targetSdkVersion:*" } | Select-Object -First 1
-if ($minSdkLine -ne "minSdkVersion:'28'" -or $targetSdkLine -ne "targetSdkVersion:'35'") {
-    throw "Expected min SDK 28 and target SDK 35, got: $minSdkLine; $targetSdkLine"
+if ($minSdkLine -ne "minSdkVersion:'29'" -or $targetSdkLine -ne "targetSdkVersion:'36'") {
+    throw "Expected min SDK 29 and target SDK 36, got: $minSdkLine; $targetSdkLine"
 }
 $nativeCodeLine = $badging | Where-Object { $_ -like "native-code:*" } | Select-Object -First 1
 if ($nativeCodeLine -ne "native-code: 'arm64-v8a'") {
@@ -58,7 +68,7 @@ $badgingText = $badging -join [Environment]::NewLine
 if ($badgingText -match "android\.permission\.(INTERNET|ACCESS_NETWORK_STATE)") {
     throw "The offline APK must not request INTERNET or ACCESS_NETWORK_STATE"
 }
-$metadataVerification = "Passed with $([System.IO.Path]::GetFileName($aapt)); API 28/35; arm64-v8a only; no network permission"
+$metadataVerification = "Passed with $([System.IO.Path]::GetFileName($aapt)); API 29/36; arm64-v8a only; no network permission"
 
 $apksigner = Join-Path $buildToolsDirectory "apksigner.bat"
 $signingOutput = @(& $apksigner verify --verbose --print-certs $resolvedApk 2>&1)
@@ -120,6 +130,7 @@ $licenseDocuments = @(
     (Join-Path $licenseSourceDirectory "SOURCE-AND-RELINK.md"),
     (Join-Path $repositoryDirectory "docs\fittrack-third-party-notices.md"),
     (Join-Path $repositoryDirectory "docs\fittrack-media-credits.md"),
+    (Join-Path $repositoryDirectory "docs\fittrack-exercise-mapping.md"),
     (Join-Path $repositoryDirectory "docs\media\original\README.md"),
     (Join-Path $projectDirectory "resources\data\exercise-media-shareable.json")
 )
@@ -137,9 +148,9 @@ foreach ($name in $requiredLicenseTexts) {
 
 $qtSbomDirectory = Join-Path $ToolchainRoot "Qt\$QtVersion\android_arm64_v8a\sbom"
 $qtSbomNames = @(
-    "qtbase-$QtVersion.spdx.json",
-    "qtdeclarative-$QtVersion.spdx.json",
-    "qtsvg-$QtVersion.spdx.json"
+    "qtbase-$QtVersion.spdx",
+    "qtdeclarative-$QtVersion.spdx",
+    "qtsvg-$QtVersion.spdx"
 )
 foreach ($name in $qtSbomNames) {
     $path = Join-Path $qtSbomDirectory $name
@@ -151,9 +162,13 @@ $ndkNotice = Join-Path $ToolchainRoot "AndroidSdk\ndk\$NdkVersion\toolchains\llv
 if (-not (Test-Path -LiteralPath $ndkNotice -PathType Leaf)) {
     throw "Android NDK LLVM NOTICE is missing: $ndkNotice"
 }
-$androidDependencyEvidence = Join-Path $projectDirectory "build-android-arm64\android-build\build\intermediates\incremental\lintAnalyzeDebug\debug-artifact-dependencies.xml"
-if (-not (Test-Path -LiteralPath $androidDependencyEvidence -PathType Leaf)) {
-    throw "Android runtime dependency evidence is missing; run lintDebug first: $androidDependencyEvidence"
+$androidBuildOutput = Join-Path $androidPackageDirectory.FullName "build"
+$androidDependencyEvidence = Get-ChildItem -LiteralPath $androidBuildOutput `
+        -Filter "debug-artifact-dependencies.xml" -File -Recurse -ErrorAction SilentlyContinue |
+    Where-Object { $_.Directory.Name -eq "lintAnalyzeDebug" } |
+    Select-Object -First 1 -ExpandProperty FullName
+if (-not $androidDependencyEvidence) {
+    throw "Android runtime dependency evidence is missing; run lintDebug first under $androidBuildOutput"
 }
 if ((Get-Item -LiteralPath $androidDependencyEvidence).LastWriteTimeUtc `
     -lt (Get-Item -LiteralPath $resolvedApk).LastWriteTimeUtc) {
@@ -191,10 +206,25 @@ Copy-Item -LiteralPath (Join-Path $licenseSourceDirectory "README.md") `
     -Destination (Join-Path $distributionLicenseDirectory "LICENSE-BUNDLE-README.md")
 Copy-Item -LiteralPath (Join-Path $licenseSourceDirectory "SOURCE-AND-RELINK.md") `
     -Destination $distributionLicenseDirectory
-Copy-Item -LiteralPath (Join-Path $repositoryDirectory "docs\fittrack-third-party-notices.md") `
-    -Destination (Join-Path $distributionLicenseDirectory "THIRD-PARTY-NOTICES.md")
-Copy-Item -LiteralPath (Join-Path $repositoryDirectory "docs\fittrack-media-credits.md") `
-    -Destination (Join-Path $distributionLicenseDirectory "MEDIA-CREDITS.md")
+$thirdPartyNotices = Get-Content -Raw -Encoding utf8 -LiteralPath `
+    (Join-Path $repositoryDirectory "docs\fittrack-third-party-notices.md")
+$thirdPartyNotices = $thirdPartyNotices.Replace(
+    "(fittrack-media-credits.md)", "(MEDIA-CREDITS.md)")
+Set-Content -Encoding utf8 `
+    -LiteralPath (Join-Path $distributionLicenseDirectory "THIRD-PARTY-NOTICES.md") `
+    -Value $thirdPartyNotices
+$mediaCredits = Get-Content -Raw -Encoding utf8 -LiteralPath `
+    (Join-Path $repositoryDirectory "docs\fittrack-media-credits.md")
+$mediaCredits = $mediaCredits.Replace(
+    "(../fittrack/resources/data/exercise-media-shareable.json)",
+    "(exercise-media-shareable.json)").Replace(
+    "(media/original/)", "(FITTRACK-ORIGINAL-MEDIA-CC0.md)").Replace(
+    "(fittrack-exercise-mapping.md)", "(EXERCISE-MAPPING.md)")
+Set-Content -Encoding utf8 `
+    -LiteralPath (Join-Path $distributionLicenseDirectory "MEDIA-CREDITS.md") `
+    -Value $mediaCredits
+Copy-Item -LiteralPath (Join-Path $repositoryDirectory "docs\fittrack-exercise-mapping.md") `
+    -Destination (Join-Path $distributionLicenseDirectory "EXERCISE-MAPPING.md")
 Copy-Item -LiteralPath (Join-Path $repositoryDirectory "docs\media\original\README.md") `
     -Destination (Join-Path $distributionLicenseDirectory "FITTRACK-ORIGINAL-MEDIA-CC0.md")
 Copy-Item -LiteralPath (Join-Path $projectDirectory "resources\data\exercise-media-shareable.json") `
@@ -257,7 +287,7 @@ $copiedLicenseTexts = @(Get-ChildItem -LiteralPath (Join-Path $distributionLicen
 if ($copiedLicenseTexts.Count -ne $requiredLicenseTexts.Count) {
     throw "The copied license text count does not match the required manifest"
 }
-$copiedSboms = @(Get-ChildItem -LiteralPath $distributionSbomDirectory -Filter "*.spdx.json" -File)
+$copiedSboms = @(Get-ChildItem -LiteralPath $distributionSbomDirectory -Filter "*.spdx" -File)
 if ($copiedSboms.Count -ne $qtSbomNames.Count) {
     throw "The copied Qt SBOM count does not match the required manifest"
 }

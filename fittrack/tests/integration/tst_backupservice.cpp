@@ -15,6 +15,7 @@ class BackupServiceTest final : public QObject
 private slots:
     void exportsAndRestoresCompleteJsonBackup();
     void rejectsOversizedJsonBackup();
+    void rejectsUnknownColumnsWithoutChangingData();
 };
 
 void BackupServiceTest::exportsAndRestoresCompleteJsonBackup()
@@ -126,6 +127,43 @@ void BackupServiceTest::rejectsOversizedJsonBackup()
     fittrack::BackupService backup(manager.database());
     QVERIFY(!backup.restoreJson(path));
     QVERIFY(backup.errorMessage().contains(QStringLiteral("64MB")));
+}
+
+void BackupServiceTest::rejectsUnknownColumnsWithoutChangingData()
+{
+    QTemporaryDir directory;
+    QVERIFY(directory.isValid());
+    fittrack::DatabaseManager manager;
+    QString error;
+    QVERIFY2(manager.initialize(directory.filePath(QStringLiteral("live.sqlite")), &error),
+             qPrintable(error));
+    QSqlQuery query(manager.database());
+    QVERIFY(query.exec(QStringLiteral("INSERT INTO gym(id,name) VALUES('gym','原始值')")));
+
+    fittrack::BackupService backup(manager.database());
+    const QString path = directory.filePath(QStringLiteral("unknown-column.json"));
+    QVERIFY2(backup.exportJson(path), qPrintable(backup.errorMessage()));
+
+    QFile file(path);
+    QVERIFY(file.open(QIODevice::ReadOnly));
+    QJsonObject root = QJsonDocument::fromJson(file.readAll()).object();
+    file.close();
+    QJsonObject tableData = root.value(QStringLiteral("tables")).toObject();
+    QJsonArray gyms = tableData.value(QStringLiteral("gym")).toArray();
+    QJsonObject gym = gyms.first().toObject();
+    gym.insert(QStringLiteral("name) VALUES('injected'); --"), QStringLiteral("攻击值"));
+    gyms.replace(0, gym);
+    tableData.insert(QStringLiteral("gym"), gyms);
+    root.insert(QStringLiteral("tables"), tableData);
+    QVERIFY(file.open(QIODevice::WriteOnly | QIODevice::Truncate));
+    QVERIFY(file.write(QJsonDocument(root).toJson()) > 0);
+    file.close();
+
+    QVERIFY(query.exec(QStringLiteral("UPDATE gym SET name='当前值' WHERE id='gym'")));
+    QVERIFY(!backup.restoreJson(path));
+    QVERIFY(backup.errorMessage().contains(QStringLiteral("未知字段")));
+    QVERIFY(query.exec(QStringLiteral("SELECT name FROM gym WHERE id='gym'")) && query.next());
+    QCOMPARE(query.value(0).toString(), QStringLiteral("当前值"));
 }
 
 QTEST_GUILESS_MAIN(BackupServiceTest)

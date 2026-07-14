@@ -12,7 +12,9 @@ class RestTimerControllerTest : public QObject
 private slots:
     void startsPausesAndResumes();
     void emitsFinishedExactlyOnce();
+    void pauseAtDeadlineFinishesInsteadOfStalling();
     void resetReturnsToIdle();
+    void reportsBackgroundAlertsUnsupportedOffAndroid();
 };
 
 void RestTimerControllerTest::startsPausesAndResumes()
@@ -44,6 +46,22 @@ void RestTimerControllerTest::emitsFinishedExactlyOnce()
     QCOMPARE(finishedSpy.count(), 1);
 }
 
+void RestTimerControllerTest::pauseAtDeadlineFinishesInsteadOfStalling()
+{
+    RestTimerController timer;
+    QSignalSpy finishedSpy(&timer, &RestTimerController::finished);
+    timer.start(1);
+
+    // Block delivery of the QTimer timeout so pause() must reconcile the
+    // already-expired deadline itself.
+    QTest::qSleep(1100);
+    timer.pause();
+
+    QCOMPARE(timer.state(), RestTimerController::State::Finished);
+    QCOMPARE(timer.remainingSeconds(), 0);
+    QCOMPARE(finishedSpy.count(), 1);
+}
+
 void RestTimerControllerTest::resetReturnsToIdle()
 {
     RestTimerController timer;
@@ -52,6 +70,16 @@ void RestTimerControllerTest::resetReturnsToIdle()
     QCOMPARE(timer.state(), RestTimerController::State::Idle);
     QCOMPARE(timer.remainingSeconds(), 0);
     QCOMPARE(timer.durationSeconds(), 0);
+}
+
+void RestTimerControllerTest::reportsBackgroundAlertsUnsupportedOffAndroid()
+{
+    RestTimerController timer;
+    QCOMPARE(timer.backgroundAlertState(),
+             RestTimerController::BackgroundAlertState::Unsupported);
+    timer.refreshBackgroundAlertState();
+    QCOMPARE(timer.backgroundAlertState(),
+             RestTimerController::BackgroundAlertState::Unsupported);
 }
 
 QTEST_GUILESS_MAIN(RestTimerControllerTest)

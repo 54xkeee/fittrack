@@ -1,29 +1,49 @@
 param(
     [string]$ToolchainRoot = "D:\FitTrackToolchains",
+    [string]$SourceDirectory = "",
     [string]$BuildDirectory = "",
+    [string]$QtVersion = "6.11.1",
+    [string]$NdkVersion = "27.2.12479018",
+    [string]$BuildToolsVersion = "36.0.0",
+    [ValidateSet("arm64-v8a", "x86_64")]
+    [string]$Abi = "arm64-v8a",
     [ValidateSet("Debug", "Release")]
     [string]$Configuration = "Debug",
+    [ValidateRange(1, 2100000000)]
+    [int]$VersionCode = 1,
     [switch]$Bundle,
-    [switch]$Sign
+    [switch]$Sign,
+    [string]$SigningProfile = "",
+    [string]$SigningConfig = ""
 )
 
 $ErrorActionPreference = "Stop"
 
-$sourceDirectory = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
+if ($Sign -and $Configuration -ne "Release") {
+    throw "Formal signing is only supported for Release builds"
+}
+if ($Bundle -and $Configuration -ne "Release") {
+    throw "AAB output is only supported for Release builds"
+}
+
+$projectDirectory = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
+if ([string]::IsNullOrWhiteSpace($SourceDirectory)) {
+    $sourceDirectory = $projectDirectory
+} else {
+    $sourceDirectory = (Resolve-Path -LiteralPath $SourceDirectory).Path
+}
+$abiDirectory = if ($Abi -eq "arm64-v8a") { "arm64" } else { "x86_64" }
 if ([string]::IsNullOrWhiteSpace($BuildDirectory)) {
-    $directoryName = if ($Configuration -eq "Release") {
-        "build-android-arm64-release"
-    } else {
-        "build-android-arm64"
-    }
+    $directoryName = "build-android-$abiDirectory-$($Configuration.ToLowerInvariant())"
     $BuildDirectory = Join-Path $sourceDirectory $directoryName
 }
 
-$qtRoot = Join-Path $ToolchainRoot "Qt\6.9.1\android_arm64_v8a"
-$hostQtRoot = Join-Path $ToolchainRoot "Qt\6.9.1\mingw_64"
+$qtArchitecture = if ($Abi -eq "arm64-v8a") { "android_arm64_v8a" } else { "android_x86_64" }
+$qtRoot = Join-Path $ToolchainRoot "Qt\$QtVersion\$qtArchitecture"
+$hostQtRoot = Join-Path $ToolchainRoot "Qt\$QtVersion\mingw_64"
 $sdkRoot = Join-Path $ToolchainRoot "AndroidSdk"
-$ndkRoot = Join-Path $sdkRoot "ndk\27.2.12479018"
-$jdkRoot = Get-ChildItem (Join-Path $ToolchainRoot "jdk17") -Directory |
+$ndkRoot = Join-Path $sdkRoot "ndk\$NdkVersion"
+$jdkRoot = Get-ChildItem (Join-Path $ToolchainRoot "jdk21") -Directory |
     Sort-Object Name -Descending |
     Select-Object -First 1 -ExpandProperty FullName
 $qtCmake = Join-Path $qtRoot "bin\qt-cmake.bat"
@@ -35,8 +55,34 @@ foreach ($requiredPath in @($qtCmake, $hostQtRoot, $sdkRoot, $ndkRoot, $jdkRoot,
     }
 }
 
-$signVariable = $null
 if ($Sign) {
+    if ([string]::IsNullOrWhiteSpace($SigningProfile)) {
+        $SigningProfile = if ($Bundle) { "PlayUpload" } else { "Direct" }
+    }
+    if ($SigningProfile -notin @("Direct", "PlayUpload")) {
+        throw "SigningProfile must be Direct or PlayUpload"
+    }
+    if ($Bundle -and $SigningProfile -ne "PlayUpload") {
+        throw "AAB releases must use the PlayUpload signing profile"
+    }
+    if (-not $Bundle -and $SigningProfile -ne "Direct") {
+        throw "Direct APK releases must use the Direct signing profile"
+    }
+
+    if ([string]::IsNullOrWhiteSpace($SigningConfig)) {
+        $SigningConfig = Join-Path $sourceDirectory "config\android-signing.local.ps1"
+    }
+    $activeProfile = $env:FITTRACK_ANDROID_SIGNING_PROFILE
+    if ((Test-Path -LiteralPath $SigningConfig -PathType Leaf) -and
+            ([string]::IsNullOrWhiteSpace($env:QT_ANDROID_KEYSTORE_PATH) -or
+             $activeProfile -ne $SigningProfile)) {
+        . $SigningConfig
+        if (-not (Get-Command Use-FitTrackAndroidSigning -ErrorAction SilentlyContinue)) {
+            throw "Signing config must define Use-FitTrackAndroidSigning"
+        }
+        Use-FitTrackAndroidSigning $SigningProfile
+    }
+
     $requiredSigningVariables = @(
         "QT_ANDROID_KEYSTORE_PATH",
         "QT_ANDROID_KEYSTORE_ALIAS",
@@ -48,7 +94,13 @@ if ($Sign) {
             throw "Signing requires environment variable: $variableName"
         }
     }
-    $signVariable = if ($Bundle) { "QT_ANDROID_SIGN_AAB" } else { "QT_ANDROID_SIGN_APK" }
+    if (-not (Test-Path -LiteralPath $env:QT_ANDROID_KEYSTORE_PATH -PathType Leaf)) {
+        throw "Signing keystore not found: $env:QT_ANDROID_KEYSTORE_PATH"
+    }
+    if (-not [string]::IsNullOrWhiteSpace($env:FITTRACK_ANDROID_SIGNING_PROFILE) -and
+            $env:FITTRACK_ANDROID_SIGNING_PROFILE -ne $SigningProfile) {
+        throw "Active signing profile is $env:FITTRACK_ANDROID_SIGNING_PROFILE, expected $SigningProfile"
+    }
 }
 
 $env:JAVA_HOME = $jdkRoot
@@ -66,16 +118,22 @@ if (Test-Path -LiteralPath $packageDirectory) {
             [System.StringComparison]::OrdinalIgnoreCase)) {
         throw "Refusing to clean outside build directory: $resolvedPackage"
     }
-    $gradleWrapper = Join-Path $resolvedPackage "gradlew.bat"
-    if (Test-Path -LiteralPath $gradleWrapper) {
+    $longPackagePath = "\\?\$resolvedPackage"
+    try {
+        [System.IO.Directory]::Delete($longPackagePath, $true)
+    } catch [System.IO.IOException] {
+        $gradleWrapper = Join-Path $resolvedPackage "gradlew.bat"
+        if (-not (Test-Path -LiteralPath $gradleWrapper)) {
+            throw
+        }
         Push-Location $resolvedPackage
         try {
             & $gradleWrapper --stop | Out-Host
         } finally {
             Pop-Location
         }
+        [System.IO.Directory]::Delete($longPackagePath, $true)
     }
-    Remove-Item -LiteralPath $resolvedPackage -Recurse -Force
 }
 
 $cmakeArguments = @(
@@ -86,16 +144,14 @@ $cmakeArguments = @(
     "-DANDROID_SDK_ROOT=$sdkRoot",
     "-DANDROID_NDK_ROOT=$ndkRoot",
     "-DQT_HOST_PATH=$hostQtRoot",
-    "-DANDROID_PLATFORM=android-28",
+    "-DANDROID_ABI=$Abi",
+    "-DANDROID_PLATFORM=android-29",
+    "-DFITTRACK_ANDROID_VERSION_CODE=$VersionCode",
     "-DCMAKE_BUILD_TYPE=$Configuration",
     "-DQT_ANDROID_SIGN_AAB=OFF",
     "-DQT_ANDROID_SIGN_APK=OFF",
     "-DBUILD_TESTING=OFF"
 )
-
-if ($signVariable) {
-    $cmakeArguments += "-D$signVariable=ON"
-}
 
 & $qtCmake @cmakeArguments
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
@@ -113,19 +169,77 @@ if (Test-Path -LiteralPath $localProperties) {
     Set-Content -LiteralPath $localProperties -Value "sdk.dir=$escapedSdkRoot" -Encoding ascii
 }
 
-$variant = $Configuration.ToLowerInvariant()
 if ($Bundle) {
-    $artifact = Join-Path $packageDirectory "build\outputs\bundle\$variant\android-build-$variant.aab"
-} else {
-    $apkDirectory = Join-Path $packageDirectory "build\outputs\apk\$variant"
-    $artifact = Get-ChildItem -LiteralPath $apkDirectory -Filter "*.apk" -File |
+    $variant = $Configuration.ToLowerInvariant()
+    $aabDirectory = Join-Path $packageDirectory "build\outputs\bundle\$variant"
+    $artifact = Get-ChildItem -LiteralPath $aabDirectory -Filter "*.aab" -File |
         Sort-Object Name |
         Select-Object -First 1 -ExpandProperty FullName
+} else {
+    $artifact = Join-Path $packageDirectory "fittrack.apk"
 }
 if (-not $artifact -or -not (Test-Path -LiteralPath $artifact)) {
     throw "Build succeeded but no $Configuration artifact was found"
 }
 
+if ($Sign) {
+    $signedArtifact = Join-Path $packageDirectory (
+        "fittrack-signed" + [IO.Path]::GetExtension($artifact))
+    if ($Bundle) {
+        $jarsigner = Join-Path $jdkRoot "bin\jarsigner.exe"
+        $signingOutput = @(& $jarsigner `
+            -sigalg SHA256withRSA `
+            -digestalg SHA-256 `
+            -keystore $env:QT_ANDROID_KEYSTORE_PATH `
+            "-storepass:env" QT_ANDROID_KEYSTORE_STORE_PASS `
+            "-keypass:env" QT_ANDROID_KEYSTORE_KEY_PASS `
+            -signedjar $signedArtifact `
+            $artifact `
+            $env:QT_ANDROID_KEYSTORE_ALIAS 2>&1)
+        if ($LASTEXITCODE -ne 0) {
+            throw "AAB signing failed: $($signingOutput -join [Environment]::NewLine)"
+        }
+    } else {
+        $buildToolsDirectory = Join-Path $sdkRoot "build-tools\$BuildToolsVersion"
+        $zipalign = Join-Path $buildToolsDirectory "zipalign.exe"
+        $apksigner = Join-Path $buildToolsDirectory "apksigner.bat"
+        foreach ($tool in @($zipalign, $apksigner)) {
+            if (-not (Test-Path -LiteralPath $tool -PathType Leaf)) {
+                throw "Required APK signing tool not found: $tool"
+            }
+        }
+
+        $alignedArtifact = Join-Path $packageDirectory "fittrack-aligned.apk"
+        try {
+            & $zipalign -f -P 16 4 $artifact $alignedArtifact
+            if ($LASTEXITCODE -ne 0) { throw "APK zipalign failed" }
+            & $apksigner sign `
+                --ks $env:QT_ANDROID_KEYSTORE_PATH `
+                --ks-pass "env:QT_ANDROID_KEYSTORE_STORE_PASS" `
+                --key-pass "env:QT_ANDROID_KEYSTORE_KEY_PASS" `
+                --ks-key-alias $env:QT_ANDROID_KEYSTORE_ALIAS `
+                --out $signedArtifact `
+                $alignedArtifact
+            if ($LASTEXITCODE -ne 0) { throw "APK signing failed" }
+        } finally {
+            if (Test-Path -LiteralPath $alignedArtifact) {
+                Remove-Item -LiteralPath $alignedArtifact -Force
+            }
+        }
+    }
+    $artifact = $signedArtifact
+}
+
 Write-Host "FitTrack $Configuration artifact: $artifact"
+
+if ($Configuration -eq "Release" -and $Sign) {
+    $verifyScript = Join-Path $sourceDirectory "scripts\verify-android-release.ps1"
+    & $verifyScript `
+        -ArtifactPath $artifact `
+        -ToolchainRoot $ToolchainRoot `
+        -NdkVersion $NdkVersion `
+        -ExpectedAbis $Abi
+    if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+}
 
 exit 0

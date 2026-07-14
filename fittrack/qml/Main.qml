@@ -13,7 +13,7 @@ ApplicationWindow {
     minimumWidth: 360
     minimumHeight: 640
     visible: true
-    title: qsTr("训迹 FitTrack")
+    title: qsTr("训迹")
     color: Design.Theme.background
     property real fontScale: 1.0
     Material.theme: Material.Dark
@@ -62,6 +62,11 @@ ApplicationWindow {
         navigation.currentIndex = 0
         mainStack.forceActiveFocus()
         return true
+    }
+
+    function handleBackEvent(event) {
+        if (event.key === Qt.Key_Back && handleBack())
+            event.accepted = true
     }
 
     function showStartError(message) {
@@ -155,10 +160,7 @@ ApplicationWindow {
         currentIndex: navigation.currentIndex
         focus: true
         Keys.priority: Keys.AfterItem
-        Keys.onReleased: event => {
-            if (event.key === Qt.Key_Back && window.handleBack())
-                event.accepted = true
-        }
+        Keys.onReleased: event => window.handleBackEvent(event)
 
         HomePage {
             Layout.fillWidth: true
@@ -313,6 +315,8 @@ ApplicationWindow {
         anchors.fill: parent
         visible: workoutController.preparing
         z: 1000
+        Keys.priority: Keys.AfterItem
+        Keys.onReleased: event => window.handleBackEvent(event)
         onStartSucceeded: navigation.currentIndex = 2
         onCancelled: navigation.currentIndex = 0
     }
@@ -320,6 +324,7 @@ ApplicationWindow {
     footer: Rectangle {
         id: navigation
         objectName: "navigation"
+        visible: !workoutController.preparing && !Qt.inputMethod["visible"]
         property int currentIndex: 0
         property var items: [
             {"label": qsTr("首页"), "icon": "home"},
@@ -329,12 +334,17 @@ ApplicationWindow {
             {"label": qsTr("分析"), "icon": "analysis"}
         ]
 
-        implicitHeight: Math.max(68,
-                                 Design.Theme.typeBody + Design.Theme.typeCaption
-                                 + Design.Theme.space12) + SafeArea.margins.bottom
+        implicitHeight: visible
+                        ? Math.max(68,
+                                   Design.Theme.typeBody + Design.Theme.typeCaption
+                                   + Design.Theme.space12)
+                          + SafeArea.margins.bottom
+                        : 0
         color: Design.Theme.surface
         border.width: 1
         border.color: Design.Theme.outline
+        Keys.priority: Keys.AfterItem
+        Keys.onReleased: event => window.handleBackEvent(event)
         onCurrentIndexChanged: window.ensureMainPage(currentIndex)
 
         RowLayout {

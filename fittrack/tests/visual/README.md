@@ -8,7 +8,7 @@
 - 200% 字体动作排序；
 - 已加载完成的动作详情与媒体署名。
 
-环境指纹为 Qt 6.9.1、`offscreen`、software RHI、Material、`zh_CN`、DPR 1、96 DPI，
+环境指纹为 Qt 6.11.1、`offscreen`、software RHI、Material、`zh_CN`、DPR 1、96 DPI，
 以及 SHA-256 为
 `D79C55E68B1131EEA0CC1C47BE4F572D964F28C682E143DB2AD09C1E4CB07A3F`
 的 `C:/Windows/Fonts/msyh.ttc`。指纹不符时测试直接报配置错误，不放宽像素阈值。

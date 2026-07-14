@@ -2,4 +2,22 @@
 /dist/
 /fittrack/build/
 /fittrack/build-android*/
+/fittrack/build-*/
+/fittrack/tmp/
+/android-build-release.aab
+/aqtinstall.log
+/fittrack/aqtinstall.log
 *.user
+
+# Android signing material and local signing configuration
+*.jks
+*.keystore
+*.p12
+*.pfx
+keystore.properties
+signing.properties
+.env
+.env.local
+.env.*.local
+/fittrack/config/android-signing.local.ps1
+/fittrack/config/*-signing.local.ps1
