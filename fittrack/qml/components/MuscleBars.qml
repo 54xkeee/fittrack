@@ -40,10 +40,26 @@ AppCard {
                     radius: 6
                     color: Design.Theme.surfaceElevated
                     Rectangle {
+                        id: valueBar
                         width: parent.width * Number(modelData.sets) / root.maximum()
                         height: parent.height
                         radius: 6
                         color: Design.Theme.primary
+                        transform: Scale {
+                            id: valueScale
+                            origin.x: 0
+                            origin.y: valueBar.height / 2
+                            xScale: 0
+                            yScale: 1
+
+                            Behavior on xScale {
+                                NumberAnimation {
+                                    duration: Design.Theme.motionSlow
+                                    easing.type: Design.Theme.easingEnter
+                                }
+                            }
+                        }
+                        Component.onCompleted: valueScale.xScale = 1
                     }
                 }
                 Label { text: modelData.sets + qsTr("组"); Layout.preferredWidth: 36 }

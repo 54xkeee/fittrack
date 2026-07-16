@@ -2,6 +2,8 @@
 
 > 本文件由 `fittrack/scripts/build-exercise-catalog.ps1` 生成。近似匹配不覆盖原动作文字；动作图片独立取自可再分发媒体清单。
 
+`underhand-wide-lat-pulldown` 是为兼容既有计划和历史记录保留的旧内部 ID；当前面向用户的动作定义已收口为“反手中窄距高位下拉”，不要再按 ID 中的 `wide` 解释握距。
+
 | FitTrack ID | 动作 | MuscleDB | 匹配 | 文字来源 | 动作集合 |
 | --- | --- | --- | --- | --- | --- |
 | `back-extension` | 山羊挺身 | 331 · 背部伸展 | 确认 | 用户原文 | tan-three-day-legs |
@@ -53,10 +55,10 @@
 | `smith-machine-squat` | 史密斯机器深蹲 | 712 · 史密斯机器深蹲 | 确认 | MuscleDB |  |
 | `standing-calf-raise` | 站姿提踵 | 752 · 站姿提踵 | 确认 | MuscleDB |  |
 | `straight-arm-cable-pulldown` | 直臂绳索下压 | 795 · 直臂绳索下压 | 确认 | MuscleDB |  |
-| `t-bar-row` | T杆划船 | 812 · T杆划船 | 确认 | MuscleDB |  |
+| `t-bar-row` | 胸托T杠划船 | 454 · 卧姿T杠划船 | 确认 | MuscleDB |  |
 | `wide-elbow-seated-row` | 低位滑轮划船至颈部 | 430 · 低位滑轮划船至颈部 | 确认 | MuscleDB |  |
 | `y-raise` | Y字侧平举 | 241 · 哑铃肩部提升 | 近似，已保留原文字段 | 用户原文 | tan-three-day-push |
-| `underhand-wide-lat-pulldown` | 反手宽距高位下拉 | 835 · 反握绳索下拉 | 近似，已保留原文字段 | 用户原文 | tan-fenjue-back |
+| `underhand-wide-lat-pulldown` | 反手中窄距高位下拉 | 835 · 反握绳索下拉 | 确认 | 用户原文 | tan-fenjue-back |
 | `close-grip-seated-cable-row` | 窄距坐姿划船 | 626 · 坐姿绳索划船 | 确认 | 用户原文 | tan-fenjue-back |
 | `straight-bar-triceps-pushdown` | 直臂下压 | 825 · 三头肌下压 | 确认 | 用户原文 | tan-fenjue-triceps |
 | `single-arm-cable-triceps-extension` | 单手绳索臂屈伸 | 122 · 绳索单臂三头肌伸展 | 确认 | 用户原文 | tan-fenjue-triceps |

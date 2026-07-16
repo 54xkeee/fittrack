@@ -8,7 +8,7 @@ Button {
     // Supported variants: primary, secondary and destructive.
     property string variant: "primary"
     property bool flatSecondary: false
-    property int cornerRadius: Design.Theme.radiusSmall
+    property int cornerRadius: Design.Theme.radiusButton
     property color primaryColor: Design.Theme.primary
     property color primaryPressedColor: Design.Theme.primaryPressed
     property color primaryTextColor: Design.Theme.primaryForeground
@@ -17,12 +17,20 @@ Button {
     readonly property bool isDestructive: variant === "destructive"
 
     implicitWidth: Math.max(96, contentItem.implicitWidth + leftPadding + rightPadding)
-    implicitHeight: Design.Theme.controlHeight
+    implicitHeight: Math.max(Design.Theme.heightPrimary, Design.Theme.controlHeight)
     leftPadding: Design.Theme.space16
     rightPadding: Design.Theme.space16
     spacing: Design.Theme.space8
     font.pixelSize: Design.Theme.typeLabel
     font.weight: Font.DemiBold
+    scale: down && enabled ? 0.97 : 1
+
+    Behavior on scale {
+        NumberAnimation {
+            duration: Design.Theme.motionFast
+            easing.type: Design.Theme.easingEnter
+        }
+    }
 
     Accessible.name: text
 
@@ -49,17 +57,18 @@ Button {
             if (!root.enabled)
                 return Design.Theme.surfaceElevated
             if (root.isPrimary)
-                return root.down ? root.primaryPressedColor : root.primaryColor
+                return root.down ? root.primaryPressedColor
+                                 : (root.hovered ? Design.Theme.primaryHover : root.primaryColor)
             if (root.isDestructive)
                 return root.down ? Design.Theme.errorPressed : Design.Theme.error
-            return root.down ? Design.Theme.surfacePressed : Design.Theme.surfaceElevated
+            return root.down ? Design.Theme.surfacePressed : Design.Theme.surfacePrimary
         }
         border.width: root.activeFocus
                       || (!root.isPrimary && !root.isDestructive && !root.flatSecondary) ? 1 : 0
         border.color: root.activeFocus
                       ? (root.isPrimary || root.isDestructive
-                         ? Design.Theme.surfaceText : Design.Theme.primary)
-                      : Design.Theme.outline
+                         ? Design.Theme.primaryForeground : Design.Theme.primary)
+                      : Design.Theme.borderDefault
         opacity: root.enabled ? 1 : Design.Theme.disabledOpacity
 
         Behavior on color {

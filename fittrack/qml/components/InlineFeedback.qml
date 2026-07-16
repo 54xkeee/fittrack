@@ -30,6 +30,18 @@ Control {
                              contentItem.implicitHeight + topPadding + bottomPadding)
     padding: Design.Theme.space12
     Accessible.name: message
+    scale: visible ? 1 : 0.98
+    opacity: visible ? 1 : 0
+
+    Behavior on scale {
+        NumberAnimation {
+            duration: Design.Theme.motionStandard
+            easing.type: Design.Theme.easingEnter
+        }
+    }
+    Behavior on opacity {
+        NumberAnimation { duration: Design.Theme.motionStandard }
+    }
 
     background: Rectangle {
         radius: Design.Theme.radiusSmall

@@ -24,8 +24,8 @@ Frame {
 
     background: Rectangle {
         color: Design.Theme.surface
-        radius: Design.Theme.radiusMedium
+        radius: Design.Theme.radiusCard
         border.width: 1
-        border.color: Design.Theme.outlineSubtle
+        border.color: Design.Theme.borderDefault
     }
 }

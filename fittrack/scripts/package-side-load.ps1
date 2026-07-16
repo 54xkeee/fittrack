@@ -120,6 +120,7 @@ $requiredLicenseTexts = @(
     "MIT.txt",
     "MIT-open-group.txt",
     "MPL-2.0.txt",
+    "Unlicense.txt",
     "Unicode-3.0.txt",
     "X11.txt",
     "Zlib.txt",

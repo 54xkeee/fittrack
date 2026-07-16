@@ -10,6 +10,8 @@ Control {
     property bool paused: false
     property string label: qsTr("组间休息")
     property bool allowStop: true
+    readonly property bool endingSoon: !paused && remainingSeconds > 0
+                                       && remainingSeconds <= 10
 
     readonly property string timeText: {
         const seconds = Math.max(0, remainingSeconds)
@@ -48,10 +50,14 @@ Control {
 
             Label {
                 text: root.timeText
-                color: Design.Theme.textPrimary
+                color: root.endingSoon ? Design.Theme.warning : Design.Theme.textPrimary
                 font.pixelSize: Design.Typography.exerciseTitle
                 font.weight: Font.DemiBold
                 font.family: "monospace"
+
+                Behavior on color {
+                    ColorAnimation { duration: Design.Theme.motionFast }
+                }
             }
         }
 

@@ -48,11 +48,11 @@
   {"fittrackId":"smith-machine-squat","muscleDbId":712},
   {"fittrackId":"standing-calf-raise","muscleDbId":752},
   {"fittrackId":"straight-arm-cable-pulldown","muscleDbId":795},
-  {"fittrackId":"t-bar-row","muscleDbId":812},
+  {"fittrackId":"t-bar-row","muscleDbId":454,"displayName":"胸托T杠划船"},
   {"fittrackId":"wide-elbow-seated-row","muscleDbId":430},
   {"fittrackId":"y-raise","muscleDbId":241,"tanName":"Y字侧平举","collections":["tan-three-day-push"],"match":"approximate"},
 
-  {"fittrackId":"underhand-wide-lat-pulldown","muscleDbId":835,"templateId":"lat-pulldown","tanName":"反手宽距高位下拉","collections":["tan-fenjue-back"],"match":"approximate"},
+  {"fittrackId":"underhand-wide-lat-pulldown","muscleDbId":835,"templateId":"lat-pulldown","tanName":"反手宽距高位下拉","displayName":"反手中窄距高位下拉","techniquePoints":["反手中窄握，上肢可以轻微后倾，但不要顶腰或依靠摆动完成动作","深吸一口气，背阔肌预先发力，身体微微前倾","将横杆拉向上胸或锁骨下方，不要追求拉到腹部","以肘驱动，手肘向后\"带\"，不是用手拉","颈部保持自然，让肘部沿躯干两侧向下、向后移动"],"collections":["tan-fenjue-back"]},
   {"fittrackId":"close-grip-seated-cable-row","muscleDbId":626,"templateId":"seated-cable-row","tanName":"窄距坐姿划船","collections":["tan-fenjue-back"]},
   {"fittrackId":"straight-bar-triceps-pushdown","muscleDbId":825,"templateId":"cable-triceps-pushdown","tanName":"直臂下压","collections":["tan-fenjue-triceps"]},
   {"fittrackId":"single-arm-cable-triceps-extension","muscleDbId":122,"templateId":"cable-triceps-pushdown","tanName":"单手绳索臂屈伸","collections":["tan-fenjue-triceps"]},

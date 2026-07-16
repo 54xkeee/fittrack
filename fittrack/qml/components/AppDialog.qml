@@ -80,14 +80,56 @@ Dialog {
     focus: true
     padding: Design.Theme.space24
     closePolicy: Popup.CloseOnEscape
-    Overlay.modal: Rectangle { color: Design.Theme.scrim }
+    enter: Transition {
+        ParallelAnimation {
+            NumberAnimation {
+                property: "opacity"
+                from: 0
+                to: 1
+                duration: Design.Theme.motionStandard
+                easing.type: Design.Theme.easingEnter
+            }
+            NumberAnimation {
+                property: "scale"
+                from: 0.98
+                to: 1
+                duration: Design.Theme.motionStandard
+                easing.type: Design.Theme.easingEnter
+            }
+        }
+    }
+    exit: Transition {
+        ParallelAnimation {
+            NumberAnimation {
+                property: "opacity"
+                from: 1
+                to: 0
+                duration: Design.Theme.motionFast
+                easing.type: Design.Theme.easingExit
+            }
+            NumberAnimation {
+                property: "scale"
+                from: 1
+                to: 0.98
+                duration: Design.Theme.motionFast
+                easing.type: Design.Theme.easingExit
+            }
+        }
+    }
+    Overlay.modal: Rectangle {
+        color: Design.Theme.scrim
+        opacity: root.opened ? 1 : 0
+        Behavior on opacity {
+            NumberAnimation { duration: Design.Theme.motionStandard }
+        }
+    }
 
     background: Rectangle {
         id: dialogSurface
         color: Design.Theme.surface
         radius: Design.Theme.radiusLarge
         border.width: 1
-        border.color: Design.Theme.outline
+        border.color: Design.Theme.borderDefault
         Accessible.role: Accessible.Dialog
         Accessible.name: root.title
         Accessible.description: root.errorText

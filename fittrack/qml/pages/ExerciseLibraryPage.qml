@@ -291,7 +291,7 @@ AppPage {
                 color: Design.Theme.surfaceMuted
                 font.pixelSize: Design.Theme.typeLabel
             }
-            ComboBox {
+            AppComboBox {
                 id: bodyPartBox
                 Layout.fillWidth: true
                 implicitHeight: Design.Theme.controlHeight
@@ -305,7 +305,7 @@ AppPage {
                 color: Design.Theme.surfaceMuted
                 font.pixelSize: Design.Theme.typeLabel
             }
-            ComboBox {
+            AppComboBox {
                 id: movementBox
                 Layout.fillWidth: true
                 implicitHeight: Design.Theme.controlHeight
@@ -319,7 +319,7 @@ AppPage {
                 color: Design.Theme.surfaceMuted
                 font.pixelSize: Design.Theme.typeLabel
             }
-            ComboBox {
+            AppComboBox {
                 id: equipmentBox
                 Layout.fillWidth: true
                 implicitHeight: Design.Theme.controlHeight
@@ -333,7 +333,7 @@ AppPage {
                 color: Design.Theme.surfaceMuted
                 font.pixelSize: Design.Theme.typeLabel
             }
-            ComboBox {
+            AppComboBox {
                 id: collectionBox
                 Layout.fillWidth: true
                 implicitHeight: Design.Theme.controlHeight
@@ -345,7 +345,7 @@ AppPage {
                 onActivated: filterDialog.pendingCollection = filterDialog.collectionIds[currentIndex]
             }
 
-            CheckBox {
+            AppCheckBox {
                 id: favoritesCheck
                 Layout.fillWidth: true
                 implicitHeight: Design.Theme.touchTarget

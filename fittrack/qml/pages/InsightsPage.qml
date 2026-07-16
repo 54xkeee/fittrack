@@ -52,7 +52,7 @@ Page {
 
         Rectangle {
             Layout.fillWidth: true
-            Layout.preferredHeight: 64 + SafeArea.margins.top
+            Layout.preferredHeight: 56 + SafeArea.margins.top
             color: Design.Theme.background
 
             RowLayout {
@@ -95,8 +95,8 @@ Page {
                         contentItem: Label {
                             text: tabButton.modelData
                             color: tabs.currentIndex === tabButton.index
-                                   ? Design.Theme.primaryForeground
-                                   : Design.Theme.surfaceMuted
+                                   ? Design.Theme.primary
+                                   : Design.Theme.textSecondary
                             font.pixelSize: Design.Theme.typeLabel
                             font.weight: tabs.currentIndex === tabButton.index
                                          ? Font.DemiBold : Font.Normal
@@ -106,12 +106,12 @@ Page {
                         }
 
                         background: Rectangle {
-                            radius: Design.Theme.radiusSmall
+                            radius: Design.Theme.radiusInput
                             color: tabs.currentIndex === tabButton.index
-                                   ? Design.Theme.primary
+                                   ? Design.Theme.primarySoft
                                    : (tabButton.down ? Design.Theme.surfacePressed : "transparent")
-                            border.width: tabs.currentIndex === tabButton.index ? 0 : 1
-                            border.color: Design.Theme.outline
+                            border.width: tabButton.activeFocus ? 1 : 0
+                            border.color: Design.Theme.primary
                         }
                     }
                 }
@@ -122,7 +122,7 @@ Page {
                 anchors.right: parent.right
                 anchors.bottom: parent.bottom
                 height: 1
-                color: Design.Theme.outline
+                color: Design.Theme.divider
             }
         }
 

@@ -1,6 +1,6 @@
 # FitTrack 第三方组件说明
 
-更新时间：2026-07-14
+更新时间：2026-07-15
 
 本文记录 FitTrack 可侧载分享版本涉及的第三方组件。当前支持直接分享 APK 和生成待签名 AAB；每次分发前仍需以实际 APK/AAB 和所用 Qt 版本重新核对依赖与媒体清单。
 
@@ -33,22 +33,16 @@ APK 包含 Android NDK r27c（27.2.12479018）构建的 `libc++_shared.so`，对
 
 ## 动作图片
 
-应用当前 58 个动作各使用 1 张已审核图片，共 58 张：42 张开放许可/公共领域素材，16 张 FitTrack 原创 CC0 图。第三方素材涉及 CC BY 2.0、CC BY-SA 2.0、CC BY-SA 3.0、CC BY-SA 4.0 和美国联邦政府公共领域作品。逐项标题、作者/来源、原始页面、许可证和本地路径见 [`fittrack-media-credits.md`](fittrack-media-credits.md) 与 `fittrack/resources/data/exercise-media-shareable.json`。
+应用当前 58 个动作各使用 1 张经过动作要领与器械结构审核的本地图，共 58 张：51 张 FitTrack 项目制作图按 [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) 提供；7 张 Free Exercise DB 实拍按 [Unlicense](https://unlicense.org/) 分发，并已标明裁切与重编码。逐项标题、真实来源、许可证和本地路径见 [`fittrack-media-credits.md`](fittrack-media-credits.md) 与 `fittrack/resources/data/exercise-media-shareable.json`。
 
-- [Creative Commons Attribution 2.0](https://creativecommons.org/licenses/by/2.0/)
-- [Creative Commons Attribution-ShareAlike 2.0](https://creativecommons.org/licenses/by-sa/2.0/)
-- [Creative Commons Attribution-ShareAlike 3.0](https://creativecommons.org/licenses/by-sa/3.0/)
-- [Creative Commons Attribution-ShareAlike 4.0](https://creativecommons.org/licenses/by-sa/4.0/)
-- [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/)
-
-所有内置图片均被统一缩放、裁切或补边并重新编码为 JPEG；原许可证与署名继续保留。MuscleDB 的 116 张本地图片、旧图片目录和国内视频平台素材不进入分发 APK。
+所有内置图片均统一为 1200×800 JPEG。MuscleDB 的本地参考图片、旧图片目录和国内视频平台素材不进入分发 APK。
 
 ## 分发许可包
 
 `fittrack/scripts/package-side-load.ps1` 会从当前 APK 生成干净的 Debug 侧载目录，校验包名、版本、Debug 证书、v2 签名和 APK 哈希，并附带：
 
 - 本说明、逐项媒体署名与 `exercise-media-shareable.json`；
-- LGPL 3.0、GPL 3.0、Apache 2.0、五种 Creative Commons 及 Qt 内嵌第三方代码所需正文；
+- LGPL 3.0、GPL 3.0、Apache 2.0、CC0 1.0、Unlicense 及 Qt 内嵌第三方代码所需正文；
 - Qt 对应源码与重新链接说明；
 - 三份实际 Qt 模块 SBOM 和 Android NDK LLVM NOTICE；
 - 对目录内全部文件生成的 SHA-256 清单。
@@ -60,5 +54,5 @@ APK 包含 Android NDK r27c（27.2.12479018）构建的 `libc++_shared.so`，对
 - 使用发布产物实际解析依赖，不从开发机的全部 Qt 安装内容推断最终包内容。
 - 运行 `scripts/package-side-load.ps1`，确认许可正文、SBOM、NDK NOTICE 和 SHA-256 清单完整生成。
 - 保留 Qt 对应版本源码获取方式和动态链接说明。
-- 任何新增动作图片都必须带作者、原始页面、许可证和本地资源路径。
+- 任何新增动作图片都必须带标题、真实来源、许可证和本地资源路径；项目制作图使用 CC0 声明 URL，Free Exercise DB 图片保留上游动作目录和 Unlicense 正文。
 - 确认 APK 只包含 `resources/images/exercises/shareable/` 对应的 58 张图，不包含 MuscleDB、旧动作图片或自定义字体资源。

@@ -41,10 +41,23 @@ Control {
             Layout.preferredHeight: 32
 
             AppIcon {
+                id: completedIcon
                 anchors.centerIn: parent
                 visible: root.isCompleted
                 name: "success"
                 color: Design.Theme.success
+                scale: root.isCompleted ? 1 : 0.7
+                opacity: root.isCompleted ? 1 : 0
+
+                Behavior on scale {
+                    NumberAnimation {
+                        duration: Design.Theme.motionStandard
+                        easing.type: Design.Theme.easingEnter
+                    }
+                }
+                Behavior on opacity {
+                    NumberAnimation { duration: Design.Theme.motionStandard }
+                }
             }
 
             Label {

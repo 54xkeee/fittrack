@@ -356,8 +356,8 @@ AppPage {
 
             SectionHeader {
                 Layout.fillWidth: true
-                Layout.leftMargin: 16
-                Layout.rightMargin: 16
+                Layout.leftMargin: Design.Theme.space16
+                Layout.rightMargin: Design.Theme.space16
                 eyebrow: qsTr("CARDIO")
                 title: qsTr("有氧记录")
                 subtitle: qsTr("爬坡机默认 9 / 5 / 30，爬楼机按等级和层数记录。")
@@ -366,8 +366,8 @@ AppPage {
             AppCard {
                 visible: cardioController.pendingSessionId.length > 0
                 Layout.fillWidth: true
-                Layout.leftMargin: 16
-                Layout.rightMargin: 16
+                Layout.leftMargin: Design.Theme.space16
+                Layout.rightMargin: Design.Theme.space16
                 RowLayout {
                     anchors.fill: parent
                     Label {
@@ -382,9 +382,9 @@ AppPage {
 
             RowLayout {
                 Layout.fillWidth: true
-                Layout.leftMargin: 16
-                Layout.rightMargin: 16
-                spacing: 10
+                Layout.leftMargin: Design.Theme.space16
+                Layout.rightMargin: Design.Theme.space16
+                spacing: Design.Theme.space8
                 ActionPill { Layout.fillWidth: true; text: qsTr("跑步机爬坡"); accent: true; onClicked: treadmillDialog.open() }
                 ActionPill { Layout.fillWidth: true; text: qsTr("爬楼机"); onClicked: stairDialog.open() }
             }
@@ -392,11 +392,11 @@ AppPage {
             GridLayout {
                 visible: cardioController.records.length > 0
                 Layout.fillWidth: true
-                Layout.leftMargin: 16
-                Layout.rightMargin: 16
+                Layout.leftMargin: Design.Theme.space16
+                Layout.rightMargin: Design.Theme.space16
                 columns: 2
-                rowSpacing: 10
-                columnSpacing: 10
+                rowSpacing: Design.Theme.space8
+                columnSpacing: Design.Theme.space8
                 StatCard {
                     Layout.fillWidth: true
                     label: qsTr("近7天")
@@ -414,8 +414,8 @@ AppPage {
 
             TrendChart {
                 Layout.fillWidth: true
-                Layout.leftMargin: 16
-                Layout.rightMargin: 16
+                Layout.leftMargin: Design.Theme.space16
+                Layout.rightMargin: Design.Theme.space16
                 visible: page.durationTrend.length > 0
                 title: qsTr("最近 30 次有氧时长")
                 points: page.durationTrend
@@ -425,8 +425,8 @@ AppPage {
 
             TrendChart {
                 Layout.fillWidth: true
-                Layout.leftMargin: 16
-                Layout.rightMargin: 16
+                Layout.leftMargin: Design.Theme.space16
+                Layout.rightMargin: Design.Theme.space16
                 visible: page.heartRateTrend.length > 0
                 title: qsTr("最近 30 次平均心率")
                 points: page.heartRateTrend
@@ -435,45 +435,21 @@ AppPage {
             }
 
             Label {
-                Layout.leftMargin: 16
+                Layout.leftMargin: Design.Theme.space16
                 text: qsTr("历史记录")
                 color: Design.Theme.backgroundText
                 font.pixelSize: Design.Theme.typeBody
                 font.weight: Font.DemiBold
             }
 
-            AppCard {
+            AppEmptyState {
                 visible: cardioController.records.length === 0
                 Layout.fillWidth: true
-                Layout.leftMargin: 16
-                Layout.rightMargin: 16
-                padding: Design.Theme.space24
-
-                ColumnLayout {
-                    anchors.fill: parent
-                    spacing: Design.Theme.space8
-                    AppIcon {
-                        Layout.alignment: Qt.AlignHCenter
-                        name: "analysis"
-                        color: Design.Theme.primary
-                    }
-                    Label {
-                        Layout.fillWidth: true
-                        text: qsTr("还没有有氧记录")
-                        color: Design.Theme.surfaceText
-                        font.pixelSize: Design.Theme.typeBody
-                        font.weight: Font.DemiBold
-                        horizontalAlignment: Text.AlignHCenter
-                    }
-                    Label {
-                        Layout.fillWidth: true
-                        text: qsTr("选择跑步机爬坡或爬楼机，第一条记录会立即出现在这里。")
-                        color: Design.Theme.surfaceMuted
-                        font.pixelSize: Design.Theme.typeLabel
-                        horizontalAlignment: Text.AlignHCenter
-                        wrapMode: Text.WordWrap
-                    }
-                }
+                Layout.leftMargin: Design.Theme.space16
+                Layout.rightMargin: Design.Theme.space16
+                iconName: "analysis"
+                title: qsTr("还没有有氧记录")
+                message: qsTr("选择跑步机爬坡或爬楼机，第一条记录会立即出现在这里。")
             }
 
             Repeater {
@@ -481,16 +457,16 @@ AppPage {
                 delegate: AppCard {
                     required property var modelData
                     Layout.fillWidth: true
-                    Layout.leftMargin: 16
-                    Layout.rightMargin: 16
+                    Layout.leftMargin: Design.Theme.space16
+                    Layout.rightMargin: Design.Theme.space16
 
                     RowLayout {
                         anchors.fill: parent
-                        spacing: 12
+                        spacing: Design.Theme.space12
 
                         ColumnLayout {
                             Layout.fillWidth: true
-                            spacing: 5
+                            spacing: Design.Theme.space4
 
                             Label {
                                 text: modelData.type === "TreadmillIncline" ? qsTr("跑步机爬坡") : qsTr("爬楼机")
@@ -532,16 +508,16 @@ AppPage {
                 objectName: "cardioLoadMoreButton"
                 visible: cardioController.hasMore
                 Layout.fillWidth: true
-                Layout.leftMargin: 16
-                Layout.rightMargin: 16
+                Layout.leftMargin: Design.Theme.space16
+                Layout.rightMargin: Design.Theme.space16
                 text: qsTr("加载更多记录")
                 onClicked: cardioController.loadMore()
             }
 
             InlineFeedback {
                 visible: cardioController.errorMessage.length > 0
-                Layout.leftMargin: 16
-                Layout.rightMargin: 16
+                Layout.leftMargin: Design.Theme.space16
+                Layout.rightMargin: Design.Theme.space16
                 Layout.fillWidth: true
                 tone: "error"
                 message: cardioController.errorMessage

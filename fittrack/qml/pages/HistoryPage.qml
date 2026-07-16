@@ -246,7 +246,7 @@ AppPage {
                 font.pixelSize: Design.Theme.typeLabel
             }
 
-            ComboBox {
+            AppComboBox {
                 id: editLoadType
 
                 Layout.fillWidth: true
@@ -269,7 +269,7 @@ AppPage {
                 wrapMode: Text.WordWrap
             }
 
-            CheckBox {
+            AppCheckBox {
                 id: editFailure
                 text: qsTr("本组力竭")
                 Accessible.name: text

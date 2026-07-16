@@ -168,6 +168,12 @@ foreach ($entry in $mapping) {
             Set-JsonArrayProperty -Object $exercise -Name 'equipment' -Value @(StandardEquipment ([string]$dbItem.equipment) $exercise.equipment)
         }
     }
+    if (-not [string]::IsNullOrWhiteSpace([string]$entry.displayName)) {
+        $exercise.nameZh = [string]$entry.displayName
+    }
+    if ($null -ne $entry.techniquePoints) {
+        Set-JsonArrayProperty -Object $exercise -Name 'techniquePoints' -Value @($entry.techniquePoints)
+    }
     Set-JsonArrayProperty -Object $exercise -Name 'equipment' -Value @($exercise.equipment)
     Set-JsonProperty $exercise 'difficulty' ([string]$dbItem.difficulty)
     Add-UniqueAlias $exercise $oldName
@@ -214,6 +220,8 @@ $report = @(
     '# FitTrack 动作与 MuscleDB 映射',
     '',
     '> 本文件由 `fittrack/scripts/build-exercise-catalog.ps1` 生成。近似匹配不覆盖原动作文字；动作图片独立取自可再分发媒体清单。',
+    '',
+    '`underhand-wide-lat-pulldown` 是为兼容既有计划和历史记录保留的旧内部 ID；当前面向用户的动作定义已收口为“反手中窄距高位下拉”，不要再按 ID 中的 `wide` 解释握距。',
     '',
     '| FitTrack ID | 动作 | MuscleDB | 匹配 | 文字来源 | 动作集合 |',
     '| --- | --- | --- | --- | --- | --- |'

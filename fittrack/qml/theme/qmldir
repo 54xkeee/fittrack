@@ -2,3 +2,5 @@ module FitTrack.Theme
 singleton Theme 1.0 Theme.qml
 singleton Spacing 1.0 Spacing.qml
 singleton Typography 1.0 Typography.qml
+singleton Preferences 1.0 Preferences.qml
+singleton WorkoutTheme 1.0 WorkoutTheme.qml

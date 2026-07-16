@@ -14,7 +14,7 @@ ColumnLayout {
     Label {
         visible: root.eyebrow.length > 0
         text: root.eyebrow
-        color: Design.Theme.primary
+        color: Design.Theme.textTertiary
         font.pixelSize: Design.Theme.typeCaption
         font.weight: Font.DemiBold
     }
@@ -23,7 +23,7 @@ ColumnLayout {
         text: root.title
         color: Design.Theme.backgroundText
         font.pixelSize: Design.Theme.typeDisplay
-        font.weight: Font.Bold
+        font.weight: Font.DemiBold
         Layout.fillWidth: true
         wrapMode: Text.WordWrap
     }

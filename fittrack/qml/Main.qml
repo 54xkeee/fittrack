@@ -16,7 +16,8 @@ ApplicationWindow {
     title: qsTr("训迹")
     color: Design.Theme.background
     property real fontScale: 1.0
-    Material.theme: Material.Dark
+    property bool reducedMotion: Design.Preferences.reducedMotion
+    Material.theme: Material.Light
     Material.accent: Design.Theme.primary
     Material.primary: Design.Theme.surface
     property var pendingWorkoutRequest: ({})
@@ -53,6 +54,12 @@ ApplicationWindow {
         target: Design.Typography
         property: "fontScale"
         value: Math.max(0.85, Math.min(2.0, window.fontScale))
+    }
+
+    Binding {
+        target: Design.Theme
+        property: "reducedMotion"
+        value: window.reducedMotion
     }
 
     function handleBack() {
@@ -330,7 +337,8 @@ ApplicationWindow {
     footer: Rectangle {
         id: navigation
         objectName: "navigation"
-        visible: !workoutController.preparing && !Qt.inputMethod["visible"]
+        visible: !workoutController.preparing && !workoutController.active
+                 && !Qt.inputMethod["visible"]
         property int currentIndex: 0
         property var items: [
             {"label": qsTr("首页"), "icon": "home"},
@@ -348,15 +356,15 @@ ApplicationWindow {
                                       + Design.Theme.space12))
                           + SafeArea.margins.bottom
                         : 0
-        color: currentIndex === 2 ? Design.Theme.panel : Design.Theme.surface
-        border.width: currentIndex === 2 ? 0 : 1
-        border.color: Design.Theme.outline
+        color: Design.Theme.surface
+        border.width: 1
+        border.color: Design.Theme.borderDefault
         Keys.priority: Keys.AfterItem
         Keys.onReleased: event => window.handleBackEvent(event)
         onCurrentIndexChanged: window.ensureMainPage(currentIndex)
 
         Rectangle {
-            visible: navigation.currentIndex === 2
+            visible: false
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.top: parent.top
@@ -403,23 +411,27 @@ ApplicationWindow {
                         AppIcon {
                             Layout.alignment: Qt.AlignHCenter
                             name: navigationButton.modelData.icon
+                            Layout.preferredWidth: 20
+                            Layout.preferredHeight: 20
+                            scale: navigation.currentIndex === navigationButton.index ? 1.04 : 1
                             color: navigation.currentIndex === navigationButton.index
-                                   ? (navigation.currentIndex === 2
-                                      ? Design.Theme.accent : Design.Theme.primary)
-                                   : (navigation.currentIndex === 2
-                                      ? Design.Theme.textSecondary : Design.Theme.surfaceMuted)
+                                   ? Design.Theme.primary
+                                   : Design.Theme.textSecondary
+
+                            Behavior on scale {
+                                NumberAnimation {
+                                    duration: Design.Theme.motionFast
+                                    easing.type: Design.Theme.easingEnter
+                                }
+                            }
                         }
                         Label {
                             Layout.alignment: Qt.AlignHCenter
                             text: navigationButton.modelData.label
                             color: navigation.currentIndex === navigationButton.index
-                                   ? (navigation.currentIndex === 2
-                                      ? Design.Theme.accent : Design.Theme.primary)
-                                   : (navigation.currentIndex === 2
-                                      ? Design.Theme.textSecondary : Design.Theme.surfaceMuted)
-                            font.pixelSize: navigation.currentIndex === 2
-                                            ? Design.Typography.caption
-                                            : Design.Theme.typeCaption
+                                   ? Design.Theme.primary
+                                   : Design.Theme.textSecondary
+                            font.pixelSize: Design.Theme.typeCaption
                             font.weight: navigation.currentIndex === navigationButton.index
                                          ? Font.DemiBold : Font.Normal
                         }
@@ -428,10 +440,13 @@ ApplicationWindow {
                     background: Rectangle {
                         radius: Design.Theme.radiusSmall
                         color: navigation.currentIndex === navigationButton.index
-                               && navigation.currentIndex !== 2
                                ? Design.Theme.primaryContainer : "transparent"
                         border.width: navigationButton.activeFocus ? 1 : 0
                         border.color: Design.Theme.primary
+
+                        Behavior on color {
+                            ColorAnimation { duration: Design.Theme.motionFast }
+                        }
                     }
                 }
             }

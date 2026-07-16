@@ -97,6 +97,8 @@ set_source_files_properties(qml/Main.qml PROPERTIES QT_QML_SKIP_CACHEGEN TRUE)
 set_source_files_properties(qml/theme/Theme.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
 set_source_files_properties(qml/theme/Spacing.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
 set_source_files_properties(qml/theme/Typography.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
+set_source_files_properties(qml/theme/Preferences.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
+set_source_files_properties(qml/theme/WorkoutTheme.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
 
 qt_add_qml_module(fittrack
     URI FitTrack
@@ -106,11 +108,17 @@ qt_add_qml_module(fittrack
         qml/theme/Theme.qml
         qml/theme/Spacing.qml
         qml/theme/Typography.qml
+        qml/theme/Preferences.qml
+        qml/theme/WorkoutTheme.qml
         qml/components/ActionPill.qml
         qml/components/AppButton.qml
+        qml/components/AppCheckBox.qml
+        qml/components/AppComboBox.qml
         qml/components/AppCard.qml
         qml/components/AppDialog.qml
+        qml/components/AppEmptyState.qml
         qml/components/AppPage.qml
+        qml/components/AppSwitch.qml
         qml/components/ConfirmDialog.qml
         qml/components/AppIcon.qml
         qml/components/IconButton.qml
@@ -126,6 +134,15 @@ qt_add_qml_module(fittrack
         qml/components/TrendChart.qml
         qml/components/WorkoutStartConflictDialog.qml
         qml/components/WorkoutRecoveryDialog.qml
+        qml/components/WorkoutTopBar.qml
+        qml/components/WorkoutSummaryBar.qml
+        qml/components/ExerciseCard.qml
+        qml/components/ExerciseHeader.qml
+        qml/components/ExerciseMetaRow.qml
+        qml/components/RestTimerRow.qml
+        qml/components/SetTableHeader.qml
+        qml/components/WorkoutSetRow.qml
+        qml/components/AddSetButton.qml
         qml/components/ExerciseDetailSheet.qml
         qml/components/ExerciseParameterSheet.qml
         qml/components/ExercisePickerSheet.qml
