@@ -2,10 +2,15 @@
 
 #include "analytics/traininganalytics.h"
 
+#include <algorithm>
+#include <QDate>
 #include <QDateTime>
 #include <QHash>
+#include <QLocale>
+#include <QMap>
 #include <QSqlError>
 #include <QSqlQuery>
+#include <QTimeZone>
 
 namespace fittrack {
 namespace {
@@ -63,6 +68,184 @@ void WorkoutHistoryController::loadMore()
 {
     if (m_hasMore)
         loadPage(false, 50);
+}
+
+QVariantMap WorkoutHistoryController::calendarMonth(int year, int month)
+{
+    clearError();
+    const QDate monthStart(year, month, 1);
+    if (!monthStart.isValid()) {
+        fail(QStringLiteral("月份无效"));
+        return {};
+    }
+
+    const QTimeZone zone = QTimeZone::systemTimeZone();
+    const QDateTime localStart(monthStart, QTime(0, 0), zone);
+    const QDateTime localEnd(monthStart.addMonths(1), QTime(0, 0), zone);
+    const QString utcStart = localStart.toUTC().toString(Qt::ISODate);
+    const QString utcEnd = localEnd.toUTC().toString(Qt::ISODate);
+
+    QHash<QString, QVariantMap> sessionsById;
+    QHash<QString, QDate> sessionDates;
+    QSqlQuery sessions(m_database);
+    sessions.prepare(QStringLiteral(
+        "SELECT ws.id,ws.name,ws.started_at,ws.ended_at,"
+        "(SELECT COUNT(*) FROM workout_exercise we WHERE we.session_id=ws.id),"
+        "(SELECT COUNT(*) FROM set_record s JOIN workout_exercise we "
+        " ON we.id=s.workout_exercise_id WHERE we.session_id=ws.id AND s.completed=1) "
+        "FROM workout_session ws WHERE ws.status='completed' "
+        "AND ws.ended_at>=? AND ws.ended_at<? ORDER BY ws.ended_at DESC,ws.id"));
+    sessions.addBindValue(utcStart);
+    sessions.addBindValue(utcEnd);
+    if (!sessions.exec()) {
+        fail(sessions.lastError().text());
+        return {};
+    }
+    while (sessions.next()) {
+        const QString id = sessions.value(0).toString();
+        const QDateTime started = QDateTime::fromString(sessions.value(2).toString(), Qt::ISODate);
+        const QDateTime ended = QDateTime::fromString(sessions.value(3).toString(), Qt::ISODate);
+        const QDate localDate = ended.toLocalTime().date();
+        sessionsById.insert(id, QVariantMap{
+            {QStringLiteral("id"), id},
+            {QStringLiteral("name"), sessions.value(1)},
+            {QStringLiteral("startedAt"), sessions.value(2)},
+            {QStringLiteral("endedAt"), sessions.value(3)},
+            {QStringLiteral("durationMinutes"), qMax<qint64>(0, started.secsTo(ended)) / 60},
+            {QStringLiteral("exerciseCount"), sessions.value(4)},
+            {QStringLiteral("setCount"), sessions.value(5)},
+            {QStringLiteral("totalVolume"), 0.0},
+        });
+        sessionDates.insert(id, localDate);
+    }
+
+    auto addVolumes = [&](const QString &statement) -> bool {
+        QSqlQuery query(m_database);
+        query.prepare(statement);
+        query.addBindValue(utcStart);
+        query.addBindValue(utcEnd);
+        if (!query.exec()) {
+            fail(query.lastError().text());
+            return false;
+        }
+        while (query.next()) {
+            const QString id = query.value(0).toString();
+            auto session = sessionsById.value(id);
+            session[QStringLiteral("totalVolume")] =
+                session.value(QStringLiteral("totalVolume")).toDouble() + query.value(1).toDouble();
+            sessionsById.insert(id, session);
+        }
+        return true;
+    };
+
+    const QString multiplier = QStringLiteral(
+        "CASE WHEN e.load_mode='DumbbellPair' THEN 2 "
+        "WHEN e.load_mode='Unilateral' AND s.both_sides=1 THEN 2 ELSE 1 END");
+    if (!addVolumes(QStringLiteral(
+            "SELECT ws.id,COALESCE(SUM(CASE WHEN e.load_mode='Bodyweight' "
+            "AND s.bodyweight_load_type<>'Added' THEN 0 ELSE "
+            "s.weight_kg*s.actual_reps*(%1) END),0) "
+            "FROM workout_session ws JOIN workout_exercise we ON we.session_id=ws.id "
+            "JOIN exercise e ON e.id=we.exercise_id "
+            "JOIN set_record s ON s.workout_exercise_id=we.id AND s.completed=1 "
+            "WHERE ws.status='completed' AND ws.ended_at>=? AND ws.ended_at<? GROUP BY ws.id")
+            .arg(multiplier))) {
+        return {};
+    }
+    if (!addVolumes(QStringLiteral(
+            "SELECT ws.id,COALESCE(SUM(CASE WHEN e.load_mode='Bodyweight' "
+            "AND s.bodyweight_load_type<>'Added' THEN 0 ELSE "
+            "a.weight_kg*a.reps*(%1) END),0) "
+            "FROM workout_session ws JOIN workout_exercise we ON we.session_id=ws.id "
+            "JOIN exercise e ON e.id=we.exercise_id "
+            "JOIN set_record s ON s.workout_exercise_id=we.id AND s.completed=1 "
+            "JOIN append_set_record a ON a.parent_set_id=s.id "
+            "WHERE ws.status='completed' AND ws.ended_at>=? AND ws.ended_at<? GROUP BY ws.id")
+            .arg(multiplier))) {
+        return {};
+    }
+
+    QMap<QDate, QVariantList> sessionsByDate;
+    for (auto it = sessionsById.cbegin(); it != sessionsById.cend(); ++it)
+        sessionsByDate[sessionDates.value(it.key())].append(it.value());
+    for (auto it = sessionsByDate.begin(); it != sessionsByDate.end(); ++it) {
+        std::sort(it.value().begin(), it.value().end(), [](const QVariant &left, const QVariant &right) {
+            return left.toMap().value(QStringLiteral("endedAt")).toString()
+                 > right.toMap().value(QStringLiteral("endedAt")).toString();
+        });
+    }
+
+    double monthVolume = 0.0;
+    QMap<QDate, QVariantMap> daySummaries;
+    for (auto it = sessionsByDate.cbegin(); it != sessionsByDate.cend(); ++it) {
+        double volume = 0.0;
+        int minutes = 0;
+        int sets = 0;
+        int exercises = 0;
+        for (const QVariant &value : it.value()) {
+            const QVariantMap session = value.toMap();
+            volume += session.value(QStringLiteral("totalVolume")).toDouble();
+            minutes += session.value(QStringLiteral("durationMinutes")).toInt();
+            sets += session.value(QStringLiteral("setCount")).toInt();
+            exercises += session.value(QStringLiteral("exerciseCount")).toInt();
+        }
+        monthVolume += volume;
+        daySummaries.insert(it.key(), QVariantMap{
+            {QStringLiteral("date"), it.key().toString(Qt::ISODate)},
+            {QStringLiteral("sessionCount"), it.value().size()},
+            {QStringLiteral("durationMinutes"), minutes},
+            {QStringLiteral("setCount"), sets},
+            {QStringLiteral("exerciseCount"), exercises},
+            {QStringLiteral("totalVolume"), volume},
+            {QStringLiteral("sessions"), it.value()},
+        });
+    }
+
+    int longestStreak = 0;
+    int currentStreak = 0;
+    QDate previous;
+    for (auto it = daySummaries.cbegin(); it != daySummaries.cend(); ++it) {
+        currentStreak = previous.isValid() && previous.addDays(1) == it.key()
+            ? currentStreak + 1 : 1;
+        longestStreak = qMax(longestStreak, currentStreak);
+        previous = it.key();
+    }
+
+    const double averageVolume = daySummaries.isEmpty()
+        ? 0.0 : monthVolume / daySummaries.size();
+    QVariantList cells;
+    const int leadingCells = monthStart.dayOfWeek() - 1;
+    const int cellCount = ((leadingCells + monthStart.daysInMonth() + 6) / 7) * 7;
+    for (int index = 0; index < cellCount; ++index) {
+        const int day = index - leadingCells + 1;
+        if (day < 1 || day > monthStart.daysInMonth()) {
+            cells.append(QVariantMap{{QStringLiteral("currentMonth"), false}});
+            continue;
+        }
+        const QDate date(year, month, day);
+        QVariantMap cell = daySummaries.value(date);
+        const bool trained = !cell.isEmpty();
+        const bool highVolume = daySummaries.size() > 1 && trained
+            && cell.value(QStringLiteral("totalVolume")).toDouble() >= averageVolume;
+        cell[QStringLiteral("currentMonth")] = true;
+        cell[QStringLiteral("day")] = day;
+        cell[QStringLiteral("date")] = date.toString(Qt::ISODate);
+        cell[QStringLiteral("intensity")] = highVolume ? 2 : (trained ? 1 : 0);
+        cells.append(cell);
+    }
+
+    return QVariantMap{
+        {QStringLiteral("year"), year},
+        {QStringLiteral("month"), month},
+        {QStringLiteral("title"), QLocale().toString(monthStart, QStringLiteral("yyyy年M月"))},
+        {QStringLiteral("trainingDays"), daySummaries.size()},
+        {QStringLiteral("sessionCount"), sessionsById.size()},
+        {QStringLiteral("longestStreak"), longestStreak},
+        {QStringLiteral("totalVolume"), monthVolume},
+        {QStringLiteral("latestTrainingDate"), daySummaries.isEmpty()
+             ? QString() : daySummaries.lastKey().toString(Qt::ISODate)},
+        {QStringLiteral("cells"), cells},
+    };
 }
 
 void WorkoutHistoryController::loadPage(bool reset, int pageSize)
@@ -279,6 +462,14 @@ bool WorkoutHistoryController::selectSession(const QString &sessionId)
     return true;
 }
 
+void WorkoutHistoryController::clearSelectedSession()
+{
+    if (m_selectedSession.isEmpty())
+        return;
+    m_selectedSession.clear();
+    emit selectedSessionChanged();
+}
+
 bool WorkoutHistoryController::updateCompletedSet(
     const QString &setId, double weightKg, int actualReps, bool toFailure,
     const QString &bodyweightLoadType)
@@ -315,7 +506,10 @@ bool WorkoutHistoryController::updateCompletedSet(
     if (update.numRowsAffected() != 1) {
         return fail(QStringLiteral("该组不属于当前已完成训练"));
     }
-    return selectSession(sessionId);
+    const bool updated = selectSession(sessionId);
+    if (updated)
+        emit sessionsChanged();
+    return updated;
 }
 
 bool WorkoutHistoryController::deleteSession(const QString &sessionId)

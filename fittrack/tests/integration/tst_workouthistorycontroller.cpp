@@ -12,6 +12,7 @@ class WorkoutHistoryControllerTest final : public QObject
 private slots:
     void summarizesCompletedWorkout();
     void pagesCompletedWorkouts();
+    void summarizesCalendarMonth();
 };
 
 void WorkoutHistoryControllerTest::summarizesCompletedWorkout()
@@ -157,6 +158,72 @@ void WorkoutHistoryControllerTest::pagesCompletedWorkouts()
     history.reload();
     QCOMPARE(history.sessions().size(), 50);
     QVERIFY(history.hasMore());
+}
+
+void WorkoutHistoryControllerTest::summarizesCalendarMonth()
+{
+    fittrack::DatabaseManager databaseManager;
+    QString error;
+    QVERIFY2(databaseManager.initialize(QStringLiteral(":memory:"), &error), qPrintable(error));
+    QSqlQuery query(databaseManager.database());
+    QVERIFY(query.exec(QStringLiteral(
+        "INSERT INTO exercise(id,name_zh,body_part,movement,load_mode) "
+        "VALUES('calendar-exercise','深蹲','腿部','深蹲','Standard')")));
+
+    QSqlQuery session(databaseManager.database());
+    session.prepare(QStringLiteral(
+        "INSERT INTO workout_session(id,name,started_at,ended_at,status) "
+        "VALUES(?,?,?,?, 'completed')"));
+    const QStringList ids{QStringLiteral("calendar-a"), QStringLiteral("calendar-b"),
+                          QStringLiteral("calendar-c")};
+    const QStringList dates{QStringLiteral("2026-07-13T08:00:00Z"),
+                            QStringLiteral("2026-07-13T09:00:00Z"),
+                            QStringLiteral("2026-07-14T08:00:00Z")};
+    for (int i = 0; i < ids.size(); ++i) {
+        session.bindValue(0, ids.at(i));
+        session.bindValue(1, QStringLiteral("训练 %1").arg(i + 1));
+        session.bindValue(2, dates.at(i));
+        session.bindValue(3, dates.at(i).left(11) + QStringLiteral("10:00:00Z"));
+        QVERIFY(session.exec());
+
+        QSqlQuery exercise(databaseManager.database());
+        exercise.prepare(QStringLiteral(
+            "INSERT INTO workout_exercise(id,session_id,exercise_id,sort_order) "
+            "VALUES(?,?,?,0)"));
+        exercise.addBindValue(ids.at(i) + QStringLiteral("-exercise"));
+        exercise.addBindValue(ids.at(i));
+        exercise.addBindValue(QStringLiteral("calendar-exercise"));
+        QVERIFY(exercise.exec());
+
+        QSqlQuery set(databaseManager.database());
+        set.prepare(QStringLiteral(
+            "INSERT INTO set_record(id,workout_exercise_id,set_order,weight_kg,actual_reps,completed) "
+            "VALUES(?,?,?,?,?,1)"));
+        set.addBindValue(ids.at(i) + QStringLiteral("-set"));
+        set.addBindValue(ids.at(i) + QStringLiteral("-exercise"));
+        set.addBindValue(0);
+        set.addBindValue(i == 0 ? 20.0 : (i == 1 ? 10.0 : 5.0));
+        set.addBindValue(10);
+        QVERIFY(set.exec());
+    }
+
+    fittrack::WorkoutHistoryController history(databaseManager.database());
+    const QVariantMap month = history.calendarMonth(2026, 7);
+    QCOMPARE(month.value(QStringLiteral("trainingDays")).toInt(), 2);
+    QCOMPARE(month.value(QStringLiteral("sessionCount")).toInt(), 3);
+    QCOMPARE(month.value(QStringLiteral("longestStreak")).toInt(), 2);
+    QCOMPARE(month.value(QStringLiteral("latestTrainingDate")).toString(),
+             QStringLiteral("2026-07-14"));
+
+    const QVariantList cells = month.value(QStringLiteral("cells")).toList();
+    QVariantMap thirteenth;
+    for (const QVariant &cell : cells) {
+        if (cell.toMap().value(QStringLiteral("date")).toString() == QStringLiteral("2026-07-13"))
+            thirteenth = cell.toMap();
+    }
+    QCOMPARE(thirteenth.value(QStringLiteral("sessionCount")).toInt(), 2);
+    QCOMPARE(thirteenth.value(QStringLiteral("totalVolume")).toDouble(), 300.0);
+    QCOMPARE(thirteenth.value(QStringLiteral("intensity")).toInt(), 2);
 }
 
 QTEST_GUILESS_MAIN(WorkoutHistoryControllerTest)

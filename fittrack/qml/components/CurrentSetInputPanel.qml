@@ -14,6 +14,9 @@ ColumnLayout {
     property int exerciseCount: 0
     property bool submitting: false
     property real viewportWidth: width
+    property bool firstDraftCaptured: false
+    property real firstDraftWeight: NaN
+    property real firstDraftReps: NaN
 
     readonly property bool currentIsBodyweight: exercise
             && exercise.loadMode === "Bodyweight"
@@ -22,6 +25,25 @@ ColumnLayout {
 
     signal completeRequested(real weightKg, int reps, bool toFailure, string loadType)
     signal editSetRequested(var setData)
+    signal weightAdjusted(int setIndex, real weightKg)
+
+    function firstSetDefaults() {
+        if (!root.exercise || !root.exercise.sets || root.exercise.sets.length === 0)
+            return {"weightKg": null, "reps": null}
+        const first = root.exercise.sets[0]
+        const sourceReps = Boolean(first.completed) ? first.actualReps : first.targetReps
+        const useDraft = root.setIndex === 0 && root.firstDraftCaptured
+        const storedWeight = first.weightKg === null || first.weightKg === undefined
+                ? NaN : Number(first.weightKg)
+        const storedReps = sourceReps === null || sourceReps === undefined
+                ? NaN : Number(sourceReps)
+        const draftWeight = useDraft ? root.firstDraftWeight : storedWeight
+        const draftReps = useDraft ? root.firstDraftReps : storedReps
+        return {
+            "weightKg": Number.isFinite(draftWeight) ? draftWeight : null,
+            "reps": Number.isFinite(draftReps) ? draftReps : null
+        }
+    }
 
     function initialWeightText(setItem) {
         if (!setItem || setItem.weightKg === undefined || setItem.weightKg === null
@@ -74,25 +96,27 @@ ColumnLayout {
             state: rowState
             setNumber: modelData.number
             previousText: root.previousSetText(index)
-            weightText: root.currentIsBodyweight
-                        && modelData.bodyweightLoadType === "Bodyweight"
-                        ? qsTr("自重")
-                        : (modelData.weightKg === undefined || modelData.weightKg === null
-                           ? qsTr("—") : String(Number(modelData.weightKg)))
             repsText: modelData.completed
                       ? String(modelData.actualReps) + (modelData.toFailure ? "*" : "")
                       : (modelData.targetReps === undefined || modelData.targetReps === null
                          ? qsTr("—") : String(modelData.targetReps))
-            weightInputText: rowState === "active"
-                             ? root.initialWeightText(modelData) : ""
+            weightInputText: root.initialWeightText(modelData)
             repsInputText: rowState === "active"
                            ? root.initialRepsText(modelData) : ""
-            weightPlaceholder: "0"
+            weightPlaceholder: rowState === "active" ? "0" : qsTr("—")
             repsPlaceholder: modelData.targetReps === undefined
                              || modelData.targetReps === null
                              ? qsTr("次数") : String(modelData.targetReps)
             pureBodyweight: root.pureBodyweight
             submitting: root.submitting
+            onDraftChanged: (weightKg, reps) => {
+                if (index !== 0)
+                    return
+                root.firstDraftCaptured = true
+                root.firstDraftWeight = weightKg
+                root.firstDraftReps = reps
+            }
+            onWeightAdjusted: weightKg => root.weightAdjusted(index, weightKg)
             onCompleteRequested: (weightKg, reps) => {
                 const loadType = root.currentIsBodyweight
                         ? bodyweightMode.model[bodyweightMode.currentIndex].value

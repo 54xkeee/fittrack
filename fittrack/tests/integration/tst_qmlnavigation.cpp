@@ -1458,6 +1458,27 @@ void QmlNavigationTest::loadsAndSwitchesEveryPrimaryPage()
     QTest::keyClick(window, Qt::Key_4);
     QTest::keyClick(window, Qt::Key_0);
     QCOMPARE(weightField->object()->property("text").toString(), QStringLiteral("40"));
+    const QPoint weightCenter = itemSceneRect(weightField, window).center().toPoint();
+    QVERIFY(touchDrag(window, touchDevice, weightCenter,
+                      weightCenter - QPoint(0, 40)));
+    QTRY_COMPARE(workoutController.exercises().first().toMap()
+                     .value(QStringLiteral("sets")).toList().first().toMap()
+                     .value(QStringLiteral("weightKg")).toDouble(),
+                 45.0);
+    QTest::qWait(100);
+    weightField = findAccessibleByName(
+        accessibleRoot, QStringLiteral("实际重量"), QAccessible::EditableText);
+    repsField = findAccessibleByName(
+        accessibleRoot, QStringLiteral("实际次数"), QAccessible::EditableText);
+    completeSet = findAccessibleByName(
+        accessibleRoot, QStringLiteral("完成本组"), QAccessible::Button);
+    QVERIFY(weightField);
+    QVERIFY(repsField);
+    QVERIFY(completeSet);
+    weightControl = qobject_cast<QQuickItem *>(weightField->object());
+    repsControl = qobject_cast<QQuickItem *>(repsField->object());
+    QVERIFY(weightControl);
+    QVERIFY(repsControl);
     QVERIFY(touchTapEditor(window, touchDevice, repsControl));
     QTRY_VERIFY(isDescendantOf(window->activeFocusItem(), repsControl));
     QTest::keyClick(window, Qt::Key_A, Qt::ControlModifier);

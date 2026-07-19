@@ -8,7 +8,10 @@ AppPage {
     id: page
     objectName: "historyPage"
 
-    Component.onCompleted: workoutHistory.ensureLoaded()
+    Component.onCompleted: {
+        workoutHistory.ensureLoaded()
+        refreshCalendar(true)
+    }
 
     signal completionDismissed()
     signal addCardioRequested()
@@ -16,10 +19,66 @@ AppPage {
     implicitWidth: 0
     property bool showDetails: false
     property bool completionMode: false
+    property bool calendarMode: true
+    property int calendarYear: new Date().getFullYear()
+    property int calendarMonth: new Date().getMonth() + 1
+    property var calendarData: ({})
+    property string selectedCalendarDate: ""
 
     readonly property var selectedSession: workoutHistory.selectedSession || ({})
     readonly property bool hasSelectedSession: selectedSession.id !== undefined
                                                 && String(selectedSession.id).length > 0
+
+    function refreshCalendar(selectDefault) {
+        page.calendarData = workoutHistory.calendarMonth(page.calendarYear, page.calendarMonth)
+        if (selectDefault || page.selectedCalendarDate.length === 0
+                || !page.selectedCalendarDate.startsWith(
+                    "%1-%2-".arg(page.calendarYear).arg(String(page.calendarMonth).padStart(2, "0")))) {
+            const today = new Date()
+            const todayDate = "%1-%2-%3".arg(today.getFullYear())
+                    .arg(String(today.getMonth() + 1).padStart(2, "0"))
+                    .arg(String(today.getDate()).padStart(2, "0"))
+            page.selectedCalendarDate = page.calendarYear === today.getFullYear()
+                    && page.calendarMonth === today.getMonth() + 1
+                    ? todayDate : String(page.calendarData.latestTrainingDate || "")
+            if (page.selectedCalendarDate.length === 0)
+                page.selectedCalendarDate = "%1-%2-01".arg(page.calendarYear)
+                        .arg(String(page.calendarMonth).padStart(2, "0"))
+        }
+        selectCalendarDate(page.selectedCalendarDate)
+    }
+
+    function selectCalendarDate(date) {
+        page.selectedCalendarDate = String(date || "")
+        let cells = page.calendarData.cells || []
+        for (let i = 0; i < cells.length; ++i) {
+            if (cells[i].date !== page.selectedCalendarDate)
+                continue
+            const sessions = cells[i].sessions || []
+            if (sessions.length > 0)
+                workoutHistory.selectSession(String(sessions[0].id))
+            else
+                workoutHistory.clearSelectedSession()
+            return
+        }
+        workoutHistory.clearSelectedSession()
+    }
+
+    function shiftCalendarMonth(delta) {
+        const shifted = new Date(page.calendarYear, page.calendarMonth - 1 + delta, 1)
+        page.calendarYear = shifted.getFullYear()
+        page.calendarMonth = shifted.getMonth() + 1
+        page.selectedCalendarDate = ""
+        page.refreshCalendar(true)
+    }
+
+    function showTodayCalendar() {
+        const today = new Date()
+        page.calendarYear = today.getFullYear()
+        page.calendarMonth = today.getMonth() + 1
+        page.selectedCalendarDate = ""
+        page.refreshCalendar(true)
+    }
 
     function dateText(value) {
         const date = new Date(value)
@@ -337,6 +396,11 @@ AppPage {
     Connections {
         target: workoutHistory
 
+        function onSessionsChanged() {
+            if (page.calendarMode && !page.showDetails)
+                page.refreshCalendar(false)
+        }
+
         function onSelectedSessionChanged() {
             if (!page.hasSelectedSession)
                 page.showDetails = false
@@ -365,7 +429,7 @@ AppPage {
 
                 Label {
                     Layout.fillWidth: true
-                    text: page.showDetails ? qsTr("训练详情") : qsTr("训练历史")
+                    text: page.showDetails ? qsTr("训练详情") : (page.calendarMode ? qsTr("训练日历") : qsTr("训练历史"))
                     color: Design.Theme.backgroundText
                     font.pixelSize: Design.Theme.typeTitle
                     font.weight: Font.Bold
@@ -374,13 +438,22 @@ AppPage {
 
                 Label {
                     Layout.fillWidth: true
-                    visible: !page.showDetails
+                    visible: !page.showDetails && !page.calendarMode
                     text: workoutHistory.hasMore
                           ? qsTr("已加载最近 %1 次训练").arg(workoutHistory.sessions.length)
                           : qsTr("共 %1 次已完成训练").arg(workoutHistory.sessions.length)
                     color: Design.Theme.surfaceMuted
                     font.pixelSize: Design.Theme.typeCaption
                 }
+            }
+
+            AppButton {
+                visible: !page.showDetails
+                text: page.calendarMode ? qsTr("列表") : qsTr("日历")
+                variant: "secondary"
+                flatSecondary: true
+                implicitWidth: 64
+                onClicked: page.calendarMode = !page.calendarMode
             }
         }
 
@@ -391,8 +464,31 @@ AppPage {
             message: workoutHistory.errorMessage
         }
 
+        ScrollView {
+            id: calendarScroll
+
+            visible: !page.showDetails && page.calendarMode
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            clip: true
+            contentWidth: availableWidth
+            ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
+
+            WorkoutCalendar {
+                width: calendarScroll.availableWidth
+                monthData: page.calendarData
+                selectedDate: page.selectedCalendarDate
+                selectedSession: page.selectedSession
+                onPreviousMonthRequested: page.shiftCalendarMonth(-1)
+                onNextMonthRequested: page.shiftCalendarMonth(1)
+                onTodayRequested: page.showTodayCalendar()
+                onDateRequested: page.selectCalendarDate(date)
+                onOpenSessionRequested: page.openSession(sessionId)
+            }
+        }
+
         Item {
-            visible: !page.showDetails
+            visible: !page.showDetails && !page.calendarMode
             Layout.fillWidth: true
             Layout.fillHeight: true
 

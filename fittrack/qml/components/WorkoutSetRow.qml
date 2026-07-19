@@ -9,7 +9,6 @@ Rectangle {
     property string state: "pending"
     property int setNumber: 1
     property string previousText: "—"
-    property string weightText: "—"
     property string repsText: "—"
     property alias weightInputText: setWeight.text
     property alias repsInputText: setReps.text
@@ -26,6 +25,12 @@ Rectangle {
 
     signal completeRequested(real weightKg, int reps)
     signal editRequested()
+    signal weightAdjusted(real weightKg)
+    signal draftChanged(real weightKg, real reps)
+
+    function notifyDraftChanged() {
+        root.draftChanged(setWeight.numericValue, setReps.numericValue)
+    }
 
     implicitHeight: Design.WorkoutTheme.rowHeight
     radius: Design.WorkoutTheme.controlRadius
@@ -81,38 +86,36 @@ Rectangle {
         NumberField {
             id: setWeight
             objectName: root.active ? "setWeightField" : ""
-            visible: root.active
             Layout.preferredWidth: Design.WorkoutTheme.weightColumnWidth
             Layout.preferredHeight: Design.WorkoutTheme.inputHeight
             accessibleName: qsTr("实际重量")
-            subtleBorder: true
+            subtleBorder: root.active
             cornerRadius: Design.WorkoutTheme.controlRadius
-            fillColor: Design.WorkoutTheme.primarySoft
+            fillColor: root.active ? Design.WorkoutTheme.primarySoft : "transparent"
             fieldHeight: Design.WorkoutTheme.inputHeight
             textPixelSize: Design.WorkoutTheme.typeSetValue
             fontFeatures: ({ "tnum": 1 })
             textColor: Design.WorkoutTheme.text
             mutedColor: Design.WorkoutTheme.textMuted
             dividerColor: root.validationError ? Design.WorkoutTheme.danger
-                                               : Design.WorkoutTheme.inputBorder
-            outlineColor: dividerColor
+                                               : (root.active
+                                                  ? Design.WorkoutTheme.inputBorder
+                                                  : "transparent")
+            outlineColor: root.active ? dividerColor : "transparent"
             focusColor: Design.WorkoutTheme.primary
             placeholderText: root.pureBodyweight ? qsTr("自重") : root.weightPlaceholder
             unit: ""
             decimals: 2
             enabled: !root.pureBodyweight && !root.submitting
-            onTextChanged: root.validationError = false
-        }
-
-        Label {
-            visible: !root.active
-            Layout.preferredWidth: Design.WorkoutTheme.weightColumnWidth
-            text: root.weightText
-            color: Design.WorkoutTheme.text
-            font.pixelSize: Design.WorkoutTheme.typeSetValue
-            font.weight: Font.Medium
-            font.features: ({ "tnum": 1 })
-            horizontalAlignment: Text.AlignHCenter
+            readOnly: !root.active
+            verticalAdjustEnabled: !root.pureBodyweight && !root.submitting
+            adjustStep: 5
+            adjustThreshold: 28
+            onTextChanged: {
+                root.validationError = false
+                root.notifyDraftChanged()
+            }
+            onValueAdjusted: value => root.weightAdjusted(value)
         }
 
         NumberField {
@@ -138,7 +141,10 @@ Rectangle {
             decimals: 0
             keyboardHints: Qt.ImhDigitsOnly
             enabled: !root.submitting
-            onTextChanged: root.validationError = false
+            onTextChanged: {
+                root.validationError = false
+                root.notifyDraftChanged()
+            }
             onAccepted: statusButton.clicked()
         }
 

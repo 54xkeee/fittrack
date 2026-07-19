@@ -143,6 +143,7 @@ qt_add_qml_module(fittrack
         qml/components/SetTableHeader.qml
         qml/components/WorkoutSetRow.qml
         qml/components/AddSetButton.qml
+        qml/components/WorkoutCalendar.qml
         qml/components/ExerciseDetailSheet.qml
         qml/components/ExerciseParameterSheet.qml
         qml/components/ExercisePickerSheet.qml

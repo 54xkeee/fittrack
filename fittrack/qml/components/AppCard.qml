@@ -22,10 +22,22 @@ Frame {
         return value
     }
 
-    background: Rectangle {
-        color: Design.Theme.surface
-        radius: Design.Theme.radiusCard
-        border.width: 1
-        border.color: Design.Theme.borderDefault
+    background: Item {
+        Rectangle {
+            x: 0
+            y: Design.Theme.shadowOffsetY
+            width: parent.width
+            height: parent.height
+            radius: Design.Theme.radiusCard
+            color: Design.Theme.shadowAmbient
+        }
+
+        Rectangle {
+            anchors.fill: parent
+            color: Design.Theme.surface
+            radius: Design.Theme.radiusCard
+            border.width: 1
+            border.color: Design.Theme.borderDefault
+        }
     }
 }

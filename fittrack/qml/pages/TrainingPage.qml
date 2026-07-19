@@ -1462,6 +1462,14 @@ AppPage {
                                                         exerciseCard.modelData.id,
                                                         setData,
                                                         exerciseCard.modelData.loadMode)
+                            onWeightAdjusted: (setIndex, weightKg) => {
+                                if (!workoutController.setSetWeight(
+                                            exerciseCard.index, setIndex, weightKg)) {
+                                    showError(workoutController.errorMessage.length > 0
+                                              ? workoutController.errorMessage
+                                              : qsTr("重量更新失败，请重试。"))
+                                }
+                            }
                             onCompleteRequested: (weightKg, reps, toFailure, loadType) => {
                                 page.submittingSet = true
                                 const success = workoutController.completeSet(
@@ -1530,7 +1538,17 @@ AppPage {
                             visible: exerciseCard.selected
                             Layout.fillWidth: true
                             Layout.topMargin: 4
-                            onClicked: configureDialog.openForExercise(exerciseCard.modelData.id)
+                            onClicked: {
+                                const defaults = cardSetInput.firstSetDefaults()
+                                if (!workoutController.addSetFromFirstSet(
+                                            exerciseCard.index,
+                                            defaults.weightKg,
+                                            defaults.reps)) {
+                                    showError(workoutController.errorMessage.length > 0
+                                              ? workoutController.errorMessage
+                                              : qsTr("添加训练组失败，请重试。"))
+                                }
+                            }
                         }
 
                         TapHandler {

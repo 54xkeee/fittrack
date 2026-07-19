@@ -16,6 +16,8 @@ QtObject {
     readonly property color borderDefault: "#E1E6ED"
     readonly property color borderSubtle: "#EDF0F4"
     readonly property color divider: "#E7EBF0"
+    readonly property color shadowAmbient: "#0A172033"
+    readonly property int shadowOffsetY: 2
 
     readonly property color primary: "#1677FF"
     readonly property color primaryHover: "#0F6FE8"
