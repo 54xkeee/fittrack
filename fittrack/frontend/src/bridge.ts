@@ -37,6 +37,8 @@ export interface FitTrackBridge {
   openNextExercise(): Promise<void>;
   pauseRest(): Promise<void>;
   skipRest(): Promise<void>;
+  finishWorkout(): Promise<void>;
+  close(): Promise<void>;
 }
 
 const mockSnapshot: WorkoutSnapshot = {
@@ -112,11 +114,24 @@ class MockBridge implements FitTrackBridge {
     this.snapshot.restRunning = false;
     this.snapshot.restSeconds = 0;
   }
+  async finishWorkout() {}
+  async close() {}
 }
 
 declare global {
   interface Window {
     fitTrackBridge?: FitTrackBridge;
+    FitTrackNative?: {
+      getSnapshot(): string;
+      updateSet(setId: string, weightKg: number, reps: number): boolean;
+      completeSet(setId: string): boolean;
+      addSet(): boolean;
+      openNextExercise(): boolean;
+      pauseRest(): void;
+      skipRest(): void;
+      finishWorkout(): boolean;
+      close(): void;
+    };
     qt?: { webChannelTransport?: unknown };
     QWebChannel?: new (
       transport: unknown,
@@ -285,10 +300,59 @@ class QtWebChannelBridge implements FitTrackBridge {
   async skipRest() {
     await qtInvoke<void>(this.timer, "reset");
   }
+
+  async finishWorkout() {
+    await qtInvoke<boolean>(this.workout, "finishWorkout");
+  }
+
+  async close() {
+    window.history.back();
+  }
+}
+
+class AndroidJavascriptBridge implements FitTrackBridge {
+  constructor(private readonly native: NonNullable<Window["FitTrackNative"]>) {}
+
+  async getSnapshot() {
+    return JSON.parse(this.native.getSnapshot()) as WorkoutSnapshot;
+  }
+
+  async updateSet(setId: string, weightKg: number, reps: number) {
+    this.native.updateSet(setId, weightKg, reps);
+  }
+
+  async completeSet(setId: string) {
+    this.native.completeSet(setId);
+  }
+
+  async addSet() {
+    this.native.addSet();
+  }
+
+  async openNextExercise() {
+    this.native.openNextExercise();
+  }
+
+  async pauseRest() {
+    this.native.pauseRest();
+  }
+
+  async skipRest() {
+    this.native.skipRest();
+  }
+
+  async finishWorkout() {
+    this.native.finishWorkout();
+  }
+
+  async close() {
+    this.native.close();
+  }
 }
 
 export async function resolveBridge(): Promise<FitTrackBridge> {
   if (window.fitTrackBridge) return window.fitTrackBridge;
+  if (window.FitTrackNative) return new AndroidJavascriptBridge(window.FitTrackNative);
   if (window.qt?.webChannelTransport && window.QWebChannel) {
     return new Promise((resolve) => {
       new window.QWebChannel!(window.qt!.webChannelTransport!, (channel) => {

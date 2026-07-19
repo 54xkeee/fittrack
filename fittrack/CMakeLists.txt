@@ -10,6 +10,9 @@ include(CTest)
 option(FITTRACK_ENABLE_REACT_WEBENGINE
     "Render the active workout with the bundled React UI in Qt WebEngine"
     OFF)
+option(FITTRACK_ENABLE_REACT_ANDROID_WEBVIEW
+    "Render the active workout with the bundled React UI in Android WebView"
+    ${ANDROID})
 if(FITTRACK_ENABLE_REACT_WEBENGINE AND ANDROID)
     message(FATAL_ERROR
         "Qt WebEngine is desktop-only. Keep this option OFF for Android and use the native Android WebView integration path.")
@@ -100,6 +103,14 @@ endif()
 qt_add_executable(fittrack
     src/app/main.cpp
 )
+
+if(ANDROID AND FITTRACK_ENABLE_REACT_ANDROID_WEBVIEW)
+    target_sources(fittrack PRIVATE
+        src/app/androidreactbridge.cpp
+        src/app/androidreactbridge.h
+    )
+    target_compile_definitions(fittrack PRIVATE FITTRACK_REACT_ANDROID_WEBVIEW=1)
+endif()
 
 # Caching the root navigation graph makes the Qt 6.11.1 MinGW link step emit
 # a nested temporary response file that GNU ld cannot consume on Windows.

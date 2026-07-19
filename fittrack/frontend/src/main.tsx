@@ -70,6 +70,15 @@ function App() {
     });
   }, []);
 
+  useEffect(() => {
+    if (!bridge) return;
+    const timer = window.setInterval(async () => {
+      if (document.activeElement instanceof HTMLInputElement) return;
+      setSnapshot(await bridge.getSnapshot());
+    }, 1000);
+    return () => window.clearInterval(timer);
+  }, [bridge]);
+
   const activeSet = useMemo(
     () => snapshot?.current.sets.find((item) => item.state === "active"),
     [snapshot],
@@ -81,8 +90,15 @@ function App() {
 
   async function updateSet(setId: string, weightKg: number, reps: number) {
     if (!bridge) return;
+    setSnapshot((current) => current ? {
+      ...current,
+      current: {
+        ...current.current,
+        sets: current.current.sets.map((item) =>
+          item.id === setId ? { ...item, weightKg, reps } : item),
+      },
+    } : current);
     await bridge.updateSet(setId, weightKg, reps);
-    await refresh();
   }
 
   async function completeSet(setId: string) {
@@ -96,13 +112,16 @@ function App() {
   return (
     <div className="app-shell">
       <header className="top-bar">
-        <button className="icon-button" aria-label="返回">‹</button>
+        <button className="icon-button" aria-label="返回" onClick={() => bridge?.close()}>‹</button>
         <div className="title-block">
           <h1>{snapshot.title}</h1>
           <p>{snapshot.progress}</p>
         </div>
         <span className="session-clock">◷ {snapshot.elapsed}</span>
-        <button className="finish-button">完成</button>
+        <button className="finish-button" onClick={async () => {
+          await bridge?.finishWorkout();
+          await refresh();
+        }}>完成</button>
       </header>
 
       <section className="summary" aria-label="训练统计">
@@ -152,7 +171,10 @@ function App() {
         </section>
 
         {snapshot.next && (
-          <button className="next-preview" onClick={() => bridge?.openNextExercise()}>
+          <button className="next-preview" onClick={async () => {
+            await bridge?.openNextExercise();
+            await refresh();
+          }}>
             <img src={snapshot.next.image} alt="" />
             <div>
               <span className="eyebrow">接下来</span>
