@@ -288,6 +288,30 @@ AppPage {
             ? currentExerciseDetail.mediaItems[0] : ({})
     readonly property bool currentIsBodyweight: currentExercise
             && currentExercise.loadMode === "Bodyweight"
+    // Keep the workout flow visible without turning every exercise into a
+    // second editor.  The preview intentionally points at the next exercise
+    // that still has work to do, while the current card remains in place.
+    function nextPreviewExerciseId() {
+        const items = workoutController.exercises || []
+        if (currentExerciseIndex < 0 || items.length < 2)
+            return ""
+        for (let offset = 1; offset < items.length; ++offset) {
+            const index = (currentExerciseIndex + offset) % items.length
+            if (firstIncompleteSetIndex(items[index]) >= 0)
+                return String(items[index].id || "")
+        }
+        return ""
+    }
+
+    readonly property string nextPreviewId: nextPreviewExerciseId()
+    readonly property int nextPreviewIndex: exerciseIndexById(nextPreviewId)
+    readonly property var nextPreviewExercise: nextPreviewIndex >= 0
+            ? workoutController.exercises[nextPreviewIndex] : null
+    readonly property var nextPreviewDetail: nextPreviewExercise
+            ? exerciseModel.exerciseById(nextPreviewExercise.exerciseId) : ({})
+    readonly property var nextPreviewMedia: nextPreviewDetail.mediaItems
+            && nextPreviewDetail.mediaItems.length > 0
+            ? nextPreviewDetail.mediaItems[0] : ({})
     readonly property bool allExercisesComplete: workoutController.active
             && workoutController.exercises.length > 0
             && nextIncompleteExerciseId(-1).length === 0
@@ -318,13 +342,10 @@ AppPage {
                         ? qsTr("本组已保存，已开始 %1 秒休息计时").arg(restSeconds)
                         : qsTr("本组已保存"),
                         Accessible.Polite)
-            const completedExerciseIndex = page.exerciseIndexById(page.selectedExerciseId)
-            if (completedExerciseIndex >= 0
-                    && page.firstIncompleteSetIndex(workoutController.exercises[completedExerciseIndex]) < 0) {
-                const nextId = page.nextIncompleteExerciseId(completedExerciseIndex)
-                if (nextId.length > 0)
-                    page.selectedExerciseId = nextId
-            }
+            // Do not advance the visual focus automatically.  The current
+            // exercise stays on screen so the user can review it; the compact
+            // next-exercise preview below is updated by the model signal and
+            // can be opened explicitly.
             if (restSeconds > 0)
                 restTimer.start(restSeconds)
             Qt.callLater(page.ensureCurrentSetVisible)
@@ -1366,203 +1387,175 @@ AppPage {
                     onActionTriggered: exercisePicker.openForExercise("")
                 }
 
-                Repeater {
-                    model: workoutController.exercises
-                    delegate: ExerciseCard {
-                        id: exerciseCard
-                        objectName: "trainingExerciseRow_" + index
-                        required property var modelData
-                        required property int index
-                        readonly property bool selected: page.selectedExerciseId === modelData.id
-                        readonly property var exerciseDetail: exerciseModel.exerciseById(modelData.exerciseId)
-                        readonly property var exerciseMedia: exerciseDetail.mediaItems
-                                && exerciseDetail.mediaItems.length > 0
-                                ? exerciseDetail.mediaItems[0] : ({})
+                // Keep one complete editor in the visual focus.  Other exercises are
+                // intentionally represented by a single hand-off preview below instead
+                // of a second set table.
+                ExerciseCard {
+                    id: currentExerciseCard
+                    objectName: page.currentExerciseIndex >= 0
+                               ? "trainingExerciseRow_" + page.currentExerciseIndex : ""
+                    visible: page.currentExercise !== null
+                    Layout.fillWidth: true
+                    property var modelData: page.currentExercise
+                    property int index: page.currentExerciseIndex
+                    readonly property bool selected: true
+                    readonly property var exerciseDetail: page.currentExerciseDetail
+                    readonly property var exerciseMedia: page.currentExerciseMedia
 
+                    active: true
+                    Accessible.role: Accessible.Button
+                    Accessible.name: modelData
+                                      ? qsTr("%1，已完成 %2 / %3 组")
+                                        .arg(modelData.name)
+                                        .arg(page.completedSetCount(modelData))
+                                        .arg(modelData.sets.length)
+                                      : ""
+
+                    ExerciseHeader {
                         Layout.fillWidth: true
-                        active: selected
-                        Accessible.role: Accessible.Button
-                        Accessible.name: qsTr("%1，已完成 %2 / %3 组")
-                                         .arg(modelData.name)
-                                         .arg(page.completedSetCount(modelData))
-                                         .arg(modelData.sets.length)
+                        exerciseName: currentExerciseCard.modelData
+                                      ? currentExerciseCard.modelData.name : ""
+                        imageSource: currentExerciseCard.exerciseMedia.url || ""
+                        setCount: currentExerciseCard.modelData
+                                  ? currentExerciseCard.modelData.sets.length : 0
+                        repsText: currentExerciseCard.modelData
+                                  && currentExerciseCard.modelData.recommendedReps
+                                  ? qsTr("%1次").arg(
+                                        currentExerciseCard.modelData.recommendedReps)
+                                  : qsTr("自定次数")
+                        restSeconds: currentExerciseCard.modelData
+                                     ? currentExerciseCard.modelData.restSeconds : 0
+                        current: true
+                        previewObjectName: "currentExercisePreviewButton"
+                        onPreviewRequested: sharedExerciseDetail.openExercise(
+                                                currentExerciseCard.exerciseDetail)
+                        onOptionsRequested: {
+                            if (!currentExerciseCard.modelData)
+                                return
+                            exerciseActions.targetExerciseId = currentExerciseCard.modelData.id
+                            exerciseActions.open()
+                        }
+                    }
 
-                        ExerciseHeader {
-                            Layout.fillWidth: true
-                            exerciseName: exerciseCard.modelData.name
-                            imageSource: exerciseCard.exerciseMedia.url || ""
-                            setCount: exerciseCard.modelData.sets.length
-                            repsText: exerciseCard.modelData.recommendedReps
-                                      ? qsTr("%1次").arg(
-                                            exerciseCard.modelData.recommendedReps)
-                                      : qsTr("自定次数")
-                            restSeconds: exerciseCard.modelData.restSeconds
-                            current: exerciseCard.selected
-                            previewObjectName: exerciseCard.selected
-                                               ? "currentExercisePreviewButton"
-                                               : "trainingExercisePreviewButton_" + exerciseCard.index
-                            onPreviewRequested: sharedExerciseDetail.openExercise(
-                                                    exerciseCard.exerciseDetail)
-                            onOptionsRequested: {
-                                page.selectExercise(exerciseCard.modelData.id)
-                                exerciseActions.targetExerciseId = exerciseCard.modelData.id
-                                exerciseActions.open()
+                    Label {
+                        visible: currentExerciseCard.modelData
+                                 && String(currentExerciseCard.modelData.notes || "").length > 0
+                        Layout.fillWidth: true
+                        Layout.topMargin: 2
+                        text: currentExerciseCard.modelData
+                              ? currentExerciseCard.modelData.notes || "" : ""
+                        color: Design.WorkoutTheme.textSecondary
+                        font.pixelSize: Design.WorkoutTheme.typeBody
+                        wrapMode: Text.WordWrap
+                        maximumLineCount: 2
+                        elide: Text.ElideRight
+                    }
+
+                    RestTimerRow {
+                        visible: currentExerciseCard.modelData !== null
+                        Layout.fillWidth: true
+                        Layout.topMargin: currentExerciseCard.modelData
+                                          && String(currentExerciseCard.modelData.notes || "").length > 0
+                                          ? 6 : 4
+                        timerState: restTimer.state
+                        remainingSeconds: restTimer.remainingSeconds
+                        defaultSeconds: currentExerciseCard.modelData
+                                        ? currentExerciseCard.modelData.restSeconds : 0
+                        onConfigureRequested: trainingRestTimer.open()
+                        onPauseRequested: restTimer.pause()
+                        onResumeRequested: restTimer.resume()
+                        onStopRequested: restTimer.reset()
+                    }
+
+                    Rectangle {
+                        visible: currentExerciseCard.modelData !== null
+                        Layout.fillWidth: true
+                        Layout.topMargin: 4
+                        implicitHeight: 1
+                        color: Design.WorkoutTheme.divider
+                    }
+
+                    CurrentSetInputPanel {
+                        id: cardSetInput
+                        visible: currentExerciseCard.modelData !== null
+                        Layout.fillWidth: true
+                        exercise: currentExerciseCard.modelData
+                        setData: page.currentSet
+                        exerciseIndex: currentExerciseCard.index
+                        setIndex: page.currentSetIndex
+                        allExercisesComplete: page.allExercisesComplete
+                        exerciseCount: workoutController.exercises.length
+                        submitting: page.submittingSet
+                        viewportWidth: page.width
+                        onEditSetRequested: setData => editSetDialog.openForSet(
+                                                    currentExerciseCard.modelData.id,
+                                                    setData,
+                                                    currentExerciseCard.modelData.loadMode)
+                        onWeightAdjusted: (setIndex, weightKg) => {
+                            if (!workoutController.setSetWeight(
+                                        currentExerciseCard.index, setIndex, weightKg)) {
+                                showError(workoutController.errorMessage.length > 0
+                                          ? workoutController.errorMessage
+                                          : qsTr("重量更新失败，请重试。"))
                             }
                         }
-
-                        Label {
-                            visible: exerciseCard.selected
-                                     && String(exerciseCard.modelData.notes || "").length > 0
-                            Layout.fillWidth: true
-                            Layout.topMargin: 2
-                            text: exerciseCard.modelData.notes || ""
-                            color: Design.WorkoutTheme.textSecondary
-                            font.pixelSize: Design.WorkoutTheme.typeBody
-                            wrapMode: Text.WordWrap
-                            maximumLineCount: 2
-                            elide: Text.ElideRight
+                        onCompleteRequested: (weightKg, reps, toFailure, loadType) => {
+                            page.submittingSet = true
+                            const success = workoutController.completeSet(
+                                              currentExerciseCard.index,
+                                              page.currentSetIndex,
+                                              weightKg,
+                                              reps,
+                                              toFailure,
+                                              loadType)
+                            if (!success)
+                                page.submittingSet = false
                         }
+                    }
 
-                        RestTimerRow {
-                            visible: exerciseCard.selected
-                            Layout.fillWidth: true
-                            Layout.topMargin: exerciseCard.modelData.notes
-                                              && String(exerciseCard.modelData.notes).length > 0
-                                              ? 6 : 4
-                            timerState: restTimer.state
-                            remainingSeconds: restTimer.remainingSeconds
-                            defaultSeconds: exerciseCard.modelData.restSeconds
-                            onConfigureRequested: trainingRestTimer.open()
-                            onPauseRequested: restTimer.pause()
-                            onResumeRequested: restTimer.resume()
-                            onStopRequested: restTimer.reset()
-                        }
-
-                        Rectangle {
-                            visible: exerciseCard.selected
-                            Layout.fillWidth: true
-                            Layout.topMargin: 4
-                            implicitHeight: 1
-                            color: Design.WorkoutTheme.divider
-                        }
-
-                        CurrentSetInputPanel {
-                            id: cardSetInput
-                            visible: exerciseCard.selected
-                            Layout.fillWidth: true
-                            exercise: exerciseCard.modelData
-                            setData: exerciseCard.selected ? page.currentSet : null
-                            exerciseIndex: exerciseCard.index
-                            setIndex: exerciseCard.selected ? page.currentSetIndex : -1
-                            allExercisesComplete: page.allExercisesComplete
-                            exerciseCount: workoutController.exercises.length
-                            submitting: page.submittingSet
-                            viewportWidth: page.width
-                            onEditSetRequested: setData => editSetDialog.openForSet(
-                                                        exerciseCard.modelData.id,
-                                                        setData,
-                                                        exerciseCard.modelData.loadMode)
-                            onWeightAdjusted: (setIndex, weightKg) => {
-                                if (!workoutController.setSetWeight(
-                                            exerciseCard.index, setIndex, weightKg)) {
-                                    showError(workoutController.errorMessage.length > 0
-                                              ? workoutController.errorMessage
-                                              : qsTr("重量更新失败，请重试。"))
-                                }
-                            }
-                            onCompleteRequested: (weightKg, reps, toFailure, loadType) => {
-                                page.submittingSet = true
-                                const success = workoutController.completeSet(
-                                                  exerciseCard.index,
-                                                  page.currentSetIndex,
-                                                  weightKg,
-                                                  reps,
-                                                  toFailure,
-                                                  loadType)
-                                if (!success)
-                                    page.submittingSet = false
+                    AddSetButton {
+                        visible: currentExerciseCard.modelData !== null
+                        Layout.fillWidth: true
+                        Layout.topMargin: 4
+                        onClicked: {
+                            const defaults = cardSetInput.firstSetDefaults()
+                            if (!workoutController.addSetFromFirstSet(
+                                        currentExerciseCard.index,
+                                        defaults.weightKg,
+                                        defaults.reps)) {
+                                showError(workoutController.errorMessage.length > 0
+                                          ? workoutController.errorMessage
+                                          : qsTr("添加训练组失败，请重试。"))
                             }
                         }
+                    }
+                }
 
-                        ColumnLayout {
-                            visible: !exerciseCard.selected
-                            Layout.fillWidth: true
-                            spacing: 0
-
-                            RowLayout {
-                                Layout.fillWidth: true
-                                spacing: Design.WorkoutTheme.space8
-
-                                AppIcon {
-                                    visible: page.completedSetCount(exerciseCard.modelData)
-                                             === exerciseCard.modelData.sets.length
-                                    name: "success"
-                                    color: Design.WorkoutTheme.success
-                                }
-                                Label {
-                                    Layout.fillWidth: true
-                                    text: page.completedSetCount(exerciseCard.modelData)
-                                          === exerciseCard.modelData.sets.length
-                                          ? qsTr("%1/%2组 · 容量%3")
-                                            .arg(page.completedSetCount(exerciseCard.modelData))
-                                            .arg(exerciseCard.modelData.sets.length)
-                                            .arg(page.compactVolume(
-                                                     page.completedExerciseVolume(
-                                                         exerciseCard.modelData)))
-                                          : qsTr("已完成 %1/%2 组")
-                                            .arg(page.completedSetCount(exerciseCard.modelData))
-                                            .arg(exerciseCard.modelData.sets.length)
-                                    color: Design.WorkoutTheme.textSecondary
-                                    font.pixelSize: 12
-                                }
-                                RowLayout {
-                                    spacing: Design.WorkoutTheme.space4
-                                    Label {
-                                        text: qsTr("展开")
-                                        color: Design.WorkoutTheme.primary
-                                        font.pixelSize: Design.WorkoutTheme.typeBody
-                                        font.weight: Font.Medium
-                                    }
-                                    AppIcon {
-                                        Layout.preferredWidth: 18
-                                        Layout.preferredHeight: 18
-                                        name: "forward"
-                                        color: Design.WorkoutTheme.primary
-                                        strokeWidth: 1.8
-                                    }
-                                }
-                            }
-                        }
-
-                        AddSetButton {
-                            visible: exerciseCard.selected
-                            Layout.fillWidth: true
-                            Layout.topMargin: 4
-                            onClicked: {
-                                const defaults = cardSetInput.firstSetDefaults()
-                                if (!workoutController.addSetFromFirstSet(
-                                            exerciseCard.index,
-                                            defaults.weightKg,
-                                            defaults.reps)) {
-                                    showError(workoutController.errorMessage.length > 0
-                                              ? workoutController.errorMessage
-                                              : qsTr("添加训练组失败，请重试。"))
-                                }
-                            }
-                        }
-
-                        TapHandler {
-                            enabled: !exerciseCard.selected
-                            acceptedButtons: Qt.LeftButton
-                            onTapped: page.selectExercise(exerciseCard.modelData.id)
-                        }
-                        Keys.onPressed: event => {
-                            if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter
-                                    || event.key === Qt.Key_Space) {
-                                page.selectExercise(exerciseCard.modelData.id)
-                                event.accepted = true
-                            }
-                        }
+                NextExercisePreview {
+                    id: nextExercisePreview
+                    objectName: page.nextPreviewIndex >= 0
+                               ? "trainingExerciseRow_" + page.nextPreviewIndex : ""
+                    visible: page.nextPreviewExercise !== null
+                    Layout.fillWidth: true
+                    exerciseName: page.nextPreviewExercise
+                                  ? page.nextPreviewExercise.name : ""
+                    imageSource: page.nextPreviewMedia.url || ""
+                    setCount: page.nextPreviewExercise
+                              ? page.nextPreviewExercise.sets.length : 0
+                    repsText: page.nextPreviewExercise
+                              && page.nextPreviewExercise.recommendedReps
+                              ? qsTr("%1次").arg(page.nextPreviewExercise.recommendedReps)
+                              : qsTr("自定次数")
+                    restSeconds: page.nextPreviewExercise
+                                 ? page.nextPreviewExercise.restSeconds : 0
+                    completedSets: page.nextPreviewExercise
+                                   ? page.completedSetCount(page.nextPreviewExercise) : 0
+                    previewObjectName: page.nextPreviewIndex >= 0
+                                       ? "trainingExercisePreviewButton_"
+                                         + page.nextPreviewIndex : ""
+                    onPreviewRequested: {
+                        if (page.nextPreviewId.length > 0)
+                            page.selectExercise(page.nextPreviewId)
                     }
                 }
 

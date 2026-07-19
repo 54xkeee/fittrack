@@ -14,6 +14,17 @@ Rectangle {
     border.color: Design.WorkoutTheme.divider
     activeFocusOnTab: true
 
+    // Active state is a small positional cue, not an editor-like blue frame.
+    Rectangle {
+        visible: root.active
+        width: 3
+        height: 32
+        anchors.left: parent.left
+        anchors.verticalCenter: parent.verticalCenter
+        color: Design.WorkoutTheme.primary
+        radius: 2
+    }
+
     ColumnLayout {
         id: content
         anchors.fill: parent

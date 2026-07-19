@@ -17,6 +17,7 @@ ColumnLayout {
     property bool firstDraftCaptured: false
     property real firstDraftWeight: NaN
     property real firstDraftReps: NaN
+    property string draftExerciseId: ""
 
     readonly property bool currentIsBodyweight: exercise
             && exercise.loadMode === "Bodyweight"
@@ -26,6 +27,19 @@ ColumnLayout {
     signal completeRequested(real weightKg, int reps, bool toFailure, string loadType)
     signal editSetRequested(var setData)
     signal weightAdjusted(int setIndex, real weightKg)
+
+    // The panel is reused when the user opens the next-exercise preview.
+    // Keep an unsaved draft while the same exercise refreshes, but discard it
+    // when the panel is genuinely bound to another exercise.
+    onExerciseChanged: {
+        const nextId = root.exercise ? String(root.exercise.id || "") : ""
+        if (nextId === root.draftExerciseId)
+            return
+        root.draftExerciseId = nextId
+        root.firstDraftCaptured = false
+        root.firstDraftWeight = NaN
+        root.firstDraftReps = NaN
+    }
 
     function firstSetDefaults() {
         if (!root.exercise || !root.exercise.sets || root.exercise.sets.length === 0)

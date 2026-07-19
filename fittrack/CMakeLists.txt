@@ -139,6 +139,7 @@ qt_add_qml_module(fittrack
         qml/components/ExerciseCard.qml
         qml/components/ExerciseHeader.qml
         qml/components/ExerciseMetaRow.qml
+        qml/components/NextExercisePreview.qml
         qml/components/RestTimerRow.qml
         qml/components/SetTableHeader.qml
         qml/components/WorkoutSetRow.qml
