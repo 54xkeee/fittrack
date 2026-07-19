@@ -4,6 +4,8 @@
 /fittrack/build-android*/
 /fittrack/build-*/
 /fittrack/tmp/
+/fittrack/frontend/node_modules/
+/fittrack/frontend/dist/
 /android-build-release.aab
 /aqtinstall.log
 /fittrack/aqtinstall.log

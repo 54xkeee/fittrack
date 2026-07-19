@@ -7,11 +7,22 @@ if(ANDROID AND NOT DEFINED BUILD_TESTING)
 endif()
 include(CTest)
 
+option(FITTRACK_ENABLE_REACT_WEBENGINE
+    "Render the active workout with the bundled React UI in Qt WebEngine"
+    OFF)
+if(FITTRACK_ENABLE_REACT_WEBENGINE AND ANDROID)
+    message(FATAL_ERROR
+        "Qt WebEngine is desktop-only. Keep this option OFF for Android and use the native Android WebView integration path.")
+endif()
+
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_AUTOMOC ON)
 
 set(FITTRACK_QT_COMPONENTS Core Gui Qml Quick QuickControls2 Sql)
+if(FITTRACK_ENABLE_REACT_WEBENGINE)
+    list(APPEND FITTRACK_QT_COMPONENTS WebChannel WebEngineQuick)
+endif()
 if(NOT ANDROID)
     list(APPEND FITTRACK_QT_COMPONENTS Multimedia)
 endif()
@@ -153,6 +164,7 @@ qt_add_qml_module(fittrack
         qml/pages/HomePage.qml
         qml/pages/ExerciseLibraryPage.qml
         qml/pages/TrainingPage.qml
+        qml/pages/ReactTrainingPage.qml
         qml/pages/HistoryPage.qml
         qml/pages/AnalysisPage.qml
         qml/pages/PlanPage.qml
@@ -196,6 +208,29 @@ target_link_libraries(fittrack PRIVATE
     Qt6::Quick
     Qt6::QuickControls2
 )
+
+if(FITTRACK_ENABLE_REACT_WEBENGINE)
+    set(FITTRACK_REACT_DIST_DIR "${CMAKE_CURRENT_SOURCE_DIR}/frontend/dist")
+    if(NOT EXISTS "${FITTRACK_REACT_DIST_DIR}/index.html")
+        message(FATAL_ERROR
+            "React bundle missing. Run `npm install` and `npm run build` in fittrack/frontend first.")
+    endif()
+
+    file(GLOB_RECURSE FITTRACK_REACT_WEB_FILES CONFIGURE_DEPENDS
+        "${FITTRACK_REACT_DIST_DIR}/*")
+    qt_add_resources(fittrack "fittrack_react_web"
+        PREFIX "/web"
+        BASE "${FITTRACK_REACT_DIST_DIR}"
+        FILES ${FITTRACK_REACT_WEB_FILES}
+    )
+    qt_add_resources(fittrack "fittrack_react_surface"
+        PREFIX "/hybrid"
+        BASE "${CMAKE_CURRENT_SOURCE_DIR}/qml/hybrid"
+        FILES "${CMAKE_CURRENT_SOURCE_DIR}/qml/hybrid/ReactWebSurface.qml"
+    )
+    target_compile_definitions(fittrack PRIVATE FITTRACK_REACT_WEBENGINE=1)
+    target_link_libraries(fittrack PRIVATE Qt6::WebChannel Qt6::WebEngineQuick)
+endif()
 
 if(ANDROID)
     set(FITTRACK_ANDROID_VERSION_CODE "1" CACHE STRING

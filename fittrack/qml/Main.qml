@@ -24,6 +24,8 @@ ApplicationWindow {
     property int pendingInsightsTab: 0
     property string databaseRecoveryBackupPath: ""
     readonly property var loadedInsights: insightsLoader.item
+    readonly property bool useReactTraining: reactTrainingEnabled
+                                              && workoutController.active
 
     Component.onCompleted: {
         if (databaseRecoveryBackupPath.length > 0)
@@ -208,12 +210,22 @@ ApplicationWindow {
             Layout.preferredWidth: 0
             Layout.preferredHeight: 0
             active: false
-            sourceComponent: Component {
-                TrainingPage {
-                    onPlanStartRequested: dayId => window.requestPlanDay(dayId)
-                    onFreeStartRequested: name => window.requestFreeWorkout(name)
-                }
+            sourceComponent: window.useReactTraining
+                             ? reactTrainingPageComponent
+                             : nativeTrainingPageComponent
+        }
+
+        Component {
+            id: nativeTrainingPageComponent
+            TrainingPage {
+                onPlanStartRequested: dayId => window.requestPlanDay(dayId)
+                onFreeStartRequested: name => window.requestFreeWorkout(name)
             }
+        }
+
+        Component {
+            id: reactTrainingPageComponent
+            ReactTrainingPage { }
         }
 
         Loader {

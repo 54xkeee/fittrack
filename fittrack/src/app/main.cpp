@@ -164,6 +164,11 @@ int main(int argc, char *argv[])
     engine.rootContext()->setContextProperty(QStringLiteral("cardioController"), &cardioController);
     engine.rootContext()->setContextProperty(QStringLiteral("gymManagement"), &gymManagement);
     engine.rootContext()->setContextProperty(QStringLiteral("backupService"), &backupService);
+#ifdef FITTRACK_REACT_WEBENGINE
+    engine.rootContext()->setContextProperty(QStringLiteral("reactTrainingEnabled"), true);
+#else
+    engine.rootContext()->setContextProperty(QStringLiteral("reactTrainingEnabled"), false);
+#endif
     engine.setInitialProperties({
         {QStringLiteral("databaseRecoveryBackupPath"), recoveredDatabasePath},
     });
