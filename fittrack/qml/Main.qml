@@ -22,6 +22,7 @@ ApplicationWindow {
     Material.primary: Design.Theme.surface
     property var pendingWorkoutRequest: ({})
     property int pendingInsightsTab: 0
+    property int preparationSourceIndex: 0
     property string databaseRecoveryBackupPath: ""
     readonly property var loadedInsights: insightsLoader.item
     readonly property Item feedbackHost: taskFeedbackHost
@@ -129,11 +130,15 @@ ApplicationWindow {
         handleStartResult(result)
     }
 
-    function requestPlanDay(dayId) {
+    function requestPlanDay(dayId, sourceIndex) {
+        preparationSourceIndex = sourceIndex === undefined
+                ? navigation.currentIndex : sourceIndex
         handlePreparationResult(workoutController.requestPreparePlanDay(dayId))
     }
 
-    function requestFreeWorkout(name) {
+    function requestFreeWorkout(name, sourceIndex) {
+        preparationSourceIndex = sourceIndex === undefined
+                ? navigation.currentIndex : sourceIndex
         handlePreparationResult(workoutController.requestPrepareFreeWorkout(name || ""))
     }
 
@@ -147,6 +152,7 @@ ApplicationWindow {
                 showStartError(workoutController.errorMessage)
             return
         }
+        preparationSourceIndex = navigation.currentIndex
         handlePreparationResult(workoutController.requestPrepareSuggestedDay())
     }
 
@@ -206,7 +212,7 @@ ApplicationWindow {
             active: false
             sourceComponent: Component {
                 PlanPage {
-                    onTrainingRequested: dayId => window.requestPlanDay(dayId)
+                    onTrainingRequested: dayId => window.requestPlanDay(dayId, 1)
                 }
             }
         }
@@ -228,8 +234,8 @@ ApplicationWindow {
         Component {
             id: nativeTrainingPageComponent
             TrainingPage {
-                onPlanStartRequested: dayId => window.requestPlanDay(dayId)
-                onFreeStartRequested: name => window.requestFreeWorkout(name)
+                onPlanStartRequested: dayId => window.requestPlanDay(dayId, 2)
+                onFreeStartRequested: name => window.requestFreeWorkout(name, 2)
                 onCurrentPlanSaved: window.feedbackHost.show(qsTr("已保存为个人计划"))
             }
         }
@@ -354,7 +360,7 @@ ApplicationWindow {
         Keys.priority: Keys.AfterItem
         Keys.onReleased: event => window.handleBackEvent(event)
         onStartSucceeded: navigation.currentIndex = 2
-        onCancelled: navigation.currentIndex = 0
+        onCancelled: navigation.currentIndex = window.preparationSourceIndex
         onPlanSaved: window.feedbackHost.show(qsTr("已保存为个人计划"))
     }
 
