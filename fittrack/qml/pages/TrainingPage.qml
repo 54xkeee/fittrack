@@ -587,7 +587,7 @@ AppPage {
         }
     }
 
-    AppDialog {
+    AppBottomSheet {
         id: configureDialog
         objectName: "configureExerciseDialog"
         property string targetExerciseId: ""
@@ -614,7 +614,6 @@ AppPage {
             open()
         }
 
-        width: Math.min(380, safeAvailableWidth)
         title: qsTr("设置训练组")
         primaryText: qsTr("应用设置")
         autoAccept: false
@@ -628,7 +627,7 @@ AppPage {
                                   quickSets.value,
                                   quickRest.value)
             if (succeeded)
-                accept()
+                close()
             else
                 showError(workoutController.errorMessage.length > 0
                           ? workoutController.errorMessage
@@ -637,7 +636,7 @@ AppPage {
 
         ScrollView {
             id: configureScroll
-            anchors.fill: parent
+            width: parent.width
             implicitHeight: Math.min(configureForm.implicitHeight,
                                      Overlay.overlay ? Overlay.overlay.height * 0.5 : 400)
             clip: true
@@ -705,7 +704,7 @@ AppPage {
         }
     }
 
-    AppDialog {
+    AppBottomSheet {
         id: editSetDialog
         objectName: "editCompletedSetDialog"
         property string targetExerciseId: ""
@@ -728,7 +727,6 @@ AppPage {
             open()
         }
 
-        width: Math.min(380, safeAvailableWidth)
         title: qsTr("修正已完成组")
         primaryText: qsTr("保存修改")
         autoAccept: false
@@ -754,7 +752,7 @@ AppPage {
                     succeeded = workoutController.setSetNotes(exerciseIndex, setIndex, editNotes.text)
             }
             if (succeeded)
-                accept()
+                close()
             else
                 showError(workoutController.errorMessage.length > 0
                           ? workoutController.errorMessage
@@ -763,7 +761,7 @@ AppPage {
 
         ScrollView {
             id: editSetScroll
-            anchors.fill: parent
+            width: parent.width
             implicitHeight: Math.min(editSetForm.implicitHeight,
                                      Overlay.overlay ? Overlay.overlay.height * 0.55 : 440)
             clip: true
@@ -823,7 +821,7 @@ AppPage {
         }
     }
 
-    AppDialog {
+    AppBottomSheet {
         id: targetRepsDialog
         objectName: "targetRepsDialog"
         property string targetExerciseId: ""
@@ -844,14 +842,13 @@ AppPage {
                     && workoutController.setTargetReps(
                         exerciseIndex, setIndex, targetRepsValue.value)
             if (succeeded)
-                accept()
+                close()
             else
                 showError(workoutController.errorMessage.length > 0
                           ? workoutController.errorMessage
                           : qsTr("目标次数保存失败，请重试。"))
         }
 
-        width: Math.min(340, safeAvailableWidth)
         title: qsTr("修改本组目标次数")
         primaryText: qsTr("保存目标")
         autoAccept: false
@@ -859,7 +856,7 @@ AppPage {
         onPrimaryRequested: submit()
 
         ColumnLayout {
-            anchors.fill: parent
+            width: parent.width
             spacing: Design.Theme.space12
             Label {
                 Layout.fillWidth: true
@@ -882,7 +879,7 @@ AppPage {
         }
     }
 
-    AppDialog {
+    AppBottomSheet {
         id: appendSetDialog
         objectName: "appendSetDialog"
         property string targetExerciseId: ""
@@ -899,7 +896,6 @@ AppPage {
             open()
         }
 
-        width: Math.min(380, safeAvailableWidth)
         title: qsTr("添加短休追加组")
         primaryText: qsTr("添加追加组")
         autoAccept: false
@@ -916,7 +912,7 @@ AppPage {
                         appendRest.value,
                         appendFailure.checked)
             if (succeeded)
-                accept()
+                close()
             else
                 showError(workoutController.errorMessage.length > 0
                           ? workoutController.errorMessage
@@ -924,7 +920,7 @@ AppPage {
         }
 
         ColumnLayout {
-            anchors.fill: parent
+            width: parent.width
             spacing: Design.Theme.space12
             NumberField { id: appendWeight; Layout.fillWidth: true; label: qsTr("追加重量"); unit: "kg"; decimals: 2 }
             NumberField { id: appendReps; Layout.fillWidth: true; label: qsTr("追加次数"); decimals: 0; keyboardHints: Qt.ImhDigitsOnly }
