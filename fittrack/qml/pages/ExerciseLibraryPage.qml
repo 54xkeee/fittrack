@@ -203,7 +203,7 @@ AppPage {
         onTriggered: page.feedbackMessage = ""
     }
 
-    Dialog {
+    AppBottomSheet {
         id: filterDialog
 
         property string pendingBodyPart: ""
@@ -217,14 +217,12 @@ AppPage {
                                               "tan-fenjue-biceps", "tan-fenjue-triceps",
                                               "tan-fenjue-legs"]
 
-        parent: Overlay.overlay
-        anchors.centerIn: Overlay.overlay
-        width: Math.min(392, Overlay.overlay ? Overlay.overlay.width - Design.Theme.space16 * 2 : 392)
-        modal: true
-        focus: true
-        padding: Design.Theme.space24
-        closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
         title: qsTr("筛选动作")
+        primaryText: qsTr("查看结果")
+        secondaryVisible: true
+        autoAccept: false
+        initialFocusItem: bodyPartBox
+        onPrimaryRequested: applyPendingFilters()
 
         function syncControls() {
             pendingBodyPart = page.sourceModel.bodyPart
@@ -264,26 +262,8 @@ AppPage {
             close()
         }
 
-        Overlay.modal: Rectangle { color: Design.Theme.scrim }
-
-        background: Rectangle {
-            color: Design.Theme.surface
-            radius: Design.Theme.radiusLarge
-            border.width: 1
-            border.color: Design.Theme.outline
-        }
-
-        header: Label {
-            text: filterDialog.title
-            color: Design.Theme.surfaceText
-            font.pixelSize: Design.Theme.typeTitle
-            font.weight: Font.DemiBold
-            leftPadding: Design.Theme.space24
-            rightPadding: Design.Theme.space24
-            topPadding: Design.Theme.space24
-        }
-
-        contentItem: ColumnLayout {
+        ColumnLayout {
+            width: parent.width
             spacing: Design.Theme.space16
 
             Label {
@@ -352,29 +332,11 @@ AppPage {
                 text: qsTr("只看已收藏动作")
                 onToggled: filterDialog.pendingFavoritesOnly = checked
             }
-        }
-
-        footer: Item {
-            implicitHeight: Design.Theme.controlHeight + Design.Theme.space24
-
-            RowLayout {
-                anchors.fill: parent
-                anchors.leftMargin: Design.Theme.space24
-                anchors.rightMargin: Design.Theme.space24
-                anchors.bottomMargin: Design.Theme.space24
-                spacing: Design.Theme.space8
-
-                AppButton {
-                    text: qsTr("清除")
-                    variant: "secondary"
-                    Layout.fillWidth: true
-                    onClicked: filterDialog.clearPendingFilters()
-                }
-                AppButton {
-                    text: qsTr("查看结果")
-                    Layout.fillWidth: true
-                    onClicked: filterDialog.applyPendingFilters()
-                }
+            AppButton {
+                Layout.fillWidth: true
+                text: qsTr("清除筛选")
+                variant: "text"
+                onClicked: filterDialog.clearPendingFilters()
             }
         }
 
