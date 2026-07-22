@@ -14,6 +14,7 @@ AppPage {
     property string feedbackMessage: ""
     property string feedbackTone: "info"
     readonly property var sourceModel: exerciseModel
+    signal feedbackRequested(string message)
 
     readonly property int activeFilterCount: (sourceModel.bodyPart.length > 0 ? 1 : 0)
                                                + (sourceModel.movementFilter.length > 0 ? 1 : 0)
@@ -42,9 +43,14 @@ AppPage {
     }
 
     function reportResult(succeeded, successMessage, errorMessage) {
-        feedbackTone = succeeded ? "success" : "error"
-        feedbackMessage = succeeded ? successMessage : errorMessage
-        feedbackTimer.restart()
+        if (succeeded) {
+            feedbackRequested(successMessage)
+            feedbackMessage = ""
+        } else {
+            feedbackTone = "error"
+            feedbackMessage = errorMessage
+            feedbackTimer.restart()
+        }
         return succeeded
     }
 

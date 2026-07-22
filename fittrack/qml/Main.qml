@@ -265,7 +265,11 @@ ApplicationWindow {
             Layout.preferredWidth: 0
             Layout.preferredHeight: 0
             active: false
-            sourceComponent: Component { ExerciseLibraryPage {} }
+            sourceComponent: Component {
+                ExerciseLibraryPage {
+                    onFeedbackRequested: message => window.feedbackHost.show(message)
+                }
+            }
         }
 
         Loader {
