@@ -173,7 +173,11 @@ Page {
                 Layout.preferredWidth: 0
                 Layout.preferredHeight: 0
                 active: false
-                sourceComponent: Component { CardioPage {} }
+                sourceComponent: Component {
+                    CardioPage {
+                        onFeedbackRequested: message => page.feedbackRequested(message)
+                    }
+                }
             }
             Loader {
                 id: managementLoader

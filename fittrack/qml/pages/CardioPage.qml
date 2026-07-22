@@ -11,6 +11,7 @@ AppPage {
     rightPadding: SafeArea.margins.right
     topPadding: SafeArea.margins.top
     bottomPadding: SafeArea.margins.bottom
+    signal feedbackRequested(string message)
 
     Component.onCompleted: cardioController.ensureLoaded()
 
@@ -52,7 +53,10 @@ AppPage {
         message: qsTr("时长、设备参数和关联信息都会被永久删除。")
         confirmText: qsTr("删除记录")
         destructive: true
-        onAccepted: cardioController.removeRecord(recordId)
+        onAccepted: {
+            if (cardioController.removeRecord(recordId))
+                page.feedbackRequested(qsTr("有氧记录已删除"))
+        }
     }
 
     AppBottomSheet {
@@ -99,6 +103,7 @@ AppPage {
             treadmillHeart.text = ""
             treadmillNotes.text = ""
             close()
+            page.feedbackRequested(qsTr("有氧记录已保存"))
         }
 
         title: qsTr("记录跑步机爬坡")
@@ -222,6 +227,7 @@ AppPage {
             stairHeart.text = ""
             stairNotes.text = ""
             close()
+            page.feedbackRequested(qsTr("有氧记录已保存"))
         }
 
         title: qsTr("记录爬楼机")
