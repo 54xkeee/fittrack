@@ -1,10 +1,15 @@
 # FitTrack 原生 Material 3 与交互架构重构计划
 
-**状态：** 讨论稿。本文确认前，不继续修改 QML、React、Android Bridge、资源或视觉基准。
+**状态：** 执行中。按轮次提交，每轮仅改动本轮目标所需文件。
 
 **目标：** 将 FitTrack 变成 Android 优先、完整且有任务感的 Material 3 健身应用。重构重点不是给页面换颜色，而是先统一训练渲染、导航、任务流、反馈与组件边界，再完成全局视觉与页面迁移。
 
 **范围基础：** Qt 6 Quick/QML、Qt Quick Controls Material、现有 C++ Controller、SQLite、可选 React 原型。
+
+**执行记录（2026-07-22）：**
+- Round 1：已冻结 Android React/WebView 默认接管；QML 是唯一正式训练渲染路径；交互契约已落在 `docs/superpowers/specs/2026-07-22-fittrack-interaction-contract.md`。
+- Round 2（进行中）：已移除重复 `Spacing` 单例，文字尺寸统一由 `Typography` 计算，`WorkoutTheme` 改为训练领域适配层；已让 Qt Material 和语义色 Token 跟随系统明暗模式。Windows Qt 6.11.1 构建通过。
+- 待后续轮次：真机记录实际解析字体与字号；将现有页面迁移到文字角色；完成 App Shell、Sheet、Snackbar 与训练流程重构。
 
 ---
 
