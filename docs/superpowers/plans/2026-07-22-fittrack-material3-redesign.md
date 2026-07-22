@@ -8,7 +8,7 @@
 
 **执行记录（2026-07-22）：**
 - Round 1：已冻结 Android React/WebView 默认接管；QML 是唯一正式训练渲染路径；交互契约已落在 `docs/superpowers/specs/2026-07-22-fittrack-interaction-contract.md`。
-- Round 2（进行中）：已移除重复 `Spacing` 单例，文字尺寸统一由 `Typography` 计算，`WorkoutTheme` 改为训练领域适配层；已让 Qt Material 和语义色 Token 跟随系统明暗模式。Windows Qt 6.11.1 构建通过。
+- Round 2（进行中）：已移除重复 `Spacing` 单例，文字尺寸统一由 `Typography` 计算，`WorkoutTheme` 改为训练领域适配层；已让 Qt Material 和语义色 Token 跟随系统明暗模式；当前 Windows 系统 UI 字体解析为 `Microsoft YaHei UI`，Android 真机字体回退仍待记录。Windows Qt 6.11.1 构建通过。
 - Round 3（已完成）：已建立 `AppScaffold`、Top App Bar、Navigation Bar、Bottom Sheet、Snackbar、OverlayHost 与 TaskFeedbackHost；主底部导航和训练准备顶栏已迁移到组件层，动作详情、动作选择、参数、排序、训练/动作操作菜单、休息计时、训练组配置、已完成组修正、目标次数、追加组、器械选择、健身房/器械创建、训练/动作备注和保存个人计划已迁移为 Bottom Sheet；保存成功已通过全局 Snackbar 反馈，训练页也不再覆盖系统明暗主题，保留原 `objectName`、焦点和无障碍页签语义。Windows Qt 6.11.1 构建通过。
 - Round 4（已完成）：训练准备取消会回到 Home、Plan 或 Training 的实际来源；首页按今日训练、近期进度、最近活动呈现；首页首个空态插画已接入，并记录了用途、主题处理、生成提示与人工筛选结果；计划的新建、复制、重命名、动作选择、动作参数和有氧目标已迁移为 Bottom Sheet，计划页仅为不可逆删除保留 Confirm Dialog。Windows Qt 6.11.1 构建通过。
 - Round 5（进行中）：休息控制已从训练滚动内容移到固定 Bottom Action Bar，滚动区域会为其预留空间；计时设置继续使用 Bottom Sheet；训练完成后会直接进入独立训练总结，关闭后回到实际训练来源；完成组与完成训练已接入 Android 原生分级触感，桌面端保持无操作。Windows Qt 6.11.1 构建通过。
