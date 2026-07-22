@@ -207,11 +207,14 @@ qt_add_resources(fittrack "seed_data"
 file(GLOB SHAREABLE_ACTION_IMAGES CONFIGURE_DEPENDS
     "${CMAKE_CURRENT_SOURCE_DIR}/resources/images/exercises/shareable/*"
 )
+file(GLOB FITTRACK_ILLUSTRATIONS CONFIGURE_DEPENDS
+    "${CMAKE_CURRENT_SOURCE_DIR}/resources/images/illustrations/*"
+)
 add_library(fittrack_action_images STATIC)
 qt_add_resources(fittrack_action_images "action_images"
     PREFIX "/"
     BASE "resources"
-    FILES ${SHAREABLE_ACTION_IMAGES}
+    FILES ${SHAREABLE_ACTION_IMAGES} ${FITTRACK_ILLUSTRATIONS}
 )
 target_link_libraries(fittrack_action_images PUBLIC Qt6::Core)
 

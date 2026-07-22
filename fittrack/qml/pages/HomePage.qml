@@ -407,20 +407,15 @@ AppPage {
                         anchors.fill: parent
                         spacing: Design.Theme.space8
 
-                        Rectangle {
+                        Image {
                             Layout.alignment: Qt.AlignHCenter
-                            Layout.preferredWidth: 52
-                            Layout.preferredHeight: 52
-                            radius: 26
-                            color: Design.Theme.surfaceElevated
-                            border.width: 1
-                            border.color: Design.Theme.outline
-
-                            AppIcon {
-                                anchors.centerIn: parent
-                                name: "training"
-                                color: Design.Theme.primary
-                            }
+                            Layout.preferredWidth: 176
+                            Layout.preferredHeight: 132
+                            source: "qrc:/images/illustrations/empty-workout.png"
+                            fillMode: Image.PreserveAspectFit
+                            asynchronous: true
+                            Accessible.role: Accessible.Graphic
+                            Accessible.name: qsTr("开始记录训练进度的插画")
                         }
 
                         Label {
