@@ -2,7 +2,7 @@
 
 #ifdef Q_OS_ANDROID
 #include <QJniObject>
-#include <QNativeInterface>
+#include <QtCore/qcoreapplication_platform.h>
 #endif
 
 namespace fittrack {

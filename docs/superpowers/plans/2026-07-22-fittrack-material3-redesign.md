@@ -13,7 +13,7 @@
 - Round 4（已完成）：训练准备取消会回到 Home、Plan 或 Training 的实际来源；首页按今日训练、近期进度、最近活动呈现；首页首个空态插画已接入，并记录了用途、主题处理、生成提示与人工筛选结果；计划的新建、复制、重命名、动作选择、动作参数和有氧目标已迁移为 Bottom Sheet，计划页仅为不可逆删除保留 Confirm Dialog。Windows Qt 6.11.1 构建通过。
 - Round 5（进行中）：休息控制已从训练滚动内容移到固定 Bottom Action Bar，滚动区域会为其预留空间；计时设置继续使用 Bottom Sheet；训练完成后会直接进入独立训练总结，关闭后回到实际训练来源；完成组与完成训练已接入 Android 原生分级触感，桌面端保持无操作。Windows Qt 6.11.1 构建通过。
 - Round 6（已完成）：历史训练的已完成组修正、动作库筛选与自定义动作维护、场馆与器械维护、有氧记录均已迁移为 Bottom Sheet；自定义动作详情改为高位 Bottom Sheet，动作库、管理页和有氧页的成功操作已接入全局 Snackbar，不可逆删除继续使用 Confirm Dialog；第二批数据备份辅助视觉已接入管理页。Windows Qt 6.11.1 构建通过。
-- Round 7（进行中）：CTest 已自行注入 Qt 与 MinGW 运行时路径，14 个非视觉测试不再依赖调用终端的 `PATH`；正常 Windows QPA 启动冒烟通过；`qmlnavigation` 仍作为独立视觉/交互验证项继续排查。Windows Qt 6.11.1 构建通过。
+- Round 7（进行中）：CTest 已自行注入 Qt 与 MinGW 运行时路径，14 个非视觉测试不再依赖调用终端的 `PATH`；正常 Windows QPA 启动冒烟通过；Android arm64 Debug APK 已重新构建并确认触感权限；`qmlnavigation` 仍作为独立视觉/交互验证项继续排查。Windows Qt 6.11.1 构建通过。
 - Foundation 收束：生产 QML 的页面色值已收敛到 `Theme` 语义 Token；圆形标记以自身尺寸推导圆角，避免新增任意圆角常量。Windows Qt 6.11.1 构建通过。
 - 旧 `ActionPill` 已从生产页面移除；次级、破坏性与主操作分别改由 `AppButton` 的 `secondary`、`destructive` 与 `primary` 角色表达。Windows Qt 6.11.1 构建通过。
 - 新增 `AppTextField` 作为复用的 Material 文本输入外观，管理页新增、重命名与器械表单已先行迁移；单线程全量 QML 缓存重建通过。

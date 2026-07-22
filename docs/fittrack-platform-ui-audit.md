@@ -18,6 +18,8 @@
 
 Android 继续继承平台系统字体及 `Configuration.fontScale`。以下项目需真机记录后才能勾选：
 
+2026-07-22 已完成 `arm64-v8a` Debug APK 构建，SHA-256 为 `E058BE09DBEE2ABE35F430527FCE2D53C663664FFDD781400376FC0416FBEBDE`；清单已确认包含 `android.permission.VIBRATE`。该证据只证明交叉编译、打包和权限声明，不代替真机触感与界面验收。
+
 - [ ] 记录实际解析字体家族、字号与 400/500/600 字重回退。
 - [ ] 在 1.0、1.3、1.5、2.0 字体缩放下检查标题、Sheet 和固定操作栏。
 - [ ] Light、Dark、System 三种模式切换。
