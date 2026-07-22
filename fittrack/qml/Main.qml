@@ -230,6 +230,7 @@ ApplicationWindow {
             TrainingPage {
                 onPlanStartRequested: dayId => window.requestPlanDay(dayId)
                 onFreeStartRequested: name => window.requestFreeWorkout(name)
+                onCurrentPlanSaved: window.feedbackHost.show(qsTr("已保存为个人计划"))
             }
         }
 

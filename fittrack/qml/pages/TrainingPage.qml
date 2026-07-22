@@ -26,6 +26,7 @@ AppPage {
     implicitHeight: 0
     signal planStartRequested(string dayId)
     signal freeStartRequested(string name)
+    signal currentPlanSaved()
     property string selectedExerciseId: ""
     property bool submittingSet: false
     property int sessionElapsedSeconds: 0
@@ -1054,7 +1055,7 @@ AppPage {
         }
     }
 
-    AppDialog {
+    AppBottomSheet {
         id: exerciseNotesDialog
         objectName: "exerciseNotesDialog"
         property string targetExerciseId: ""
@@ -1068,7 +1069,6 @@ AppPage {
             open()
         }
 
-        width: Math.min(400, safeAvailableWidth)
         title: qsTr("动作备注")
         primaryText: qsTr("保存备注")
         autoAccept: false
@@ -1078,7 +1078,7 @@ AppPage {
             const succeeded = index >= 0
                     && workoutController.setExerciseNotes(index, exerciseNotes.text)
             if (succeeded)
-                accept()
+                close()
             else
                 showError(workoutController.errorMessage.length > 0
                           ? workoutController.errorMessage
@@ -1086,7 +1086,7 @@ AppPage {
         }
         TextArea {
             id: exerciseNotes
-            anchors.fill: parent
+            width: parent.width
             implicitHeight: 112
             wrapMode: TextEdit.Wrap
             placeholderText: qsTr("器械档位或本次感受，可选")
@@ -1094,17 +1094,16 @@ AppPage {
         }
     }
 
-    AppDialog {
+    AppBottomSheet {
         id: sessionNotesDialog
         objectName: "sessionNotesDialog"
-        width: Math.min(400, safeAvailableWidth)
         title: qsTr("训练备注")
         primaryText: qsTr("保存备注")
         autoAccept: false
         initialFocusItem: sessionNotes
         onPrimaryRequested: {
             if (workoutController.setSessionNotes(sessionNotes.text))
-                accept()
+                close()
             else
                 showError(workoutController.errorMessage.length > 0
                           ? workoutController.errorMessage
@@ -1112,7 +1111,7 @@ AppPage {
         }
         TextArea {
             id: sessionNotes
-            anchors.fill: parent
+            width: parent.width
             implicitHeight: 112
             wrapMode: TextEdit.Wrap
             placeholderText: qsTr("本次训练备注，可选")
@@ -1120,10 +1119,9 @@ AppPage {
         }
     }
 
-    AppDialog {
+    AppBottomSheet {
         id: savePlanDialog
         objectName: "savePlanDialog"
-        width: Math.min(400, safeAvailableWidth)
         title: qsTr("保存为个人计划")
         primaryText: qsTr("保存计划")
         primaryEnabled: savedPlanName.text.trim().length > 0
@@ -1132,16 +1130,17 @@ AppPage {
         initialFocusItem: savedPlanName
         onPrimaryRequested: {
             if (workoutController.saveCurrentAsPlan(
-                        savedPlanName.text, savedDayName.text, savedSectionName.text))
-                accept()
-            else
+                        savedPlanName.text, savedDayName.text, savedSectionName.text)) {
+                close()
+                page.currentPlanSaved()
+            } else
                 showError(workoutController.errorMessage.length > 0
                           ? workoutController.errorMessage
                           : qsTr("个人计划保存失败，请重试。"))
         }
         ScrollView {
             id: savePlanFormScroll
-            anchors.fill: parent
+            width: parent.width
             implicitHeight: Math.min(savePlanForm.implicitHeight,
                                      Overlay.overlay ? Overlay.overlay.height * 0.45 : 360)
             clip: true
