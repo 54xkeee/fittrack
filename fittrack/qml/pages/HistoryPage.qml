@@ -237,7 +237,7 @@ AppPage {
         }
     }
 
-    Dialog {
+    AppBottomSheet {
         id: editSetDialog
 
         property string setId: ""
@@ -247,35 +247,23 @@ AppPage {
                                                    && editWeight.acceptableInput
                                                    && editReps.acceptableInput
 
-        parent: Overlay.overlay
-        anchors.centerIn: Overlay.overlay
-        width: Math.min(392, Overlay.overlay ? Overlay.overlay.width - Design.Theme.space16 * 2 : 392)
-        modal: true
-        focus: true
-        padding: Design.Theme.space24
-        closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
         title: qsTr("修正训练组")
-
-        Overlay.modal: Rectangle { color: Design.Theme.scrim }
-
-        background: Rectangle {
-            color: Design.Theme.surface
-            radius: Design.Theme.radiusLarge
-            border.width: 1
-            border.color: Design.Theme.outline
+        primaryText: qsTr("保存修正")
+        secondaryVisible: true
+        primaryEnabled: inputValid
+        autoAccept: false
+        initialFocusItem: editWeight.editorItem
+        onPrimaryRequested: {
+            const loadType = editLoadType.currentIndex >= 0
+                    ? editLoadType.model[editLoadType.currentIndex].value : "Bodyweight"
+            if (workoutHistory.updateCompletedSet(
+                    setId, Number(editWeight.text.replace(",", ".")), Number(editReps.text),
+                    editFailure.checked, loadType))
+                close()
         }
 
-        header: Label {
-            text: editSetDialog.title
-            color: Design.Theme.surfaceText
-            font.pixelSize: Design.Theme.typeTitle
-            font.weight: Font.DemiBold
-            leftPadding: Design.Theme.space24
-            rightPadding: Design.Theme.space24
-            topPadding: Design.Theme.space24
-        }
-
-        contentItem: ColumnLayout {
+        ColumnLayout {
+            width: parent.width
             spacing: Design.Theme.space12
 
             RowLayout {
@@ -332,43 +320,6 @@ AppPage {
                 id: editFailure
                 text: qsTr("本组力竭")
                 Accessible.name: text
-            }
-        }
-
-        footer: Item {
-            implicitHeight: Design.Theme.controlHeight + Design.Theme.space24
-
-            RowLayout {
-                anchors.fill: parent
-                anchors.leftMargin: Design.Theme.space24
-                anchors.rightMargin: Design.Theme.space24
-                anchors.bottomMargin: Design.Theme.space24
-                spacing: Design.Theme.space8
-
-                AppButton {
-                    text: qsTr("取消")
-                    variant: "secondary"
-                    Layout.fillWidth: true
-                    onClicked: editSetDialog.close()
-                }
-
-                AppButton {
-                    text: qsTr("保存修正")
-                    Layout.fillWidth: true
-                    enabled: editSetDialog.inputValid
-                    onClicked: {
-                        const loadType = editLoadType.currentIndex >= 0
-                                ? editLoadType.model[editLoadType.currentIndex].value : "Bodyweight"
-                        if (workoutHistory.updateCompletedSet(
-                                editSetDialog.setId,
-                                Number(editWeight.text.replace(",", ".")),
-                                Number(editReps.text),
-                                editFailure.checked,
-                                loadType)) {
-                            editSetDialog.close()
-                        }
-                    }
-                }
             }
         }
 
