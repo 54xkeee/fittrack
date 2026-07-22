@@ -17,12 +17,7 @@ FitTrack 是一个本地优先的个人健身训练伙伴，核心目标是：
 
 ### 1.1 仓库边界
 
-当前仓库同时保留两个互不依赖的项目：
-
-- `fittrack/` 是当前持续开发目标，即 Android 健身训练伙伴“训迹 FitTrack”；
-- 根目录的 `StudentGradeSystem.pro`、`app/`、根目录 `tests/` 和对应构建脚本属于历史成绩管理系统，只作保留，不参与 FitTrack 的构建、运行或测试。
-
-两者不共享业务代码、数据库或发布产物。除非任务明确指向历史项目，后续架构、开发和验收均以 `fittrack/` 及 `docs/fittrack-*.md` 为范围。
+`fittrack/` 是应用核心目录，后续架构、开发和发布均以 `fittrack/` 及 `docs/fittrack-*.md` 为范围。
 
 ### 1.2 FitTrack 目录职责
 

@@ -2,7 +2,7 @@
 
 # 训迹 FitTrack
 
-一款离线优先的 Android 健身记录应用。
+一款离线优先的 Android 健身记录应用，把训练计划、逐组记录、休息计时与长期进步分析完整串联起来。
 
 [![Release](https://img.shields.io/github/v/release/54xkeee/fittrack?display_name=tag&sort=semver)](https://github.com/54xkeee/fittrack/releases/latest)
 ![Android](https://img.shields.io/badge/Android-10%2B-3DDC84?logo=android&logoColor=white)
@@ -24,11 +24,12 @@
 
 ## 功能
 
-- 训练计划与自由训练
-- 逐组记录重量、次数与休息时间
-- 训练历史、容量与趋势分析
-- 本地备份与恢复
-- 浅色、深色主题
+- **完整训练编排**：支持训练计划与自由训练，可按实际节奏添加、调整和排序动作。
+- **专业逐组记录**：集中记录重量、次数、完成状态、训练备注与休息时间，当前组和下一动作一目了然。
+- **智能休息衔接**：完成一组即可进入休息计时，让组间节奏更稳定，减少训练过程中的重复操作。
+- **长期进步追踪**：通过训练日历、历史记录、训练容量和趋势图表回看每一次积累。
+- **本地数据管理**：训练数据保存在设备本地，并提供备份与恢复能力，离线也能完整使用。
+- **现代 Android 体验**：采用 Material 3 界面体系，适配浅色与深色主题，训练中的重点信息拥有清晰层级。
 
 ## 安装
 
