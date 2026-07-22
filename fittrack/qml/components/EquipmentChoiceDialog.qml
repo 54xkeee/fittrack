@@ -3,7 +3,7 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import "../theme" as Design
 
-AppDialog {
+AppBottomSheet {
     id: root
 
     property var equipmentModel: []
@@ -28,7 +28,6 @@ AppDialog {
     }
 
     objectName: "equipmentChoiceDialog"
-    width: Math.min(400, safeAvailableWidth)
     title: qsTr("本次使用器械")
     primaryText: qsTr("保存器械")
     autoAccept: false
@@ -40,7 +39,7 @@ AppDialog {
     }
 
     ColumnLayout {
-        anchors.fill: parent
+        width: parent.width
         spacing: Design.Theme.space12
 
         AppComboBox {

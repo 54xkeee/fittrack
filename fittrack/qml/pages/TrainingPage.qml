@@ -959,7 +959,7 @@ AppPage {
             const succeeded = index >= 0
                     && workoutController.setExerciseEquipment(index, equipmentId)
             if (succeeded)
-                accept()
+                close()
             else
                 showError(workoutController.errorMessage.length > 0
                           ? workoutController.errorMessage
