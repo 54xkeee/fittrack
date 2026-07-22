@@ -12,7 +12,7 @@
 - Round 3（已完成）：已建立 `AppScaffold`、Top App Bar、Navigation Bar、Bottom Sheet、Snackbar、OverlayHost 与 TaskFeedbackHost；主底部导航和训练准备顶栏已迁移到组件层，动作详情、动作选择、参数、排序、训练/动作操作菜单、休息计时、训练组配置、已完成组修正、目标次数、追加组、器械选择、健身房/器械创建、训练/动作备注和保存个人计划已迁移为 Bottom Sheet；保存成功已通过全局 Snackbar 反馈，训练页也不再覆盖系统明暗主题，保留原 `objectName`、焦点和无障碍页签语义。Windows Qt 6.11.1 构建通过。
 - Round 4（已完成）：训练准备取消会回到 Home、Plan 或 Training 的实际来源；首页按今日训练、近期进度、最近活动呈现；首页首个空态插画已接入，并记录了用途、主题处理、生成提示与人工筛选结果；计划的新建、复制、重命名、动作选择、动作参数和有氧目标已迁移为 Bottom Sheet，计划页仅为不可逆删除保留 Confirm Dialog。Windows Qt 6.11.1 构建通过。
 - Round 5（进行中）：休息控制已从训练滚动内容移到固定 Bottom Action Bar，滚动区域会为其预留空间；计时设置继续使用 Bottom Sheet；训练结束总结关闭后会回到实际训练来源。Windows Qt 6.11.1 构建通过。
-- Round 6（进行中）：历史训练的已完成组修正、场馆与器械维护、有氧记录均已迁移为 Bottom Sheet；不可逆删除继续使用 Confirm Dialog。Windows Qt 6.11.1 构建通过。
+- Round 6（进行中）：历史训练的已完成组修正、动作库筛选、场馆与器械维护、有氧记录均已迁移为 Bottom Sheet；不可逆删除继续使用 Confirm Dialog。Windows Qt 6.11.1 构建通过。
 - 待后续轮次：真机记录实际解析字体与字号；将现有页面迁移到文字角色；把具体编辑/选择流程迁移到 Sheet 与全局反馈宿主。
 
 ---
