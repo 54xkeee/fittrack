@@ -14,6 +14,7 @@
 - Round 5（进行中）：休息控制已从训练滚动内容移到固定 Bottom Action Bar，滚动区域会为其预留空间；计时设置继续使用 Bottom Sheet；训练完成后会直接进入独立训练总结，关闭后回到实际训练来源。Windows Qt 6.11.1 构建通过。
 - Round 6（进行中）：历史训练的已完成组修正、动作库筛选与自定义动作维护、场馆与器械维护、有氧记录均已迁移为 Bottom Sheet；自定义动作详情改为高位 Bottom Sheet，动作库、管理页和有氧页的成功操作已接入全局 Snackbar，不可逆删除继续使用 Confirm Dialog；第二批数据备份辅助视觉已接入管理页。Windows Qt 6.11.1 构建通过。
 - Round 7（进行中）：CTest 已自行注入 Qt 与 MinGW 运行时路径，14 个非视觉测试不再依赖调用终端的 `PATH`；`qmlnavigation` 仍作为独立视觉/交互验证项继续排查。Windows Qt 6.11.1 构建通过。
+- Foundation 收束：生产 QML 的页面色值已收敛到 `Theme` 语义 Token；圆形标记以自身尺寸推导圆角，避免新增任意圆角常量。Windows Qt 6.11.1 构建通过。
 - 待后续轮次：真机记录实际解析字体与字号；将现有页面迁移到文字角色；把具体编辑/选择流程迁移到 Sheet 与全局反馈宿主。
 
 ---

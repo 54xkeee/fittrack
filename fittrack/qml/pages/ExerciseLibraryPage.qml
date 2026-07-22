@@ -854,7 +854,7 @@ AppPage {
                             Rectangle {
                                 Layout.preferredWidth: 28
                                 Layout.preferredHeight: 28
-                                radius: 14
+                                radius: width / 2
                                 color: Design.Theme.primaryContainer
                                 Label {
                                     anchors.centerIn: parent

@@ -159,9 +159,9 @@ Item {
                                 color: !dayButton.modelData.currentMonth
                                        ? "transparent"
                                        : dayButton.modelData.intensity === 2
-                                         ? "#176B37"
+                                         ? Design.Theme.success
                                          : dayButton.modelData.intensity === 1
-                                           ? "#36B968" : "#FFFFFF"
+                                           ? Design.Theme.successSoft : Design.Theme.surfaceContainerLowest
                                 border.width: dayButton.modelData.date === root.selectedDate ? 2 : 1
                                 border.color: dayButton.modelData.date === root.selectedDate
                                               ? Design.Theme.primary
@@ -184,9 +184,9 @@ Item {
 
                     Repeater {
                         model: [
-                            {label: qsTr("未训练"), color: "#FFFFFF"},
-                            {label: qsTr("已训练"), color: "#36B968"},
-                            {label: qsTr("高训练量"), color: "#176B37"}
+                            {label: qsTr("未训练"), color: Design.Theme.surfaceContainerLowest},
+                            {label: qsTr("已训练"), color: Design.Theme.successSoft},
+                            {label: qsTr("高训练量"), color: Design.Theme.success}
                         ]
                         delegate: RowLayout {
                             required property var modelData

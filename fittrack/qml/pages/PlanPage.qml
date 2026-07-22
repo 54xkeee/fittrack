@@ -973,7 +973,7 @@ AppPage {
                                         Rectangle {
                                             Layout.preferredWidth: 32
                                             Layout.preferredHeight: 32
-                                            radius: 16
+                                            radius: width / 2
                                             color: Design.Theme.surfaceElevated
                                             border.width: 1
                                             border.color: Design.Theme.outline

@@ -560,7 +560,7 @@ AppPage {
                         Layout.alignment: Qt.AlignHCenter
                         Layout.preferredWidth: 64
                         Layout.preferredHeight: 64
-                        radius: 32
+                        radius: width / 2
                         color: Design.Theme.surfaceElevated
 
                         AppIcon {
@@ -879,7 +879,7 @@ AppPage {
                                         Rectangle {
                                             Layout.preferredWidth: 32
                                             Layout.preferredHeight: 32
-                                            radius: 16
+                                            radius: width / 2
                                             color: Design.Theme.surfaceElevated
 
                                             Label {
