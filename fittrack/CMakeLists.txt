@@ -132,7 +132,6 @@ qt_add_qml_module(fittrack
         qml/theme/Typography.qml
         qml/theme/Preferences.qml
         qml/theme/WorkoutTheme.qml
-        qml/components/ActionPill.qml
         qml/components/AppBottomSheet.qml
         qml/components/AppButton.qml
         qml/components/AppCheckBox.qml
