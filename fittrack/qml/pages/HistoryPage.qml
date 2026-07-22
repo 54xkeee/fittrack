@@ -19,6 +19,7 @@ AppPage {
     implicitWidth: 0
     property bool showDetails: false
     property bool completionMode: false
+    property bool standaloneCompletion: false
     property bool calendarMode: true
     property int calendarYear: new Date().getFullYear()
     property int calendarMonth: new Date().getMonth() + 1
@@ -370,7 +371,8 @@ AppPage {
             IconButton {
                 visible: page.showDetails
                 iconName: "back"
-                accessibleName: qsTr("返回训练历史")
+                accessibleName: page.completionMode && page.standaloneCompletion
+                                ? qsTr("完成训练总结") : qsTr("返回训练历史")
                 onClicked: page.handleBack()
             }
 
@@ -380,7 +382,10 @@ AppPage {
 
                 Label {
                     Layout.fillWidth: true
-                    text: page.showDetails ? qsTr("训练详情") : (page.calendarMode ? qsTr("训练日历") : qsTr("训练历史"))
+                    text: page.completionMode && page.standaloneCompletion
+                          ? qsTr("训练总结")
+                          : (page.showDetails ? qsTr("训练详情")
+                             : (page.calendarMode ? qsTr("训练日历") : qsTr("训练历史")))
                     color: Design.Theme.backgroundText
                     font.pixelSize: Design.Theme.typeTitle
                     font.weight: Font.Bold

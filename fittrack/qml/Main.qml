@@ -281,11 +281,7 @@ ApplicationWindow {
         function onWorkoutFinished(sessionId) {
             cardioController.setPendingSession(sessionId)
             workoutHistory.reload()
-            window.ensureMainPage(4, 1)
-            navigation.currentIndex = 4
-            const insights = window.loadedInsights
-            if (insights && !insights.openWorkoutSummary(sessionId))
-                insights.openCardio()
+            workoutCompletionPage.visible = workoutCompletionPage.openCompletion(sessionId)
         }
     }
 
@@ -366,6 +362,27 @@ ApplicationWindow {
         }
         onCancelled: navigation.currentIndex = window.preparationSourceIndex
         onPlanSaved: window.feedbackHost.show(qsTr("已保存为个人计划"))
+    }
+
+    HistoryPage {
+        id: workoutCompletionPage
+        anchors.fill: parent
+        visible: false
+        z: 1001
+        standaloneCompletion: true
+        onCompletionDismissed: {
+            workoutCompletionPage.visible = false
+            cardioController.clearPendingSession()
+            navigation.currentIndex = window.workoutSourceIndex
+        }
+        onAddCardioRequested: {
+            workoutCompletionPage.visible = false
+            window.ensureMainPage(4, 1)
+            navigation.currentIndex = 4
+            const insights = window.loadedInsights
+            if (insights)
+                insights.openCardio()
+        }
     }
 
     footer: AppNavigationBar {
