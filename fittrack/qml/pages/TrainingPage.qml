@@ -16,7 +16,7 @@ AppPage {
     topPadding: (workoutController.active ? Design.WorkoutTheme.space8
                                           : Design.Theme.space12) + SafeArea.margins.top
 
-    Material.theme: workoutController.active ? Material.Light : Material.Dark
+    Material.theme: Design.Theme.isDark ? Material.Dark : Material.Light
     background: Rectangle {
         color: workoutController.active ? Design.WorkoutTheme.background
                                         : Design.Theme.canvas
