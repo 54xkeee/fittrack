@@ -8,7 +8,7 @@
 
 **执行记录（2026-07-22）：**
 - Round 1：已冻结 Android React/WebView 默认接管；QML 是唯一正式训练渲染路径；交互契约已落在 `docs/superpowers/specs/2026-07-22-fittrack-interaction-contract.md`。
-- Round 2（进行中）：已移除重复 `Spacing` 单例，文字尺寸统一由 `Typography` 计算，`WorkoutTheme` 改为训练领域适配层；已让 Qt Material 和语义色 Token 跟随系统明暗模式；当前 Windows 系统 UI 字体解析为 `Microsoft YaHei UI`，Android 真机字体回退仍待记录。Windows Qt 6.11.1 构建通过。
+- Round 2（进行中）：已移除重复 `Spacing` 单例，文字尺寸统一由 `Typography` 计算，`WorkoutTheme` 改为训练领域适配层；已让 Qt Material 和语义色 Token 跟随系统明暗模式；当前 Windows 系统 UI 字体解析为 `Microsoft YaHei UI`，冻结的 React 原型已镜像 M3 颜色、文字与触控 Token，Android 真机字体回退仍待记录。Windows Qt 6.11.1 构建通过。
 - Round 3（已完成）：已建立 `AppScaffold`、Top App Bar、Navigation Bar、Bottom Sheet、Snackbar、OverlayHost 与 TaskFeedbackHost；主底部导航和训练准备顶栏已迁移到组件层，动作详情、动作选择、参数、排序、训练/动作操作菜单、休息计时、训练组配置、已完成组修正、目标次数、追加组、器械选择、健身房/器械创建、训练/动作备注和保存个人计划已迁移为 Bottom Sheet；保存成功已通过全局 Snackbar 反馈，训练页也不再覆盖系统明暗主题，保留原 `objectName`、焦点和无障碍页签语义。Windows Qt 6.11.1 构建通过。
 - Round 4（已完成）：训练准备取消会回到 Home、Plan 或 Training 的实际来源；首页按今日训练、近期进度、最近活动呈现；首页首个空态插画已接入，并记录了用途、主题处理、生成提示与人工筛选结果；计划的新建、复制、重命名、动作选择、动作参数和有氧目标已迁移为 Bottom Sheet，计划页仅为不可逆删除保留 Confirm Dialog。Windows Qt 6.11.1 构建通过。
 - Round 5（进行中）：休息控制已从训练滚动内容移到固定 Bottom Action Bar，滚动区域会为其预留空间；计时设置继续使用 Bottom Sheet；训练完成后会直接进入独立训练总结，关闭后回到实际训练来源；完成组与完成训练已接入 Android 原生分级触感，桌面端保持无操作；训练/动作备注与保存个人计划的编辑表面已分别抽取为 `TrainingNoteSheet` 和 `SaveWorkoutPlanSheet`。Windows Qt 6.11.1 构建通过。
@@ -234,11 +234,11 @@ Pages
 
 **解决的问题：** 先判断谁负责训练、Back 去哪里、哪些表面该出现，避免先美化错误架构。
 
-- [ ] 对比 `e943351` 与当前 Material 分支，列出未批准视觉提交的保留或回退决定。
-- [ ] 确认正式训练渲染器，推荐 QML 唯一生产路径并冻结 React/WebView 自动覆盖。
-- [ ] 输出一级导航图、Back 规则、训练状态机、Overlay 使用矩阵和反馈状态矩阵。
-- [ ] 识别现有 ObjectName、辅助技术和视觉测试锚点，形成迁移保护清单。
-- [ ] 使用低保真 QML 或交互图走查核心路径，不做最终视觉。
+- [x] 对比 `e943351` 与当前 Material 分支，列出未批准视觉提交的保留或回退决定。
+- [x] 确认正式训练渲染器，推荐 QML 唯一生产路径并冻结 React/WebView 自动覆盖。
+- [x] 输出一级导航图、Back 规则、训练状态机、Overlay 使用矩阵和反馈状态矩阵。
+- [x] 识别现有 ObjectName、辅助技术和视觉测试锚点，形成迁移保护清单。
+- [x] 使用低保真 QML 或交互图走查核心路径，不做最终视觉。
 
 **验收门：** 用户确认 QML/React 处置、训练流程和表面矩阵。
 
@@ -246,10 +246,10 @@ Pages
 
 **解决的问题：** 让所有后续页面从同一套主题、文字和状态规则开始。
 
-- [ ] 建立唯一的 Color、Type、Shape、Spacing、Motion、State Token。
-- [ ] 完成 Light、Dark、System 主题策略与 Android/Windows 密度策略。
+- [x] 建立唯一的 Color、Type、Shape、Spacing、Motion、State Token。
+- [x] 完成 Light、Dark、System 主题策略与 Android/Windows 密度策略。
 - [ ] 完成文字角色、数字角色、系统字体解析检查和 React CSS Token 镜像。
-- [ ] 移除或过渡重复的 Theme、Typography、Spacing、WorkoutTheme 定义。
+- [x] 移除或过渡重复的 Theme、Typography、Spacing、WorkoutTheme 定义。
 
 **验收门：** 主题和字体缩放可运行；不存在新的页面原始 Hex、任意字号或任意圆角。
 
