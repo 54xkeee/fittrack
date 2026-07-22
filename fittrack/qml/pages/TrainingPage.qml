@@ -420,8 +420,7 @@ AppPage {
                 onClicked: {
                     sessionMenu.close()
                     Qt.callLater(function() {
-                        sessionNotes.text = workoutController.sessionNotes
-                        sessionNotesDialog.open()
+                        sessionNotesDialog.openWithText(workoutController.sessionNotes)
                     })
                 }
             }
@@ -1055,7 +1054,7 @@ AppPage {
         }
     }
 
-    AppBottomSheet {
+    TrainingNoteSheet {
         id: exerciseNotesDialog
         objectName: "exerciseNotesDialog"
         property string targetExerciseId: ""
@@ -1065,18 +1064,16 @@ AppPage {
             const index = page.exerciseIndexById(exerciseId)
             if (index < 0)
                 return
-            exerciseNotes.text = workoutController.exercises[index].notes
-            open()
+            openWithText(workoutController.exercises[index].notes)
         }
 
         title: qsTr("动作备注")
-        primaryText: qsTr("保存备注")
-        autoAccept: false
-        initialFocusItem: exerciseNotes
-        onPrimaryRequested: {
+        placeholderText: qsTr("器械档位或本次感受，可选")
+        editorAccessibleName: qsTr("动作备注")
+        onSaveRequested: value => {
             const index = page.exerciseIndexById(targetExerciseId)
             const succeeded = index >= 0
-                    && workoutController.setExerciseNotes(index, exerciseNotes.text)
+                    && workoutController.setExerciseNotes(index, value)
             if (succeeded)
                 close()
             else
@@ -1084,38 +1081,21 @@ AppPage {
                           ? workoutController.errorMessage
                           : qsTr("动作备注保存失败，请重试。"))
         }
-        TextArea {
-            id: exerciseNotes
-            width: parent.width
-            implicitHeight: 112
-            wrapMode: TextEdit.Wrap
-            placeholderText: qsTr("器械档位或本次感受，可选")
-            Accessible.name: qsTr("动作备注")
-        }
     }
 
-    AppBottomSheet {
+    TrainingNoteSheet {
         id: sessionNotesDialog
         objectName: "sessionNotesDialog"
         title: qsTr("训练备注")
-        primaryText: qsTr("保存备注")
-        autoAccept: false
-        initialFocusItem: sessionNotes
-        onPrimaryRequested: {
-            if (workoutController.setSessionNotes(sessionNotes.text))
+        placeholderText: qsTr("本次训练备注，可选")
+        editorAccessibleName: qsTr("训练备注")
+        onSaveRequested: value => {
+            if (workoutController.setSessionNotes(value))
                 close()
             else
                 showError(workoutController.errorMessage.length > 0
                           ? workoutController.errorMessage
                           : qsTr("训练备注保存失败，请重试。"))
-        }
-        TextArea {
-            id: sessionNotes
-            width: parent.width
-            implicitHeight: 112
-            wrapMode: TextEdit.Wrap
-            placeholderText: qsTr("本次训练备注，可选")
-            Accessible.name: qsTr("训练备注")
         }
     }
 

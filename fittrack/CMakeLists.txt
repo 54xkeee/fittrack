@@ -157,6 +157,7 @@ qt_add_qml_module(fittrack
         qml/components/RestTimerBar.qml
         qml/components/CurrentSetInputPanel.qml
         qml/components/TrainingRestTimer.qml
+        qml/components/TrainingNoteSheet.qml
         qml/components/EquipmentChoiceDialog.qml
         qml/components/SectionHeader.qml
         qml/components/SetRow.qml
