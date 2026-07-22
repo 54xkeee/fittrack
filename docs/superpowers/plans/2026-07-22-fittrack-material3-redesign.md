@@ -1,6 +1,6 @@
 # FitTrack 原生 Material 3 与交互架构重构计划
 
-**状态：** 执行中。按轮次提交，每轮仅改动本轮目标所需文件。
+**状态：** 代码收束完成，等待 Android 真机与独立视觉门禁的发布验证。
 
 **目标：** 将 FitTrack 变成 Android 优先、完整且有任务感的 Material 3 健身应用。重构重点不是给页面换颜色，而是先统一训练渲染、导航、任务流、反馈与组件边界，再完成全局视觉与页面迁移。
 
@@ -17,6 +17,7 @@
 - Foundation 收束：生产 QML 的页面色值已收敛到 `Theme` 语义 Token；圆形标记以自身尺寸推导圆角，避免新增任意圆角常量。Windows Qt 6.11.1 构建通过。
 - 旧 `ActionPill` 已从生产页面移除；次级、破坏性与主操作分别改由 `AppButton` 的 `secondary`、`destructive` 与 `primary` 角色表达。Windows Qt 6.11.1 构建通过。
 - 新增 `AppTextField` 作为复用的 Material 文本输入外观，管理页新增、重命名与器械表单已先行迁移；单线程全量 QML 缓存重建通过。
+- 本地收束结果：Round 1、3、4、5、6 已关闭；Round 2 仅缺 Android 真机字体回退记录；Round 7 仅缺 Android 真机走查与隔离后的视觉回归恢复。默认 CTest 14/14、Windows 正常 QPA 启动、React 原型构建和 Android arm64 Debug APK 构建均通过。
 - 待后续轮次：真机记录实际解析字体与字号；将现有页面迁移到文字角色；把具体编辑/选择流程迁移到 Sheet 与全局反馈宿主。
 
 ---
