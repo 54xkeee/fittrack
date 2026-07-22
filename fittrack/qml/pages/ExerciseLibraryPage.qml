@@ -1034,69 +1034,30 @@ AppPage {
         })
     }
 
-    Dialog {
+    AppBottomSheet {
         id: customDialog
 
         property string editingId: ""
         property string validationMessage: ""
 
-        parent: Overlay.overlay
-        anchors.centerIn: Overlay.overlay
-        width: Overlay.overlay ? Overlay.overlay.width - Design.Theme.space16 : 400
-        height: Math.min(760, Overlay.overlay ? Overlay.overlay.height - Design.Theme.space24 : 760)
-        modal: true
-        focus: true
-        padding: 0
-        closePolicy: Popup.CloseOnEscape
         title: editingId.length > 0 ? qsTr("编辑自定义动作") : qsTr("新建自定义动作")
+        primaryText: editingId.length > 0 ? qsTr("保存修改") : qsTr("创建动作")
+        secondaryVisible: true
+        autoAccept: false
+        errorText: validationMessage
+        initialFocusItem: customName
+        onPrimaryRequested: page.submitCustomExercise()
 
-        Overlay.modal: Rectangle { color: Design.Theme.scrim }
-
-        background: Rectangle {
-            color: Design.Theme.background
-            radius: Design.Theme.radiusLarge
-            border.width: 1
-            border.color: Design.Theme.outline
-        }
-
-        header: Item {
-            implicitHeight: 64
-
-            RowLayout {
-                anchors.fill: parent
-                anchors.leftMargin: Design.Theme.space16
-                anchors.rightMargin: Design.Theme.space8
-                Label {
-                    Layout.fillWidth: true
-                    text: customDialog.title
-                    color: Design.Theme.surfaceText
-                    font.pixelSize: Design.Theme.typeTitle
-                    font.weight: Font.Bold
-                }
-                IconButton {
-                    iconName: "close"
-                    accessibleName: qsTr("取消编辑")
-                    onClicked: customDialog.close()
-                }
-            }
-        }
-
-        contentItem: ScrollView {
+        ScrollView {
             id: customScroll
+            Layout.fillWidth: true
+            implicitHeight: Math.min(customForm.implicitHeight, 480)
             clip: true
-            leftPadding: Design.Theme.space16
-            rightPadding: Design.Theme.space16
 
             ColumnLayout {
+                id: customForm
                 width: customScroll.availableWidth
                 spacing: Design.Theme.space12
-
-                InlineFeedback {
-                    visible: customDialog.validationMessage.length > 0
-                    Layout.fillWidth: true
-                    tone: "error"
-                    message: customDialog.validationMessage
-                }
 
                 Label { text: qsTr("动作名称 *"); color: Design.Theme.surfaceMuted; font.pixelSize: Design.Theme.typeLabel }
                 FormInput {
@@ -1189,33 +1150,6 @@ AppPage {
                 Item { Layout.preferredHeight: Design.Theme.space8 }
             }
         }
-
-        footer: Item {
-            implicitHeight: Design.Theme.controlHeight + Design.Theme.space24
-
-            RowLayout {
-                anchors.fill: parent
-                anchors.leftMargin: Design.Theme.space16
-                anchors.rightMargin: Design.Theme.space16
-                anchors.topMargin: Design.Theme.space8
-                anchors.bottomMargin: Design.Theme.space16
-                spacing: Design.Theme.space8
-
-                AppButton {
-                    text: qsTr("取消")
-                    variant: "secondary"
-                    Layout.fillWidth: true
-                    onClicked: customDialog.close()
-                }
-                AppButton {
-                    text: customDialog.editingId.length > 0 ? qsTr("保存修改") : qsTr("创建动作")
-                    Layout.fillWidth: true
-                    onClicked: page.submitCustomExercise()
-                }
-            }
-        }
-
-        onOpened: customName.forceActiveFocus()
     }
 
     ConfirmDialog {
