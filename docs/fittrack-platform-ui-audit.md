@@ -10,6 +10,7 @@
 | 应用文字尺寸来源 | `Typography.qml` 语义角色，经 `fontScale` 统一缩放 | `Main.qml` 同时绑定 `Theme.fontScale` 与 `Typography.fontScale`。 |
 | 主题 | System；Light/Dark 由系统色彩方案驱动 | `Theme.isDark` 绑定 `Qt.styleHints.colorScheme`。 |
 | 构建 | 通过 | `D:\FitTrackBuild\windows-qt6.11.1`，单线程全量构建。 |
+| 正常 Windows QPA 启动 | 通过 | 2026-07-22 启动 `fittrack.exe`，6 秒后进程仍存活且标准错误只有 Qt Multimedia/FFmpeg 后端信息，随后由冒烟脚本主动结束。 |
 | QML lint | 退出码 0 | 仍有既有 unqualified-access 静态警告，未作为“无警告”记录。 |
 | 非视觉自动测试 | 14/14 通过 | CTest 排除独立的 `qmlnavigation` 视觉/交互测试。 |
 
