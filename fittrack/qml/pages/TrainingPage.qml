@@ -1222,6 +1222,8 @@ AppPage {
         id: trainingScroll
         clip: true
         contentWidth: availableWidth
+        bottomPadding: trainingRestTimer.visible
+                       ? trainingRestTimer.implicitHeight + Design.Theme.space16 : 0
         ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
 
         ColumnLayout {
@@ -1445,7 +1447,7 @@ AppPage {
                     }
 
                     RestTimerRow {
-                        visible: currentExerciseCard.modelData !== null
+                        visible: currentExerciseCard.modelData !== null && restTimer.state === 0
                         Layout.fillWidth: true
                         Layout.topMargin: currentExerciseCard.modelData
                                           && String(currentExerciseCard.modelData.notes || "").length > 0
@@ -1565,8 +1567,13 @@ AppPage {
 
     TrainingRestTimer {
         id: trainingRestTimer
-        x: -10000
-        y: -10000
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.bottom: parent.bottom
+        anchors.leftMargin: Design.Theme.space16 + SafeArea.margins.left
+        anchors.rightMargin: Design.Theme.space16 + SafeArea.margins.right
+        anchors.bottomMargin: Design.Theme.space16 + SafeArea.margins.bottom
+        z: 10
         timerState: restTimer.state
         remainingSeconds: restTimer.remainingSeconds
         backgroundAlertState: restTimer.backgroundAlertState
