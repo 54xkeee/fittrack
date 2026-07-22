@@ -3,7 +3,7 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import "../theme" as Design
 
-Dialog {
+AppBottomSheet {
     id: root
 
     property var exercise: ({})
@@ -30,61 +30,22 @@ Dialog {
     }
 
     objectName: "sharedExerciseDetailSheet"
-    parent: Overlay.overlay
-    width: Overlay.overlay ? Overlay.overlay.width - Design.Theme.space16 : 400
-    height: Overlay.overlay ? Overlay.overlay.height - Design.Theme.space16 : 760
-    anchors.centerIn: Overlay.overlay
-    modal: true
-    focus: true
-    padding: 0
-    closePolicy: Popup.CloseOnEscape
-    Overlay.modal: Rectangle { color: Design.Theme.scrim }
+    title: exercise.name || qsTr("动作详情")
+    titleObjectName: "sharedExerciseDetailTitle"
+    primaryText: qsTr("关闭")
+    secondaryVisible: false
 
-    background: Rectangle {
-        color: Design.Theme.background
-        radius: Design.Theme.radiusLarge
-        border.width: 1
-        border.color: Design.Theme.outline
-    }
-
-    header: Item {
-        implicitHeight: headerLayout.implicitHeight + Design.Theme.space16
-
-        RowLayout {
-            id: headerLayout
-            anchors.fill: parent
-            anchors.leftMargin: Design.Theme.space16
-            anchors.rightMargin: Design.Theme.space8
-            anchors.topMargin: Design.Theme.space8
-            anchors.bottomMargin: Design.Theme.space8
-
-            Label {
-                objectName: "sharedExerciseDetailTitle"
-                Layout.fillWidth: true
-                Layout.minimumWidth: 0
-                text: root.exercise.name || qsTr("动作详情")
-                color: Design.Theme.surfaceText
-                font.pixelSize: Design.Theme.typeTitle
-                font.weight: Font.Bold
-                wrapMode: Text.WordWrap
-                Accessible.name: text
-            }
-            IconButton {
-                iconName: "close"
-                accessibleName: qsTr("关闭动作详情")
-                onClicked: root.close()
-            }
-        }
-    }
-
-    contentItem: ScrollView {
+    ScrollView {
         id: detailScroll
         objectName: "sharedExerciseDetailScroll"
+        width: parent.width
+        implicitHeight: Math.min(560, detailColumn.implicitHeight)
         clip: true
         contentWidth: availableWidth
         ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
 
         ColumnLayout {
+            id: detailColumn
             width: detailScroll.availableWidth
             spacing: Design.Theme.space16
 

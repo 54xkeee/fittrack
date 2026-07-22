@@ -7,6 +7,7 @@ Popup {
     id: root
 
     property string title: ""
+    property string titleObjectName: ""
     property string supportingText: ""
     property bool showDragHandle: true
     property string primaryText: ""
@@ -93,6 +94,7 @@ Popup {
             spacing: Design.Theme.space4
 
             Label {
+                objectName: root.titleObjectName
                 visible: root.title.length > 0
                 Layout.fillWidth: true
                 text: root.title
