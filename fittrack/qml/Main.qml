@@ -17,7 +17,7 @@ ApplicationWindow {
     color: Design.Theme.background
     property real fontScale: 1.0
     property bool reducedMotion: Design.Preferences.reducedMotion
-    Material.theme: Material.Light
+    Material.theme: Design.Theme.isDark ? Material.Dark : Material.Light
     Material.accent: Design.Theme.primary
     Material.primary: Design.Theme.surface
     property var pendingWorkoutRequest: ({})

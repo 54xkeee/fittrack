@@ -122,9 +122,6 @@ int main(int argc, char *argv[])
 {
     Q_INIT_RESOURCE(action_images);
     QGuiApplication app(argc, argv);
-#ifdef Q_OS_ANDROID
-    QGuiApplication::styleHints()->setColorScheme(Qt::ColorScheme::Dark);
-#endif
     QGuiApplication::setApplicationName(QStringLiteral("FitTrack"));
     QGuiApplication::setOrganizationName(QStringLiteral("FitTrack"));
     QQuickStyle::setStyle(QStringLiteral("Material"));

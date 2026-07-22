@@ -6,43 +6,44 @@ import "." as Tokens
 QtObject {
     // Material 3 semantic roles. The current blue brand remains the only
     // interactive accent; cool neutral surfaces carry the dense training UI.
-    readonly property color primary: "#0B57D0"
-    readonly property color onPrimary: "#FFFFFF"
-    readonly property color primaryContainer: "#D3E3FD"
-    readonly property color onPrimaryContainer: "#041E49"
-    readonly property color secondary: "#535F70"
-    readonly property color onSecondary: "#FFFFFF"
-    readonly property color secondaryContainer: "#D7E3F7"
-    readonly property color onSecondaryContainer: "#101C2B"
-    readonly property color tertiary: "#6A4F90"
-    readonly property color onTertiary: "#FFFFFF"
-    readonly property color tertiaryContainer: "#EBDDFF"
-    readonly property color onTertiaryContainer: "#251343"
-    readonly property color error: "#BA1A1A"
-    readonly property color onError: "#FFFFFF"
-    readonly property color errorContainer: "#FFDAD6"
-    readonly property color onErrorContainer: "#410002"
+    readonly property bool isDark: Qt.styleHints.colorScheme === Qt.Dark
+    readonly property color primary: isDark ? "#A8C7FA" : "#0B57D0"
+    readonly property color onPrimary: isDark ? "#062E6F" : "#FFFFFF"
+    readonly property color primaryContainer: isDark ? "#0842A0" : "#D3E3FD"
+    readonly property color onPrimaryContainer: isDark ? "#D3E3FD" : "#041E49"
+    readonly property color secondary: isDark ? "#BBC7DB" : "#535F70"
+    readonly property color onSecondary: isDark ? "#253140" : "#FFFFFF"
+    readonly property color secondaryContainer: isDark ? "#3B4858" : "#D7E3F7"
+    readonly property color onSecondaryContainer: isDark ? "#D7E3F7" : "#101C2B"
+    readonly property color tertiary: isDark ? "#D9B9FF" : "#6A4F90"
+    readonly property color onTertiary: isDark ? "#3B1E63" : "#FFFFFF"
+    readonly property color tertiaryContainer: isDark ? "#52367A" : "#EBDDFF"
+    readonly property color onTertiaryContainer: isDark ? "#EBDDFF" : "#251343"
+    readonly property color error: isDark ? "#FFB4AB" : "#BA1A1A"
+    readonly property color onError: isDark ? "#690005" : "#FFFFFF"
+    readonly property color errorContainer: isDark ? "#93000A" : "#FFDAD6"
+    readonly property color onErrorContainer: isDark ? "#FFDAD6" : "#410002"
 
-    readonly property color surface: "#F8F9FC"
-    readonly property color surfaceContainerLowest: "#FFFFFF"
-    readonly property color surfaceContainerLow: "#F2F4F8"
-    readonly property color surfaceContainer: "#ECEFF4"
-    readonly property color surfaceContainerHigh: "#E6E9EF"
-    readonly property color onSurface: "#1A1C20"
-    readonly property color onSurfaceVariant: "#44474E"
-    readonly property color outline: "#74777F"
-    readonly property color outlineVariant: "#C4C7CF"
+    readonly property color surface: isDark ? "#111318" : "#F8F9FC"
+    readonly property color surfaceContainerLowest: isDark ? "#0C0E12" : "#FFFFFF"
+    readonly property color surfaceContainerLow: isDark ? "#191C20" : "#F2F4F8"
+    readonly property color surfaceContainer: isDark ? "#1D2024" : "#ECEFF4"
+    readonly property color surfaceContainerHigh: isDark ? "#282A2F" : "#E6E9EF"
+    readonly property color onSurface: isDark ? "#E2E2E9" : "#1A1C20"
+    readonly property color onSurfaceVariant: isDark ? "#C4C7CF" : "#44474E"
+    readonly property color outline: isDark ? "#8E9099" : "#74777F"
+    readonly property color outlineVariant: isDark ? "#44474E" : "#C4C7CF"
     readonly property color scrim: "#52000000"
 
-    readonly property color primaryHover: "#0842A0"
-    readonly property color primaryPressed: "#062F6F"
+    readonly property color primaryHover: isDark ? "#C2D7FF" : "#0842A0"
+    readonly property color primaryPressed: isDark ? "#7BAAF7" : "#062F6F"
     readonly property color primaryForeground: onPrimary
     readonly property color primarySoft: primaryContainer
-    readonly property color success: "#146C2E"
-    readonly property color successSoft: "#C4EED0"
-    readonly property color warning: "#805500"
-    readonly property color warningSoft: "#FFDEA6"
-    readonly property color errorPressed: "#8F1013"
+    readonly property color success: isDark ? "#82D99A" : "#146C2E"
+    readonly property color successSoft: isDark ? "#005321" : "#C4EED0"
+    readonly property color warning: isDark ? "#FFB95F" : "#805500"
+    readonly property color warningSoft: isDark ? "#633E00" : "#FFDEA6"
+    readonly property color errorPressed: isDark ? "#FF897D" : "#8F1013"
     readonly property color errorSoft: errorContainer
     readonly property color info: tertiary
     readonly property color infoSoft: tertiaryContainer
@@ -54,10 +55,10 @@ QtObject {
     readonly property color surfaceElevated: surfaceContainerHigh
     readonly property color textPrimary: onSurface
     readonly property color textSecondary: onSurfaceVariant
-    readonly property color textTertiary: "#74777F"
-    readonly property color textDisabled: "#A7A9B1"
+    readonly property color textTertiary: isDark ? "#AEB0B8" : "#74777F"
+    readonly property color textDisabled: isDark ? "#777982" : "#A7A9B1"
     readonly property color borderDefault: outlineVariant
-    readonly property color borderSubtle: "#E2E5EB"
+    readonly property color borderSubtle: isDark ? "#303238" : "#E2E5EB"
     readonly property color divider: outlineVariant
     readonly property color shadowAmbient: "#14000000"
     readonly property int shadowOffsetY: 1
@@ -72,9 +73,9 @@ QtObject {
     readonly property color outlineStrong: textTertiary
     readonly property color primaryContainerText: onPrimaryContainer
     readonly property color successContainer: successSoft
-    readonly property color successContainerText: "#257A3D"
+    readonly property color successContainerText: isDark ? "#A1F4B5" : "#257A3D"
     readonly property color warningContainer: warningSoft
-    readonly property color warningContainerText: "#8A5A00"
+    readonly property color warningContainerText: isDark ? "#FFDEA6" : "#8A5A00"
     readonly property color errorForeground: onError
     readonly property color errorContainerText: onErrorContainer
     readonly property color infoContainer: infoSoft
