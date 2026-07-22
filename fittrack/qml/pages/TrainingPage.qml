@@ -360,7 +360,7 @@ AppPage {
         }
     }
 
-    AppDialog {
+    AppBottomSheet {
         id: sessionMenu
         objectName: "sessionActionsDialog"
         title: qsTr("训练操作")
@@ -370,7 +370,7 @@ AppPage {
         initialFocusItem: addExerciseAction
 
         ColumnLayout {
-            anchors.fill: parent
+            width: parent.width
             spacing: Design.Theme.space8
 
             AppButton {
@@ -434,7 +434,7 @@ AppPage {
         }
     }
 
-    AppDialog {
+    AppBottomSheet {
         id: exerciseActions
         objectName: "exerciseActionsDialog"
         property string targetExerciseId: ""
@@ -445,7 +445,7 @@ AppPage {
         initialFocusItem: configureExerciseAction
 
         ColumnLayout {
-            anchors.fill: parent
+            width: parent.width
             spacing: Design.Theme.space8
 
             AppButton {

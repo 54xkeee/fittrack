@@ -25,10 +25,9 @@ Item {
     implicitHeight: timerContent.implicitHeight
     visible: timerState === 1 || timerState === 2 || timerState === 3
 
-    AppDialog {
+    AppBottomSheet {
         id: timerDialog
         objectName: "restTimerDialog"
-        width: Math.min(380, safeAvailableWidth)
         title: qsTr("休息计时")
         primaryText: qsTr("关闭")
         primaryVariant: "secondary"
@@ -36,7 +35,7 @@ Item {
         initialFocusItem: timerMinutes
 
         ColumnLayout {
-            anchors.fill: parent
+            width: parent.width
             spacing: Design.Theme.space12
 
             GridLayout {
