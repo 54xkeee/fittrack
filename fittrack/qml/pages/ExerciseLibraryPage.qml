@@ -378,9 +378,12 @@ AppPage {
         readonly property Item accessibleItem: detailSurface
 
         parent: Overlay.overlay
-        anchors.centerIn: Overlay.overlay
-        width: Overlay.overlay ? Overlay.overlay.width - Design.Theme.space16 : 400
-        height: Math.min(820, Overlay.overlay ? Overlay.overlay.height - Design.Theme.space16 : 820)
+        width: Math.min(640, Overlay.overlay ? Overlay.overlay.width : 640)
+        x: Overlay.overlay ? (Overlay.overlay.width - width) / 2 : 0
+        height: Math.min(820, Overlay.overlay
+                         ? Overlay.overlay.height - SafeArea.margins.top - Design.Theme.space16
+                         : 820)
+        y: Overlay.overlay ? Overlay.overlay.height - height : 0
         modal: true
         focus: true
         padding: 0
@@ -394,27 +397,43 @@ AppPage {
         background: Rectangle {
             id: detailSurface
             objectName: "exerciseDetailDialogSurface"
-            color: Design.Theme.background
+            color: Design.Theme.surfaceContainerLowest
             radius: Design.Theme.radiusLarge
-            border.width: 1
-            border.color: Design.Theme.outline
+            topLeftRadius: Design.Theme.radiusLarge
+            topRightRadius: Design.Theme.radiusLarge
             Accessible.role: Accessible.Dialog
             Accessible.name: detailDialog.title
             Accessible.description: detailDialog.introduction
         }
 
         header: Item {
-            implicitHeight: 64
+            implicitHeight: 72
 
-            RowLayout {
+            ColumnLayout {
                 anchors.fill: parent
-                anchors.leftMargin: Design.Theme.space16
-                anchors.rightMargin: Design.Theme.space8
-                spacing: Design.Theme.space8
+                spacing: 0
 
-                ColumnLayout {
+                Rectangle {
+                    Layout.alignment: Qt.AlignHCenter
+                    Layout.topMargin: Design.Theme.space12
+                    Layout.bottomMargin: Design.Theme.space8
+                    implicitWidth: 32
+                    implicitHeight: 4
+                    radius: Design.Theme.radiusPill
+                    color: Design.Theme.outlineVariant
+                    Accessible.ignored: true
+                }
+
+                RowLayout {
                     Layout.fillWidth: true
-                    spacing: Design.Theme.space4
+                    Layout.fillHeight: true
+                    Layout.leftMargin: Design.Theme.space16
+                    Layout.rightMargin: Design.Theme.space8
+                    spacing: Design.Theme.space8
+
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        spacing: Design.Theme.space4
                     Label {
                         Layout.fillWidth: true
                         text: detailDialog.exerciseName
@@ -455,11 +474,12 @@ AppPage {
                         }
                     }
                 }
-                IconButton {
-                    id: closeDetailButton
-                    iconName: "close"
-                    accessibleName: qsTr("关闭动作详情")
-                    onClicked: detailDialog.close()
+                    IconButton {
+                        id: closeDetailButton
+                        iconName: "close"
+                        accessibleName: qsTr("关闭动作详情")
+                        onClicked: detailDialog.close()
+                    }
                 }
             }
         }
