@@ -133,19 +133,25 @@ qt_add_qml_module(fittrack
         qml/theme/Preferences.qml
         qml/theme/WorkoutTheme.qml
         qml/components/ActionPill.qml
+        qml/components/AppBottomSheet.qml
         qml/components/AppButton.qml
         qml/components/AppCheckBox.qml
         qml/components/AppComboBox.qml
         qml/components/AppCard.qml
         qml/components/AppDialog.qml
         qml/components/AppEmptyState.qml
+        qml/components/AppNavigationBar.qml
         qml/components/AppPage.qml
+        qml/components/AppScaffold.qml
+        qml/components/AppSnackbar.qml
         qml/components/AppSwitch.qml
+        qml/components/AppTopAppBar.qml
         qml/components/ConfirmDialog.qml
         qml/components/AppIcon.qml
         qml/components/IconButton.qml
         qml/components/InlineFeedback.qml
         qml/components/NumberField.qml
+        qml/components/OverlayHost.qml
         qml/components/RestTimerBar.qml
         qml/components/CurrentSetInputPanel.qml
         qml/components/TrainingRestTimer.qml
@@ -164,6 +170,7 @@ qt_add_qml_module(fittrack
         qml/components/NextExercisePreview.qml
         qml/components/RestTimerRow.qml
         qml/components/SetTableHeader.qml
+        qml/components/TaskFeedbackHost.qml
         qml/components/WorkoutSetRow.qml
         qml/components/AddSetButton.qml
         qml/components/WorkoutCalendar.qml

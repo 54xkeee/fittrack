@@ -24,6 +24,8 @@ ApplicationWindow {
     property int pendingInsightsTab: 0
     property string databaseRecoveryBackupPath: ""
     readonly property var loadedInsights: insightsLoader.item
+    readonly property Item feedbackHost: taskFeedbackHost
+    readonly property Item overlayHost: globalOverlayHost
     readonly property bool useReactTraining: reactTrainingEnabled
                                               && workoutController.active
 
@@ -62,6 +64,14 @@ ApplicationWindow {
         target: Design.Theme
         property: "reducedMotion"
         value: window.reducedMotion
+    }
+
+    OverlayHost {
+        id: globalOverlayHost
+    }
+
+    TaskFeedbackHost {
+        id: taskFeedbackHost
     }
 
     function handleBack() {
@@ -346,129 +356,25 @@ ApplicationWindow {
         onCancelled: navigation.currentIndex = 0
     }
 
-    footer: Rectangle {
+    footer: AppNavigationBar {
         id: navigation
         objectName: "navigation"
         visible: !workoutController.preparing && !workoutController.active
                  && !Qt.inputMethod["visible"]
-        property int currentIndex: 0
-        property var items: [
+        currentIndex: 0
+        items: [
             {"label": qsTr("首页"), "icon": "home"},
             {"label": qsTr("计划"), "icon": "plan"},
             {"label": qsTr("训练"), "icon": "training"},
             {"label": qsTr("动作"), "icon": "library"},
             {"label": qsTr("分析"), "icon": "analysis"}
         ]
-
-        implicitHeight: visible
-                        ? (currentIndex === 2
-                           ? 64
-                           : Math.max(80,
-                                      Design.Theme.typeBody + Design.Theme.typeCaption
-                                      + Design.Theme.space12))
-                          + SafeArea.margins.bottom
-                        : 0
-        color: Design.Theme.surfaceContainerLowest
-        border.width: 1
-        border.color: Design.Theme.outlineVariant
         Keys.priority: Keys.AfterItem
         Keys.onReleased: event => window.handleBackEvent(event)
         onCurrentIndexChanged: window.ensureMainPage(currentIndex)
-
-        Rectangle {
-            visible: false
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.top: parent.top
-            height: 1
-            color: Design.Theme.divider
-        }
-
-        RowLayout {
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.top: parent.top
-            anchors.bottom: parent.bottom
-            anchors.leftMargin: Design.Theme.space8 + SafeArea.margins.left
-            anchors.rightMargin: Design.Theme.space8 + SafeArea.margins.right
-            anchors.topMargin: Design.Theme.space4
-            anchors.bottomMargin: Design.Theme.space4 + SafeArea.margins.bottom
-            spacing: Design.Theme.space4
-
-            Repeater {
-                model: navigation.items
-                delegate: Button {
-                    id: navigationButton
-                    required property var modelData
-                    required property int index
-
-                    function activate() {
-                        navigation.currentIndex = index
-                        mainStack.forceActiveFocus()
-                    }
-
-                    Layout.fillWidth: true
-                    Layout.fillHeight: true
-                    implicitHeight: Design.Theme.touchTarget
-                    padding: 0
-                    flat: true
-                    Accessible.name: modelData.label
-                    Accessible.role: Accessible.PageTab
-                    Accessible.selected: navigation.currentIndex === index
-                    Accessible.onPressAction: activate()
-                    onClicked: activate()
-
-                    contentItem: ColumnLayout {
-                        spacing: 0
-                        Item {
-                            Layout.alignment: Qt.AlignHCenter
-                            Layout.preferredWidth: 64
-                            Layout.preferredHeight: 32
-                            Rectangle {
-                                anchors.centerIn: parent
-                                width: 64
-                                height: 32
-                                radius: Design.Theme.radiusPill
-                                color: navigation.currentIndex === navigationButton.index
-                                       ? Design.Theme.primaryContainer : "transparent"
-                                Behavior on color {
-                                    ColorAnimation { duration: Design.Theme.motionFast }
-                                }
-                            }
-                            AppIcon {
-                                anchors.centerIn: parent
-                                name: navigationButton.modelData.icon
-                                width: 20
-                                height: 20
-                                color: navigation.currentIndex === navigationButton.index
-                                       ? Design.Theme.primaryContainerText
-                                       : Design.Theme.textSecondary
-                            }
-                        }
-                        Label {
-                            Layout.alignment: Qt.AlignHCenter
-                            text: navigationButton.modelData.label
-                            color: navigation.currentIndex === navigationButton.index
-                                   ? Design.Theme.primary
-                                   : Design.Theme.textSecondary
-                            font.pixelSize: Design.Theme.typeCaption
-                            font.weight: navigation.currentIndex === navigationButton.index
-                                         ? Font.DemiBold : Font.Normal
-                        }
-                    }
-
-                    background: Rectangle {
-                        radius: Design.Theme.radiusSmall
-                        color: "transparent"
-                        border.width: navigationButton.activeFocus ? 1 : 0
-                        border.color: Design.Theme.primary
-
-                        Behavior on color {
-                            ColorAnimation { duration: Design.Theme.motionFast }
-                        }
-                    }
-                }
-            }
+        onDestinationRequested: index => {
+            currentIndex = index
+            mainStack.forceActiveFocus()
         }
     }
 }
