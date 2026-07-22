@@ -203,4 +203,7 @@ target_link_libraries(tst_qmlnavigation PRIVATE
     Qt6::Test
 )
 
-fittrack_add_test(qmlnavigation tst_qmlnavigation)
+if(FITTRACK_ENABLE_QML_VISUAL_TEST)
+    fittrack_add_test(qmlnavigation tst_qmlnavigation)
+    set_tests_properties(qmlnavigation PROPERTIES LABELS "qml;visual")
+endif()

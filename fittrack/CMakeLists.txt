@@ -13,6 +13,9 @@ option(FITTRACK_ENABLE_REACT_WEBENGINE
 option(FITTRACK_ENABLE_REACT_ANDROID_WEBVIEW
     "EXPERIMENTAL: render the active workout with the bundled React UI in Android WebView"
     OFF)
+option(FITTRACK_ENABLE_QML_VISUAL_TEST
+    "Register the Windows headless QML navigation and visual regression test with CTest"
+    OFF)
 if(FITTRACK_ENABLE_REACT_WEBENGINE AND ANDROID)
     message(FATAL_ERROR
         "Qt WebEngine is desktop-only. Keep this option OFF for Android and use the native Android WebView integration path.")

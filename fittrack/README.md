@@ -22,7 +22,7 @@ FitTrack 是一个面向 Android 的个人健身训练记录与分析应用，�
 - UI 使用 Material 3 语义令牌与原生交互组件。QML 是唯一正式训练渲染路径；React/WebView 仅为显式开启的实验原型。底部导航、训练准备顶栏、动作详情、选择、排序、参数、休息计时与训练编辑均使用 `AppNavigationBar`、`AppTopAppBar`、`AppBottomSheet`、`AppDialog`、`ConfirmDialog` 和全局 Snackbar 的明确表面语义；破坏性操作仍要求确认。统一线性图标由 `AppIcon` 使用 `PathSvg` 绘制，不依赖 Unicode 字符图标。
 - 应用不再内置字体，直接继承 Android、Windows 等平台的系统字体；Android 字体缩放统一映射到设计令牌。当前 Windows 系统 UI 字体记录为 `Microsoft YaHei UI`；Android 的真实字体回退和四档字体缩放仍需真机复核，详见 [`../docs/fittrack-platform-ui-audit.md`](../docs/fittrack-platform-ui-audit.md)。
 
-当前自动化测试共 15 项。14 项业务、存储、控制器与性能测试已在 2026-07-22 通过；`qmlnavigation` 保留为独立视觉/交互验证目标，当前 Windows headless 环境在进入测试输出前超时。数据库用例覆盖合成 v1–v7 迁移、旧 v8 约束修复、损坏原字节与 sidecar 保留、恢复中断续跑及损坏 v9 拒绝；QML 回归仍负责训练准备、详情、排序、TalkBack、字体缩放、触控目标和视觉基准，待执行环境修复后恢复为发布门禁。
+默认 CTest 注册 14 项业务、存储、控制器与性能测试，已在 2026-07-22 全部通过。`tst_qmlnavigation` 仍会构建，但仅在配置 `-DFITTRACK_ENABLE_QML_VISUAL_TEST=ON` 时注册为 `qml;visual` 测试；当前 Windows headless 环境在进入测试输出前超时。数据库用例覆盖合成 v1–v7 迁移、旧 v8 约束修复、损坏原字节与 sidecar 保留、恢复中断续跑及损坏 v9 拒绝；QML 回归负责训练准备、详情、排序、TalkBack、字体缩放、触控目标和视觉基准，待执行环境修复后恢复为发布门禁。
 
 当前数据库结构版本为 SQLite v8。版本判断与完整性检查通过后才进入同版本快路径；旧库会在单个事务中补列、重建不一致约束、建索引和触发器，既有用户数据会保留。v9 及以上数据库不会被当前版本降级或替换。
 

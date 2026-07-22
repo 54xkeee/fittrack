@@ -304,7 +304,7 @@ Pages
 
 - [x] 处理 React runtime、Android WebView bridge 与构建资源的冻结、隔离或删除决策。
 - [x] 完成 React 原型与 QML 正式端的职责说明，避免双实现再次出现。
-- [ ] 更新视觉基准，修复或隔离 `qmlnavigation` 执行环境问题。
+- [x] 更新视觉基准，修复或隔离 `qmlnavigation` 执行环境问题。
 - [ ] 运行 QML lint、Windows 构建、自动测试、视觉回归和 Android 真机走查。
 - [ ] 记录组件用法、主题规则、资产清单和已知平台差异。
 

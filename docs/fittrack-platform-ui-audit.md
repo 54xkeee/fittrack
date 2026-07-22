@@ -28,4 +28,4 @@ Android 继续继承平台系统字体及 `Configuration.fontScale`。以下项�
 
 ## 已知验证隔离
 
-`tst_qmlnavigation.exe` 在当前 Windows headless 环境中进入测试输出前持续驻留，120 秒超时。它保留为独立视觉/交互验证目标；业务、存储和控制器测试不再被该环境问题阻塞。
+`tst_qmlnavigation.exe` 在当前 Windows headless 环境中进入测试输出前持续驻留，120 秒超时。目标仍会构建，但默认不注册到 CTest；使用 `-DFITTRACK_ENABLE_QML_VISUAL_TEST=ON` 可显式注册带 `qml;visual` 标签的测试。业务、存储和控制器测试不再被该环境问题阻塞。
