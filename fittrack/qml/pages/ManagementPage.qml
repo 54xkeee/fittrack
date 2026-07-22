@@ -17,6 +17,7 @@ AppPage {
     property string editId: ""
     property string feedbackMessage: ""
     property string feedbackTone: "success"
+    signal feedbackRequested(string message)
 
     function localPath(url) { return url.toString() }
 
@@ -40,6 +41,7 @@ AppPage {
                 return
             }
             formError = ""
+            page.feedbackRequested(page.editId.length ? qsTr("健身房已更新") : qsTr("健身房已添加"))
             gymName.clear()
             page.editId = ""
             close()
@@ -93,6 +95,7 @@ AppPage {
                 return
             }
             formError = ""
+            page.feedbackRequested(page.editId.length ? qsTr("器械已更新") : qsTr("器械已添加"))
             equipmentName.clear()
             equipmentCode.clear()
             equipmentNotes.clear()
@@ -135,8 +138,7 @@ AppPage {
         nameFilters: [qsTr("FitTrack JSON (*.json)")]
         onAccepted: {
             if (backupService.exportJson(page.localPath(selectedFile))) {
-                page.feedbackTone = "success"
-                page.feedbackMessage = qsTr("JSON 备份已导出")
+                page.feedbackRequested(qsTr("JSON 备份已导出"))
             }
         }
     }
@@ -147,8 +149,7 @@ AppPage {
         nameFilters: [qsTr("SQLite数据库 (*.sqlite)")]
         onAccepted: {
             if (backupService.exportDatabase(page.localPath(selectedFile))) {
-                page.feedbackTone = "success"
-                page.feedbackMessage = qsTr("SQLite 快照已导出")
+                page.feedbackRequested(qsTr("SQLite 快照已导出"))
             }
         }
     }
@@ -159,8 +160,7 @@ AppPage {
         nameFilters: [qsTr("FitTrack JSON (*.json)")]
         onAccepted: {
             if (backupService.restoreJson(page.localPath(selectedFile))) {
-                page.feedbackTone = "success"
-                page.feedbackMessage = qsTr("备份恢复完成")
+                page.feedbackRequested(qsTr("备份恢复完成"))
             }
         }
     }

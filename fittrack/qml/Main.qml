@@ -285,6 +285,7 @@ ApplicationWindow {
                 InsightsPage {
                     initialTab: window.pendingInsightsTab
                     onWorkoutSummaryDone: navigation.currentIndex = window.workoutSourceIndex
+                    onFeedbackRequested: message => window.feedbackHost.show(message)
                 }
             }
         }

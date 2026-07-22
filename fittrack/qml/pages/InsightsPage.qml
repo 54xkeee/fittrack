@@ -9,6 +9,7 @@ Page {
     background: Rectangle { color: Design.Theme.background }
 
     signal workoutSummaryDone()
+    signal feedbackRequested(string message)
     property int initialTab: 0
     readonly property var loadedHistory: historyLoader.item
 
@@ -183,7 +184,11 @@ Page {
                 Layout.preferredWidth: 0
                 Layout.preferredHeight: 0
                 active: false
-                sourceComponent: Component { ManagementPage {} }
+                sourceComponent: Component {
+                    ManagementPage {
+                        onFeedbackRequested: message => page.feedbackRequested(message)
+                    }
+                }
             }
         }
     }
