@@ -327,20 +327,11 @@ AppPage {
                         font.pixelSize: Design.Theme.typeBody
                         font.weight: Font.DemiBold
                     }
-                    Button {
+                    AppButton {
                         id: filterToggle
-                        implicitHeight: Design.Theme.touchTarget
                         text: page.filtersExpanded ? qsTr("收起筛选") : qsTr("器械筛选")
-                        flat: true
-                        font.pixelSize: Design.Theme.typeLabel
+                        variant: "text"
                         onClicked: page.filtersExpanded = !page.filtersExpanded
-                        contentItem: Label {
-                            text: filterToggle.text
-                            color: Design.Theme.primary
-                            font: filterToggle.font
-                            horizontalAlignment: Text.AlignRight
-                            verticalAlignment: Text.AlignVCenter
-                        }
                     }
                 }
 
