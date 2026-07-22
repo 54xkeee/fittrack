@@ -304,7 +304,7 @@ AppPage {
         }
     }
 
-    Dialog {
+    AppBottomSheet {
         id: actionEditor
 
         property string planExerciseId: ""
@@ -319,34 +319,20 @@ AppPage {
             open()
         }
 
-        parent: Overlay.overlay
-        anchors.centerIn: Overlay.overlay
-        width: Math.min(392, Overlay.overlay ? Overlay.overlay.width - Design.Theme.space16 * 2 : 392)
-        modal: true
-        focus: true
-        padding: Design.Theme.space24
-        closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
-
-        Overlay.modal: Rectangle { color: Design.Theme.scrim }
-
-        background: Rectangle {
-            color: Design.Theme.surface
-            radius: Design.Theme.radiusLarge
-            border.width: 1
-            border.color: Design.Theme.outline
+        title: qsTr("调整动作参数")
+        primaryText: qsTr("保存参数")
+        secondaryVisible: true
+        primaryEnabled: editReps.text.trim().length > 0
+        autoAccept: false
+        initialFocusItem: editReps
+        onPrimaryRequested: {
+            if (planManagement.updateExercise(planExerciseId, editSets.value,
+                                              editReps.text, editRest.value))
+                close()
         }
 
-        header: Label {
-            text: qsTr("调整动作参数")
-            color: Design.Theme.surfaceText
-            font.pixelSize: Design.Theme.typeTitle
-            font.weight: Font.DemiBold
-            leftPadding: Design.Theme.space24
-            rightPadding: Design.Theme.space24
-            topPadding: Design.Theme.space24
-        }
-
-        contentItem: ColumnLayout {
+        ColumnLayout {
+            width: parent.width
             spacing: Design.Theme.space16
 
             ColumnLayout {
@@ -406,40 +392,9 @@ AppPage {
             }
         }
 
-        footer: Item {
-            implicitHeight: Design.Theme.controlHeight + Design.Theme.space24
-
-            RowLayout {
-                anchors.fill: parent
-                anchors.leftMargin: Design.Theme.space24
-                anchors.rightMargin: Design.Theme.space24
-                anchors.bottomMargin: Design.Theme.space24
-                spacing: Design.Theme.space8
-
-                AppButton {
-                    text: qsTr("取消")
-                    variant: "secondary"
-                    Layout.fillWidth: true
-                    onClicked: actionEditor.close()
-                }
-
-                AppButton {
-                    text: qsTr("保存参数")
-                    Layout.fillWidth: true
-                    enabled: editReps.text.trim().length > 0
-                    onClicked: {
-                        if (planManagement.updateExercise(actionEditor.planExerciseId,
-                                                          editSets.value,
-                                                          editReps.text,
-                                                          editRest.value))
-                            actionEditor.close()
-                    }
-                }
-            }
-        }
     }
 
-    Dialog {
+    AppBottomSheet {
         id: cardioEditor
         objectName: "cardioEditor"
 
@@ -464,33 +419,26 @@ AppPage {
             open()
         }
 
-        parent: Overlay.overlay
-        anchors.centerIn: Overlay.overlay
-        width: Math.min(392, Overlay.overlay ? Overlay.overlay.width - Design.Theme.space16 * 2 : 392)
-        modal: true
-        focus: true
-        padding: Design.Theme.space24
-        closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
         title: qsTr("训练日有氧")
-
-        Overlay.modal: Rectangle { color: Design.Theme.scrim }
-        background: Rectangle {
-            color: Design.Theme.surface
-            radius: Design.Theme.radiusLarge
-            border.width: 1
-            border.color: Design.Theme.outline
+        primaryText: qsTr("保存目标")
+        secondaryVisible: true
+        primaryEnabled: cardioType === "StairClimber"
+                        || (cardioIncline.acceptableInput && cardioSpeed.acceptableInput)
+        autoAccept: false
+        initialFocusItem: cardioTypeBox
+        onPrimaryRequested: {
+            const saved = planManagement.setCardio(
+                        dayId, cardioType, cardioDuration.value,
+                        cardioType === "TreadmillIncline" ? cardioIncline.numericValue : -1,
+                        cardioType === "TreadmillIncline" ? cardioSpeed.numericValue : -1,
+                        cardioLevel.text.trim().length ? cardioLevel.numericValue : -1,
+                        cardioNotes.text)
+            if (saved)
+                close()
         }
-        header: Label {
-            text: cardioEditor.title
-            color: Design.Theme.surfaceText
-            font.pixelSize: Design.Theme.typeTitle
-            font.weight: Font.DemiBold
-            leftPadding: Design.Theme.space24
-            rightPadding: Design.Theme.space24
-            topPadding: Design.Theme.space24
-        }
 
-        contentItem: ColumnLayout {
+        ColumnLayout {
+            width: parent.width
             spacing: Design.Theme.space12
 
             Label {
@@ -559,34 +507,6 @@ AppPage {
             }
         }
 
-        footer: Item {
-            implicitHeight: Design.Theme.controlHeight + Design.Theme.space24
-            RowLayout {
-                anchors.fill: parent
-                anchors.leftMargin: Design.Theme.space24
-                anchors.rightMargin: Design.Theme.space24
-                anchors.bottomMargin: Design.Theme.space24
-                spacing: Design.Theme.space8
-                AppButton { Layout.fillWidth: true; variant: "secondary"; text: qsTr("取消"); onClicked: cardioEditor.close() }
-                AppButton {
-                    Layout.fillWidth: true
-                    text: qsTr("保存目标")
-                    enabled: cardioEditor.cardioType === "StairClimber"
-                             || (cardioIncline.acceptableInput && cardioSpeed.acceptableInput)
-                    onClicked: {
-                        const saved = planManagement.setCardio(
-                                    cardioEditor.dayId, cardioEditor.cardioType,
-                                    cardioDuration.value,
-                                    cardioEditor.cardioType === "TreadmillIncline" ? cardioIncline.numericValue : -1,
-                                    cardioEditor.cardioType === "TreadmillIncline" ? cardioSpeed.numericValue : -1,
-                                    cardioLevel.text.trim().length ? cardioLevel.numericValue : -1,
-                                    cardioNotes.text)
-                        if (saved)
-                            cardioEditor.close()
-                    }
-                }
-            }
-        }
     }
 
     ScrollView {
