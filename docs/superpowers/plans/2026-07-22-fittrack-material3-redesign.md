@@ -12,7 +12,7 @@
 - Round 3（已完成）：已建立 `AppScaffold`、Top App Bar、Navigation Bar、Bottom Sheet、Snackbar、OverlayHost 与 TaskFeedbackHost；主底部导航和训练准备顶栏已迁移到组件层，动作详情、动作选择、参数、排序、训练/动作操作菜单、休息计时、训练组配置、已完成组修正、目标次数、追加组、器械选择、健身房/器械创建、训练/动作备注和保存个人计划已迁移为 Bottom Sheet；保存成功已通过全局 Snackbar 反馈，训练页也不再覆盖系统明暗主题，保留原 `objectName`、焦点和无障碍页签语义。Windows Qt 6.11.1 构建通过。
 - Round 4（已完成）：训练准备取消会回到 Home、Plan 或 Training 的实际来源；首页按今日训练、近期进度、最近活动呈现；首页首个空态插画已接入，并记录了用途、主题处理、生成提示与人工筛选结果；计划的新建、复制、重命名、动作选择、动作参数和有氧目标已迁移为 Bottom Sheet，计划页仅为不可逆删除保留 Confirm Dialog。Windows Qt 6.11.1 构建通过。
 - Round 5（进行中）：休息控制已从训练滚动内容移到固定 Bottom Action Bar，滚动区域会为其预留空间；计时设置继续使用 Bottom Sheet；训练完成后会直接进入独立训练总结，关闭后回到实际训练来源。Windows Qt 6.11.1 构建通过。
-- Round 6（进行中）：历史训练的已完成组修正、动作库筛选与自定义动作维护、场馆与器械维护、有氧记录均已迁移为 Bottom Sheet；自定义动作详情改为高位 Bottom Sheet，动作库、管理页和有氧页的成功操作已接入全局 Snackbar，不可逆删除继续使用 Confirm Dialog；第二批数据备份辅助视觉已接入管理页。Windows Qt 6.11.1 构建通过。
+- Round 6（已完成）：历史训练的已完成组修正、动作库筛选与自定义动作维护、场馆与器械维护、有氧记录均已迁移为 Bottom Sheet；自定义动作详情改为高位 Bottom Sheet，动作库、管理页和有氧页的成功操作已接入全局 Snackbar，不可逆删除继续使用 Confirm Dialog；第二批数据备份辅助视觉已接入管理页。Windows Qt 6.11.1 构建通过。
 - Round 7（进行中）：CTest 已自行注入 Qt 与 MinGW 运行时路径，14 个非视觉测试不再依赖调用终端的 `PATH`；`qmlnavigation` 仍作为独立视觉/交互验证项继续排查。Windows Qt 6.11.1 构建通过。
 - Foundation 收束：生产 QML 的页面色值已收敛到 `Theme` 语义 Token；圆形标记以自身尺寸推导圆角，避免新增任意圆角常量。Windows Qt 6.11.1 构建通过。
 - 旧 `ActionPill` 已从生产页面移除；次级、破坏性与主操作分别改由 `AppButton` 的 `secondary`、`destructive` 与 `primary` 角色表达。Windows Qt 6.11.1 构建通过。
@@ -287,14 +287,14 @@ Pages
 
 **验收门：** 在不寻找隐藏操作的情况下，可完成一组、休息、进入下一组、结束训练和返回。
 
-### Round 6：动作、分析、历史、有氧与管理
+### Round 6：动作、分析、历史、有氧与管理（已完成）
 
 **解决的问题：** Material 3 不只覆盖训练页，也不让次要功能退回 Web/桌面式 CRUD。
 
-- [ ] 重构动作库、动作详情、筛选和收藏。
-- [ ] 重构分析、历史、有氧和管理的页面状态、详情流和可撤销反馈。
-- [ ] 用 Bottom Sheet、详情页和 Snackbar 替换不合适的中心 Dialog 与页面内提示。
-- [ ] 审核并接入第二批必要视觉资产。
+- [x] 重构动作库、动作详情、筛选和收藏。
+- [x] 重构分析、历史、有氧和管理的页面状态、详情流和可撤销反馈。
+- [x] 用 Bottom Sheet、详情页和 Snackbar 替换不合适的中心 Dialog 与页面内提示。
+- [x] 审核并接入第二批必要视觉资产。
 
 **验收门：** 全部一级功能都遵循同一导航、表面、反馈和文字规则。
 
