@@ -24,6 +24,7 @@ ApplicationWindow {
     property int pendingInsightsTab: 0
     property int preparationSourceIndex: 0
     property int workoutSourceIndex: 0
+    property string pendingCompletionSessionId: ""
     property string databaseRecoveryBackupPath: ""
     readonly property var loadedInsights: insightsLoader.item
     readonly property var feedbackHost: taskFeedbackHost
@@ -68,6 +69,13 @@ ApplicationWindow {
         value: window.reducedMotion
     }
 
+    function presentWorkoutCompletion(sessionId) {
+        pendingCompletionSessionId = String(sessionId || "")
+        workoutCompletionLoader.active = true
+        if (workoutCompletionLoader.item)
+            workoutCompletionLoader.openPendingCompletion()
+    }
+
     OverlayHost {
         id: globalOverlayHost
     }
@@ -77,6 +85,8 @@ ApplicationWindow {
     }
 
     function handleBack() {
+        if (workoutCompletionLoader.active && workoutCompletionLoader.item)
+            return workoutCompletionLoader.item.handleBack()
         if (workoutController.preparing) {
             preparationPage.requestCancel()
             return true
@@ -281,7 +291,7 @@ ApplicationWindow {
         function onWorkoutFinished(sessionId) {
             cardioController.setPendingSession(sessionId)
             workoutHistory.reload()
-            workoutCompletionPage.visible = workoutCompletionPage.openCompletion(sessionId)
+            window.presentWorkoutCompletion(sessionId)
         }
     }
 
@@ -364,24 +374,35 @@ ApplicationWindow {
         onPlanSaved: window.feedbackHost.show(qsTr("已保存为个人计划"))
     }
 
-    HistoryPage {
-        id: workoutCompletionPage
+    Loader {
+        id: workoutCompletionLoader
         anchors.fill: parent
-        visible: false
         z: 1001
-        standaloneCompletion: true
-        onCompletionDismissed: {
-            workoutCompletionPage.visible = false
-            cardioController.clearPendingSession()
-            navigation.currentIndex = window.workoutSourceIndex
+        active: false
+        function openPendingCompletion() {
+            if (item && window.pendingCompletionSessionId.length > 0) {
+                item.openCompletion(window.pendingCompletionSessionId)
+                window.pendingCompletionSessionId = ""
+            }
         }
-        onAddCardioRequested: {
-            workoutCompletionPage.visible = false
-            window.ensureMainPage(4, 1)
-            navigation.currentIndex = 4
-            const insights = window.loadedInsights
-            if (insights)
-                insights.openCardio()
+        onLoaded: openPendingCompletion()
+        sourceComponent: Component {
+            HistoryPage {
+                standaloneCompletion: true
+                onCompletionDismissed: {
+                    workoutCompletionLoader.active = false
+                    cardioController.clearPendingSession()
+                    navigation.currentIndex = window.workoutSourceIndex
+                }
+                onAddCardioRequested: {
+                    workoutCompletionLoader.active = false
+                    window.ensureMainPage(4, 1)
+                    navigation.currentIndex = 4
+                    const insights = window.loadedInsights
+                    if (insights)
+                        insights.openCardio()
+                }
+            }
         }
     }
 
