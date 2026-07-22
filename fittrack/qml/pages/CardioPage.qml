@@ -344,7 +344,7 @@ AppPage {
                         text: qsTr("下一条有氧将关联到刚完成的力量训练")
                         color: Design.Theme.surfaceText
                     }
-                    ActionPill { text: qsTr("取消"); onClicked: cardioController.clearPendingSession() }
+                    AppButton { text: qsTr("取消"); variant: "secondary"; onClicked: cardioController.clearPendingSession() }
                 }
             }
 
@@ -353,8 +353,8 @@ AppPage {
                 Layout.leftMargin: Design.Theme.space16
                 Layout.rightMargin: Design.Theme.space16
                 spacing: Design.Theme.space8
-                ActionPill { Layout.fillWidth: true; text: qsTr("跑步机爬坡"); accent: true; onClicked: treadmillDialog.open() }
-                ActionPill { Layout.fillWidth: true; text: qsTr("爬楼机"); onClicked: stairDialog.open() }
+                AppButton { Layout.fillWidth: true; text: qsTr("跑步机爬坡"); onClicked: treadmillDialog.open() }
+                AppButton { Layout.fillWidth: true; text: qsTr("爬楼机"); variant: "secondary"; onClicked: stairDialog.open() }
             }
 
             GridLayout {
@@ -472,13 +472,14 @@ AppPage {
                 }
             }
 
-            ActionPill {
+            AppButton {
                 objectName: "cardioLoadMoreButton"
                 visible: cardioController.hasMore
                 Layout.fillWidth: true
                 Layout.leftMargin: Design.Theme.space16
                 Layout.rightMargin: Design.Theme.space16
                 text: qsTr("加载更多记录")
+                variant: "secondary"
                 onClicked: cardioController.loadMore()
             }
 

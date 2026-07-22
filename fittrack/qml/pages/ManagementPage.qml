@@ -270,9 +270,8 @@ AppPage {
                             font.pixelSize: Design.Theme.typeBody
                             font.weight: Font.DemiBold
                         }
-                        ActionPill {
+                        AppButton {
                             text: qsTr("新建")
-                            accent: true
                             onClicked: {
                                 page.editId = ""
                                 gymName.text = ""
@@ -293,9 +292,10 @@ AppPage {
                         visible: gymManagement.selectedGymId.length > 0
                         Layout.fillWidth: true
                         spacing: Design.Theme.space8
-                        ActionPill {
+                        AppButton {
                             Layout.fillWidth: true
                             text: qsTr("重命名")
+                            variant: "secondary"
                             onClicked: {
                                 page.editId = gymManagement.selectedGymId
                                 const gym = gymManagement.gyms.find(item => item.id === page.editId)
@@ -303,19 +303,18 @@ AppPage {
                                 gymDialog.open()
                             }
                         }
-                        ActionPill {
+                        AppButton {
                             Layout.fillWidth: true
                             text: qsTr("删除")
-                            destructive: true
+                            variant: "destructive"
                             onClicked: {
                                 deleteGymDialog.gymId = gymManagement.selectedGymId
                                 deleteGymDialog.open()
                             }
                         }
-                        ActionPill {
+                        AppButton {
                             Layout.fillWidth: true
                             text: qsTr("加器械")
-                            accent: true
                             onClicked: {
                                 page.editId = ""
                                 equipmentName.text = ""
@@ -446,13 +445,12 @@ AppPage {
                     RowLayout {
                         Layout.fillWidth: true
                         spacing: Design.Theme.space8
-                        ActionPill { Layout.fillWidth: true; text: qsTr("导出JSON"); onClicked: exportJsonDialog.open() }
-                        ActionPill { Layout.fillWidth: true; text: qsTr("导出SQLite"); onClicked: exportDbDialog.open() }
+                        AppButton { Layout.fillWidth: true; text: qsTr("导出JSON"); variant: "secondary"; onClicked: exportJsonDialog.open() }
+                        AppButton { Layout.fillWidth: true; text: qsTr("导出SQLite"); variant: "secondary"; onClicked: exportDbDialog.open() }
                     }
-                    ActionPill {
+                    AppButton {
                         Layout.fillWidth: true
                         text: qsTr("从JSON恢复")
-                        accent: true
                         onClicked: restoreConfirmDialog.open()
                     }
                 }
