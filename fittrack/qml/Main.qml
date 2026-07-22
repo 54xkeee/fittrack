@@ -23,6 +23,7 @@ ApplicationWindow {
     property var pendingWorkoutRequest: ({})
     property int pendingInsightsTab: 0
     property int preparationSourceIndex: 0
+    property int workoutSourceIndex: 0
     property string databaseRecoveryBackupPath: ""
     readonly property var loadedInsights: insightsLoader.item
     readonly property Item feedbackHost: taskFeedbackHost
@@ -269,7 +270,7 @@ ApplicationWindow {
             sourceComponent: Component {
                 InsightsPage {
                     initialTab: window.pendingInsightsTab
-                    onWorkoutSummaryDone: navigation.currentIndex = 0
+                    onWorkoutSummaryDone: navigation.currentIndex = window.workoutSourceIndex
                 }
             }
         }
@@ -359,7 +360,10 @@ ApplicationWindow {
         z: 1000
         Keys.priority: Keys.AfterItem
         Keys.onReleased: event => window.handleBackEvent(event)
-        onStartSucceeded: navigation.currentIndex = 2
+        onStartSucceeded: {
+            window.workoutSourceIndex = window.preparationSourceIndex
+            navigation.currentIndex = 2
+        }
         onCancelled: navigation.currentIndex = window.preparationSourceIndex
         onPlanSaved: window.feedbackHost.show(qsTr("已保存为个人计划"))
     }
