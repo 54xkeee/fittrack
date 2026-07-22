@@ -973,10 +973,9 @@ AppPage {
         }
     }
 
-    AppDialog {
+    AppBottomSheet {
         id: gymDialog
         objectName: "createGymDialog"
-        width: Math.min(380, safeAvailableWidth)
         title: qsTr("新建健身房")
         primaryText: qsTr("创建健身房")
         primaryEnabled: gymName.text.trim().length > 0
@@ -984,7 +983,7 @@ AppPage {
         initialFocusItem: gymName
         onPrimaryRequested: {
             if (workoutController.addGym(gymName.text))
-                accept()
+                close()
             else
                 showError(workoutController.errorMessage.length > 0
                           ? workoutController.errorMessage
@@ -992,17 +991,16 @@ AppPage {
         }
         TextField {
             id: gymName
-            anchors.fill: parent
+            width: parent.width
             placeholderText: qsTr("例如：学校健身房")
             implicitHeight: Design.Theme.controlHeight
             Accessible.name: qsTr("健身房名称")
         }
     }
 
-    AppDialog {
+    AppBottomSheet {
         id: equipmentDialog
         objectName: "createEquipmentDialog"
-        width: Math.min(400, safeAvailableWidth)
         title: qsTr("新建具体器械")
         primaryText: qsTr("创建器械")
         primaryEnabled: equipmentName.text.trim().length > 0
@@ -1011,7 +1009,7 @@ AppPage {
         onPrimaryRequested: {
             if (workoutController.addEquipment(
                         equipmentName.text, equipmentCode.text, equipmentNotes.text))
-                accept()
+                close()
             else
                 showError(workoutController.errorMessage.length > 0
                           ? workoutController.errorMessage
@@ -1019,7 +1017,7 @@ AppPage {
         }
         ScrollView {
             id: equipmentFormScroll
-            anchors.fill: parent
+            width: parent.width
             implicitHeight: Math.min(equipmentForm.implicitHeight,
                                      Overlay.overlay ? Overlay.overlay.height * 0.45 : 360)
             clip: true
