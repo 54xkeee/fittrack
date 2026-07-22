@@ -58,7 +58,7 @@ AppPage {
         ColumnLayout {
             width: parent.width
             spacing: Design.Theme.space8
-            TextField {
+            AppTextField {
                 id: gymName
                 Layout.fillWidth: true
                 placeholderText: qsTr("健身房名称")
@@ -114,13 +114,13 @@ AppPage {
         ColumnLayout {
             width: parent.width
             spacing: Design.Theme.space8
-            TextField {
+            AppTextField {
                 id: equipmentName
                 Layout.fillWidth: true
                 placeholderText: qsTr("器械名称")
                 onAccepted: equipmentDialog.submit()
             }
-            TextField { id: equipmentCode; Layout.fillWidth: true; placeholderText: qsTr("编号（选填）") }
+            AppTextField { id: equipmentCode; Layout.fillWidth: true; placeholderText: qsTr("编号（选填）") }
             TextArea { id: equipmentNotes; Layout.fillWidth: true; placeholderText: qsTr("座椅档位、把手等（选填）"); wrapMode: TextEdit.Wrap }
             InlineFeedback {
                 visible: equipmentDialog.formError.length > 0

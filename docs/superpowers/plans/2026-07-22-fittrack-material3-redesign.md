@@ -16,6 +16,7 @@
 - Round 7（进行中）：CTest 已自行注入 Qt 与 MinGW 运行时路径，14 个非视觉测试不再依赖调用终端的 `PATH`；`qmlnavigation` 仍作为独立视觉/交互验证项继续排查。Windows Qt 6.11.1 构建通过。
 - Foundation 收束：生产 QML 的页面色值已收敛到 `Theme` 语义 Token；圆形标记以自身尺寸推导圆角，避免新增任意圆角常量。Windows Qt 6.11.1 构建通过。
 - 旧 `ActionPill` 已从生产页面移除；次级、破坏性与主操作分别改由 `AppButton` 的 `secondary`、`destructive` 与 `primary` 角色表达。Windows Qt 6.11.1 构建通过。
+- 新增 `AppTextField` 作为复用的 Material 文本输入外观，管理页新增、重命名与器械表单已先行迁移；单线程全量 QML 缓存重建通过。
 - 待后续轮次：真机记录实际解析字体与字号；将现有页面迁移到文字角色；把具体编辑/选择流程迁移到 Sheet 与全局反馈宿主。
 
 ---

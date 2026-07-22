@@ -144,6 +144,7 @@ qt_add_qml_module(fittrack
         qml/components/AppScaffold.qml
         qml/components/AppSnackbar.qml
         qml/components/AppSwitch.qml
+        qml/components/AppTextField.qml
         qml/components/AppTopAppBar.qml
         qml/components/ConfirmDialog.qml
         qml/components/AppIcon.qml
