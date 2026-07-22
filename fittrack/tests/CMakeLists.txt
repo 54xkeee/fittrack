@@ -1,3 +1,14 @@
+get_filename_component(FITTRACK_TEST_QT_BIN_DIR "${Qt6Core_DIR}/../../../bin" ABSOLUTE)
+get_filename_component(FITTRACK_TEST_COMPILER_BIN_DIR "${CMAKE_CXX_COMPILER}" DIRECTORY)
+set(FITTRACK_TEST_RUNTIME_PATH
+    "${FITTRACK_TEST_QT_BIN_DIR};${FITTRACK_TEST_COMPILER_BIN_DIR};$ENV{PATH}")
+
+function(fittrack_add_test name target)
+    add_test(NAME ${name}
+        COMMAND ${CMAKE_COMMAND} -E env "PATH=${FITTRACK_TEST_RUNTIME_PATH}"
+                $<TARGET_FILE:${target}>)
+endfunction()
+
 qt_add_executable(tst_traininganalytics
     unit/tst_traininganalytics.cpp
 )
@@ -7,7 +18,7 @@ target_link_libraries(tst_traininganalytics PRIVATE
     Qt6::Test
 )
 
-add_test(NAME traininganalytics COMMAND tst_traininganalytics)
+fittrack_add_test(traininganalytics tst_traininganalytics)
 
 qt_add_executable(tst_databasemanager
     integration/tst_databasemanager.cpp
@@ -19,7 +30,7 @@ target_link_libraries(tst_databasemanager PRIVATE
     Qt6::Test
 )
 
-add_test(NAME databasemanager COMMAND tst_databasemanager)
+fittrack_add_test(databasemanager tst_databasemanager)
 
 qt_add_executable(tst_exerciseseedimporter
     integration/tst_exerciseseedimporter.cpp
@@ -35,7 +46,7 @@ target_compile_definitions(tst_exerciseseedimporter PRIVATE
     FITTRACK_SOURCE_DIR="${CMAKE_SOURCE_DIR}"
 )
 
-add_test(NAME exerciseseedimporter COMMAND tst_exerciseseedimporter)
+fittrack_add_test(exerciseseedimporter tst_exerciseseedimporter)
 
 qt_add_executable(tst_planseedimporter
     integration/tst_planseedimporter.cpp
@@ -51,7 +62,7 @@ target_link_libraries(tst_planseedimporter PRIVATE
     Qt6::Test
 )
 
-add_test(NAME planseedimporter COMMAND tst_planseedimporter)
+fittrack_add_test(planseedimporter tst_planseedimporter)
 
 qt_add_executable(tst_exerciselistmodel
     integration/tst_exerciselistmodel.cpp
@@ -68,7 +79,7 @@ target_link_libraries(tst_exerciselistmodel PRIVATE
     Qt6::Test
 )
 
-add_test(NAME exerciselistmodel COMMAND tst_exerciselistmodel)
+fittrack_add_test(exerciselistmodel tst_exerciselistmodel)
 
 qt_add_executable(tst_performance
     integration/tst_performance.cpp
@@ -87,7 +98,7 @@ target_link_libraries(tst_performance PRIVATE
     Qt6::Test
 )
 
-add_test(NAME performance COMMAND tst_performance)
+fittrack_add_test(performance tst_performance)
 
 qt_add_executable(tst_resttimercontroller
     unit/tst_resttimercontroller.cpp
@@ -98,7 +109,7 @@ target_link_libraries(tst_resttimercontroller PRIVATE
     Qt6::Test
 )
 
-add_test(NAME resttimercontroller COMMAND tst_resttimercontroller)
+fittrack_add_test(resttimercontroller tst_resttimercontroller)
 
 qt_add_executable(tst_workoutsessioncontroller
     integration/tst_workoutsessioncontroller.cpp
@@ -111,7 +122,7 @@ target_link_libraries(tst_workoutsessioncontroller PRIVATE
     Qt6::Test
 )
 
-add_test(NAME workoutsessioncontroller COMMAND tst_workoutsessioncontroller)
+fittrack_add_test(workoutsessioncontroller tst_workoutsessioncontroller)
 
 qt_add_executable(tst_workouthistorycontroller
     integration/tst_workouthistorycontroller.cpp
@@ -124,7 +135,7 @@ target_link_libraries(tst_workouthistorycontroller PRIVATE
     Qt6::Test
 )
 
-add_test(NAME workouthistorycontroller COMMAND tst_workouthistorycontroller)
+fittrack_add_test(workouthistorycontroller tst_workouthistorycontroller)
 
 qt_add_executable(tst_analyticsdashboardcontroller
     integration/tst_analyticsdashboardcontroller.cpp
@@ -137,7 +148,7 @@ target_link_libraries(tst_analyticsdashboardcontroller PRIVATE
     Qt6::Test
 )
 
-add_test(NAME analyticsdashboardcontroller COMMAND tst_analyticsdashboardcontroller)
+fittrack_add_test(analyticsdashboardcontroller tst_analyticsdashboardcontroller)
 
 qt_add_executable(tst_planmanagementcontroller
     integration/tst_planmanagementcontroller.cpp
@@ -150,25 +161,25 @@ target_link_libraries(tst_planmanagementcontroller PRIVATE
     Qt6::Test
 )
 
-add_test(NAME planmanagementcontroller COMMAND tst_planmanagementcontroller)
+fittrack_add_test(planmanagementcontroller tst_planmanagementcontroller)
 
 qt_add_executable(tst_cardiocontroller
     integration/tst_cardiocontroller.cpp
 )
 target_link_libraries(tst_cardiocontroller PRIVATE fittrack_storage fittrack_services Qt6::Sql Qt6::Test)
-add_test(NAME cardiocontroller COMMAND tst_cardiocontroller)
+fittrack_add_test(cardiocontroller tst_cardiocontroller)
 
 qt_add_executable(tst_gymmanagementcontroller
     integration/tst_gymmanagementcontroller.cpp
 )
 target_link_libraries(tst_gymmanagementcontroller PRIVATE fittrack_storage fittrack_services Qt6::Sql Qt6::Test)
-add_test(NAME gymmanagementcontroller COMMAND tst_gymmanagementcontroller)
+fittrack_add_test(gymmanagementcontroller tst_gymmanagementcontroller)
 
 qt_add_executable(tst_backupservice
     integration/tst_backupservice.cpp
 )
 target_link_libraries(tst_backupservice PRIVATE fittrack_storage fittrack_services Qt6::Sql Qt6::Test)
-add_test(NAME backupservice COMMAND tst_backupservice)
+fittrack_add_test(backupservice tst_backupservice)
 
 qt_add_executable(tst_qmlnavigation
     integration/tst_qmlnavigation.cpp
@@ -192,4 +203,4 @@ target_link_libraries(tst_qmlnavigation PRIVATE
     Qt6::Test
 )
 
-add_test(NAME qmlnavigation COMMAND tst_qmlnavigation)
+fittrack_add_test(qmlnavigation tst_qmlnavigation)
