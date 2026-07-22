@@ -354,6 +354,7 @@ ApplicationWindow {
         Keys.onReleased: event => window.handleBackEvent(event)
         onStartSucceeded: navigation.currentIndex = 2
         onCancelled: navigation.currentIndex = 0
+        onPlanSaved: window.feedbackHost.show(qsTr("已保存为个人计划"))
     }
 
     footer: AppNavigationBar {

@@ -9,6 +9,7 @@ Rectangle {
 
     signal startSucceeded()
     signal cancelled()
+    signal planSaved()
 
     function draftById(draftId) {
         const items = workoutController.preparation.exercises || []
@@ -326,9 +327,10 @@ Rectangle {
         autoAccept: false
         onPrimaryRequested: {
             if (workoutController.savePreparationAsPlan(
-                        savedPlanName.text, savedDayName.text))
+                        savedPlanName.text, savedDayName.text)) {
                 close()
-            else
+                page.planSaved()
+            } else
                 showError(workoutController.errorMessage)
         }
         ColumnLayout {
