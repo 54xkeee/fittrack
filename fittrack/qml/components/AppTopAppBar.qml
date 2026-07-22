@@ -7,6 +7,7 @@ Control {
     id: root
 
     property string title: ""
+    property string titleObjectName: ""
     property string supportingText: ""
     property string leadingIcon: ""
     property string leadingAccessibleName: ""
@@ -35,6 +36,7 @@ Control {
             spacing: 0
 
             Label {
+                objectName: root.titleObjectName
                 Layout.fillWidth: true
                 text: root.title
                 color: Design.Theme.onSurface

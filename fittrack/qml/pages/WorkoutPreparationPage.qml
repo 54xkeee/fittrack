@@ -47,47 +47,16 @@ Rectangle {
         anchors.bottomMargin: Design.Theme.space8
         spacing: Design.Theme.space12
 
-        ColumnLayout {
+        AppTopAppBar {
             Layout.fillWidth: true
-            spacing: Design.Theme.space4
-
-            RowLayout {
-                Layout.fillWidth: true
-                spacing: Design.Theme.space8
-
-                IconButton {
-                    iconName: "back"
-                    accessibleName: qsTr("取消训练准备")
-                    onClicked: page.requestCancel()
-                }
-
-                Label {
-                    objectName: "preparationTitle"
-                    Layout.fillWidth: true
-                    Layout.minimumWidth: 0
-                    text: workoutController.preparation.name || qsTr("训练准备")
-                    color: Design.Theme.backgroundText
-                    font.pixelSize: Design.Theme.typeTitle
-                    font.weight: Font.Bold
-                    wrapMode: Text.WordWrap
-                }
-            }
-
-            RowLayout {
-                Layout.fillWidth: true
-                Layout.leftMargin: Design.Theme.touchTarget + Design.Theme.space8
-                spacing: Design.Theme.space8
-
-                Label {
-                    Layout.fillWidth: true
-                    Layout.minimumWidth: 0
-                    text: qsTr("%1 个动作 · 修改只影响本次训练")
-                          .arg((workoutController.preparation.exercises || []).length)
-                    color: Design.Theme.surfaceMuted
-                    font.pixelSize: Design.Theme.typeCaption
-                    wrapMode: Text.WordWrap
-                }
-
+            title: workoutController.preparation.name || qsTr("训练准备")
+            titleObjectName: "preparationTitle"
+            supportingText: qsTr("%1 个动作 · 修改只影响本次训练")
+                            .arg((workoutController.preparation.exercises || []).length)
+            leadingIcon: "back"
+            leadingAccessibleName: qsTr("取消训练准备")
+            onLeadingTriggered: page.requestCancel()
+            trailingContent: Component {
                 AppButton {
                     text: qsTr("保存计划")
                     variant: "text"
