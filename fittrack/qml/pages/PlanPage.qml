@@ -519,34 +519,16 @@ AppPage {
             width: parent.width
             spacing: Design.Theme.space16
 
-            RowLayout {
+            AppTopAppBar {
                 Layout.fillWidth: true
-                spacing: Design.Theme.space12
-
-                ColumnLayout {
-                    spacing: Design.Theme.space4
-                    Layout.fillWidth: true
-
-                    Label {
-                        text: qsTr("训练计划")
-                        color: Design.Theme.backgroundText
-                        font.pixelSize: Design.Theme.typeDisplay
-                        font.weight: Font.Bold
+                title: qsTr("训练计划")
+                supportingText: qsTr("选择模板，复制后按你的器械和顺序调整")
+                trailingContent: Component {
+                    AppButton {
+                        text: qsTr("新建")
+                        variant: "text"
+                        onClicked: page.openTextDialog("createPlan", "", "")
                     }
-
-                    Label {
-                        text: qsTr("选择模板，复制后按你的器械和顺序调整")
-                        color: Design.Theme.surfaceMuted
-                        font.pixelSize: Design.Theme.typeLabel
-                        wrapMode: Text.WordWrap
-                        Layout.fillWidth: true
-                    }
-                }
-
-                AppButton {
-                    text: qsTr("新建")
-                    Layout.preferredWidth: 84
-                    onClicked: page.openTextDialog("createPlan", "", "")
                 }
             }
 
