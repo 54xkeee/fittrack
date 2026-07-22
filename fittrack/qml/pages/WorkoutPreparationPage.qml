@@ -90,7 +90,7 @@ Rectangle {
 
                 AppButton {
                     text: qsTr("保存计划")
-                    variant: "secondary"
+                    variant: "text"
                     enabled: (workoutController.preparation.exercises || []).length > 0
                     onClicked: {
                         savedPlanName.text = (workoutController.preparation.sourcePlanName || "")
@@ -106,6 +106,7 @@ Rectangle {
             Layout.fillWidth: true
             visible: workoutController.gyms.length > 0
             padding: Design.Theme.space12
+            variant: "outlined"
             RowLayout {
                 anchors.fill: parent
                 Label {
@@ -159,6 +160,7 @@ Rectangle {
                         required property int index
                         Layout.fillWidth: true
                         padding: Design.Theme.space12
+                        variant: "filled"
 
                         ColumnLayout {
                             anchors.fill: parent
@@ -175,7 +177,7 @@ Rectangle {
                                     objectName: "preparedExercisePreviewButton"
                                     Layout.fillWidth: true
                                     text: draftCard.modelData.name
-                                    variant: "secondary"
+                                    variant: "text"
                                     Accessible.description: qsTr("预览动作做法")
                                     onClicked: exerciseDetail.openExercise(
                                                    exerciseModel.exerciseById(
@@ -207,13 +209,13 @@ Rectangle {
                                     objectName: "preparedExerciseParametersButton"
                                     Layout.fillWidth: true
                                     text: qsTr("参数")
-                                    variant: "secondary"
+                                    variant: "tonal"
                                     onClicked: parameterSheet.openExercise(draftCard.modelData)
                                 }
                                 AppButton {
                                     Layout.fillWidth: true
                                     text: qsTr("上移")
-                                    variant: "secondary"
+                                    variant: "text"
                                     enabled: draftCard.index > 0
                                     onClicked: workoutController.movePreparedExercise(
                                                    draftCard.modelData.draftId, draftCard.index - 1)
@@ -221,7 +223,7 @@ Rectangle {
                                 AppButton {
                                     Layout.fillWidth: true
                                     text: qsTr("下移")
-                                    variant: "secondary"
+                                    variant: "text"
                                     enabled: draftCard.index + 1
                                              < workoutController.preparation.exercises.length
                                     onClicked: workoutController.movePreparedExercise(
@@ -244,7 +246,7 @@ Rectangle {
                 AppButton {
                     Layout.fillWidth: true
                     text: qsTr("添加动作")
-                    variant: "secondary"
+                    variant: "tonal"
                     onClicked: {
                         picker.targetDraftId = ""
                         picker.openPicker("add")
@@ -254,7 +256,7 @@ Rectangle {
                 AppButton {
                     Layout.fillWidth: true
                     text: qsTr("调整动作顺序")
-                    variant: "secondary"
+                    variant: "text"
                     enabled: (workoutController.preparation.exercises || []).length > 1
                     onClicked: preparationOrderSheet.openExercises(
                                    workoutController.preparation.exercises,

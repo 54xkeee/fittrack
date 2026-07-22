@@ -363,14 +363,14 @@ ApplicationWindow {
         implicitHeight: visible
                         ? (currentIndex === 2
                            ? 64
-                           : Math.max(68,
+                           : Math.max(80,
                                       Design.Theme.typeBody + Design.Theme.typeCaption
                                       + Design.Theme.space12))
                           + SafeArea.margins.bottom
                         : 0
-        color: Design.Theme.surface
+        color: Design.Theme.surfaceContainerLowest
         border.width: 1
-        border.color: Design.Theme.borderDefault
+        border.color: Design.Theme.outlineVariant
         Keys.priority: Keys.AfterItem
         Keys.onReleased: event => window.handleBackEvent(event)
         onCurrentIndexChanged: window.ensureMainPage(currentIndex)
@@ -420,21 +420,29 @@ ApplicationWindow {
 
                     contentItem: ColumnLayout {
                         spacing: 0
-                        AppIcon {
+                        Item {
                             Layout.alignment: Qt.AlignHCenter
-                            name: navigationButton.modelData.icon
-                            Layout.preferredWidth: 20
-                            Layout.preferredHeight: 20
-                            scale: navigation.currentIndex === navigationButton.index ? 1.04 : 1
-                            color: navigation.currentIndex === navigationButton.index
-                                   ? Design.Theme.primary
-                                   : Design.Theme.textSecondary
-
-                            Behavior on scale {
-                                NumberAnimation {
-                                    duration: Design.Theme.motionFast
-                                    easing.type: Design.Theme.easingEnter
+                            Layout.preferredWidth: 64
+                            Layout.preferredHeight: 32
+                            Rectangle {
+                                anchors.centerIn: parent
+                                width: 64
+                                height: 32
+                                radius: Design.Theme.radiusPill
+                                color: navigation.currentIndex === navigationButton.index
+                                       ? Design.Theme.primaryContainer : "transparent"
+                                Behavior on color {
+                                    ColorAnimation { duration: Design.Theme.motionFast }
                                 }
+                            }
+                            AppIcon {
+                                anchors.centerIn: parent
+                                name: navigationButton.modelData.icon
+                                width: 20
+                                height: 20
+                                color: navigation.currentIndex === navigationButton.index
+                                       ? Design.Theme.primaryContainerText
+                                       : Design.Theme.textSecondary
                             }
                         }
                         Label {
@@ -451,8 +459,7 @@ ApplicationWindow {
 
                     background: Rectangle {
                         radius: Design.Theme.radiusSmall
-                        color: navigation.currentIndex === navigationButton.index
-                               ? Design.Theme.primaryContainer : "transparent"
+                        color: "transparent"
                         border.width: navigationButton.activeFocus ? 1 : 0
                         border.color: Design.Theme.primary
 

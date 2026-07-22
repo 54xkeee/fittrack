@@ -24,13 +24,13 @@ Control {
     signal resumeRequested()
     signal stopRequested()
 
-    implicitHeight: 56
+    implicitHeight: 64
     padding: Design.Theme.space8
     Accessible.name: qsTr("%1，剩余%2").arg(label).arg(timeText)
 
     background: Rectangle {
-        radius: Design.Theme.radiusSmall
-        color: Design.Theme.field
+        radius: Design.Theme.radiusMedium
+        color: Design.Theme.surfaceContainerHigh
         border.width: root.activeFocus ? 1 : 0
         border.color: Design.Theme.accent
     }
@@ -63,7 +63,7 @@ Control {
 
         AppButton {
             text: root.paused ? qsTr("继续") : qsTr("暂停")
-            variant: "secondary"
+            variant: "text"
             flatSecondary: true
             cornerRadius: 14
             Layout.preferredWidth: 76

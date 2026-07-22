@@ -12,8 +12,8 @@ Control {
     property string label: ""
     property string accessibleName: ""
     property bool subtleBorder: false
-    property int cornerRadius: Design.Theme.radiusSmall
-    property color fillColor: Design.Theme.surfaceElevated
+    property int cornerRadius: Design.Theme.radiusInput
+    property color fillColor: Design.Theme.surfaceContainerLowest
     property color textColor: Design.Theme.surfaceText
     property color mutedColor: Design.Theme.surfaceMuted
     property color outlineColor: Design.Theme.outline

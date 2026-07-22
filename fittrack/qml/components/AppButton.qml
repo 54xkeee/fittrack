@@ -5,7 +5,7 @@ import "../theme" as Design
 Button {
     id: root
 
-    // Supported variants: primary, secondary and destructive.
+    // Material variants: primary, tonal, secondary (outlined), text and destructive.
     property string variant: "primary"
     property bool flatSecondary: false
     property int cornerRadius: Design.Theme.radiusButton
@@ -15,6 +15,8 @@ Button {
 
     readonly property bool isPrimary: variant === "primary"
     readonly property bool isDestructive: variant === "destructive"
+    readonly property bool isTonal: variant === "tonal"
+    readonly property bool isText: variant === "text"
 
     implicitWidth: Math.max(96, contentItem.implicitWidth + leftPadding + rightPadding)
     implicitHeight: Math.max(Design.Theme.heightPrimary, Design.Theme.controlHeight)
@@ -43,6 +45,10 @@ Button {
                 return root.primaryTextColor
             if (root.isDestructive)
                 return Design.Theme.errorForeground
+            if (root.isTonal)
+                return Design.Theme.onSecondaryContainer
+            if (root.isText)
+                return Design.Theme.primary
             return Design.Theme.surfaceText
         }
         font: root.font
@@ -61,14 +67,19 @@ Button {
                                  : (root.hovered ? Design.Theme.primaryHover : root.primaryColor)
             if (root.isDestructive)
                 return root.down ? Design.Theme.errorPressed : Design.Theme.error
-            return root.down ? Design.Theme.surfacePressed : Design.Theme.surfacePrimary
+            if (root.isTonal)
+                return Design.Theme.secondaryContainer
+            if (root.isText)
+                return root.down ? Design.Theme.primarySoft : "transparent"
+            return root.down ? Design.Theme.surfacePressed : "transparent"
         }
         border.width: root.activeFocus
-                      || (!root.isPrimary && !root.isDestructive && !root.flatSecondary) ? 1 : 0
+                      || (!root.isPrimary && !root.isDestructive && !root.isTonal
+                          && !root.isText && !root.flatSecondary) ? 1 : 0
         border.color: root.activeFocus
                       ? (root.isPrimary || root.isDestructive
                          ? Design.Theme.primaryForeground : Design.Theme.primary)
-                      : Design.Theme.borderDefault
+                      : Design.Theme.outline
         opacity: root.enabled ? 1 : Design.Theme.disabledOpacity
 
         Behavior on color {

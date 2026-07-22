@@ -22,16 +22,14 @@ AppPage {
                                              || workoutController.hasUnfinished
                                              || workoutController.suggestedDay.dayId !== undefined
 
-    component MetricTile: AppCard {
+    component MetricTile: Item {
         id: metric
         property string label: ""
-        property string value: qsTr("—")
+        property string value: qsTr("-")
         property string detail: ""
 
         Layout.fillWidth: true
         Layout.preferredHeight: 100
-        padding: Design.Theme.space12
-
         ColumnLayout {
             anchors.fill: parent
             spacing: Design.Theme.space4
@@ -117,14 +115,14 @@ AppPage {
     function compactWeight(value) {
         const weight = Number(value || 0)
         if (weight <= 0)
-            return qsTr("—")
+            return qsTr("-")
         return weight.toFixed(weight % 1 === 0 ? 0 : 1) + qsTr(" kg")
     }
 
     function compactVolume(value) {
         const volume = Number(value || 0)
         if (volume <= 0)
-            return qsTr("—")
+            return qsTr("-")
         if (volume >= 1000)
             return (volume / 1000).toFixed(1) + qsTr(" t")
         return Math.round(volume) + qsTr(" kg")
@@ -203,6 +201,7 @@ AppPage {
             AppCard {
                 Layout.fillWidth: true
                 padding: Design.Theme.space16
+                variant: "tonal"
 
                 ColumnLayout {
                     anchors.fill: parent
@@ -220,7 +219,8 @@ AppPage {
                                 text: workoutController.active || workoutController.hasUnfinished
                                       ? qsTr("继续上次") : qsTr("下一训练日")
                                 color: workoutController.active || workoutController.hasUnfinished
-                                       ? Design.Theme.warning : Design.Theme.surfaceMuted
+                                       ? Design.Theme.warningContainerText
+                                       : Design.Theme.primaryContainerText
                                 font.pixelSize: Design.Theme.typeCaption
                                 font.weight: Font.DemiBold
                             }
@@ -233,7 +233,7 @@ AppPage {
                                         ? qsTr("未完成训练")
                                         : (workoutController.suggestedDay.name
                                            || qsTr("暂无可用训练日"))
-                                color: Design.Theme.surfaceText
+                                color: Design.Theme.primaryContainerText
                                 font.pixelSize: Design.Theme.typeTitle
                                 font.weight: Font.Bold
                                 wrapMode: Text.WordWrap
@@ -246,7 +246,8 @@ AppPage {
                                       : workoutController.hasUnfinished
                                         ? qsTr("恢复进度，继续完成剩余动作")
                                         : qsTr("谭成义三分化 · 训练前可替换动作")
-                                color: Design.Theme.surfaceMuted
+                                color: Design.Theme.primaryContainerText
+                                opacity: 0.78
                                 font.pixelSize: Design.Theme.typeCaption
                                 wrapMode: Text.WordWrap
                             }
@@ -257,16 +258,14 @@ AppPage {
                             Layout.preferredHeight: 56
                             radius: Design.Theme.radiusMedium
                             color: workoutController.active || workoutController.hasUnfinished
-                                   ? Design.Theme.warningContainer
-                                   : Design.Theme.primaryContainer
+                                   ? Design.Theme.warningContainer : Design.Theme.surfaceContainerLowest
 
                             Label {
                                 anchors.centerIn: parent
                                 text: workoutController.active || workoutController.hasUnfinished
                                       ? qsTr("续") : qsTr("练")
                                 color: workoutController.active || workoutController.hasUnfinished
-                                       ? Design.Theme.warningContainerText
-                                       : Design.Theme.primaryContainerText
+                                       ? Design.Theme.warningContainerText : Design.Theme.primary
                                 font.pixelSize: Design.Theme.typeTitle
                                 font.weight: Font.Bold
                             }
@@ -302,31 +301,35 @@ AppPage {
                     font.weight: Font.DemiBold
                 }
 
-                RowLayout {
+                AppCard {
                     Layout.fillWidth: true
-                    spacing: Design.Theme.space8
+                    padding: Design.Theme.space12
+                    RowLayout {
+                        anchors.fill: parent
+                        spacing: Design.Theme.space8
 
-                    MetricTile {
-                        label: qsTr("最高重量")
-                        value: page.compactWeight(page.overview.highestWeight)
-                        detail: Number(page.overview.highestWeight || 0) > 0
-                                ? qsTr("%1 × %2").arg(page.overview.highestExercise)
-                                                  .arg(page.overview.highestReps)
-                                : qsTr("暂无负重数据")
-                    }
+                        MetricTile {
+                            label: qsTr("最高重量")
+                            value: page.compactWeight(page.overview.highestWeight)
+                            detail: Number(page.overview.highestWeight || 0) > 0
+                                    ? qsTr("%1 × %2").arg(page.overview.highestExercise)
+                                                      .arg(page.overview.highestReps)
+                                    : qsTr("暂无负重数据")
+                        }
 
-                    MetricTile {
-                        label: qsTr("最佳 e1RM")
-                        value: page.compactWeight(page.overview.bestOneRepMax)
-                        detail: page.overview.bestOneRepMaxExercise || qsTr("暂无估算数据")
-                    }
+                        MetricTile {
+                            label: qsTr("最佳 e1RM")
+                            value: page.compactWeight(page.overview.bestOneRepMax)
+                            detail: page.overview.bestOneRepMaxExercise || qsTr("暂无估算数据")
+                        }
 
-                    MetricTile {
-                        label: qsTr("训练容量")
-                        value: page.compactVolume(page.overview.totalVolume)
-                        detail: qsTr("%1 次 · %2 组")
-                                .arg(page.overview.workoutCount || 0)
-                                .arg(page.overview.setCount || 0)
+                        MetricTile {
+                            label: qsTr("训练容量")
+                            value: page.compactVolume(page.overview.totalVolume)
+                            detail: qsTr("%1 次 · %2 组")
+                                    .arg(page.overview.workoutCount || 0)
+                                    .arg(page.overview.setCount || 0)
+                        }
                     }
                 }
             }
@@ -346,6 +349,7 @@ AppPage {
                     Layout.fillWidth: true
                     visible: page.hasWorkoutData || page.hasCardioData
                     padding: Design.Theme.space16
+                    variant: "outlined"
 
                     ColumnLayout {
                         anchors.fill: parent
@@ -368,7 +372,7 @@ AppPage {
                         Rectangle {
                             Layout.fillWidth: true
                             Layout.preferredHeight: 1
-                            color: Design.Theme.outline
+                            color: Design.Theme.outlineVariant
                         }
 
                         ActivityRow {
@@ -387,7 +391,7 @@ AppPage {
                         AppButton {
                             Layout.fillWidth: true
                             text: qsTr("查看详细分析")
-                            variant: "secondary"
+                            variant: "text"
                             onClicked: page.showAnalysisRequested()
                         }
                     }
@@ -397,6 +401,7 @@ AppPage {
                     Layout.fillWidth: true
                     visible: !page.hasWorkoutData && !page.hasCardioData
                     padding: Design.Theme.space24
+                    variant: "outlined"
 
                     ColumnLayout {
                         anchors.fill: parent
