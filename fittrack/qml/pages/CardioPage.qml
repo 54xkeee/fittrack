@@ -55,7 +55,7 @@ AppPage {
         onAccepted: cardioController.removeRecord(recordId)
     }
 
-    Dialog {
+    AppBottomSheet {
         id: treadmillDialog
         property string formError: ""
 
@@ -101,10 +101,12 @@ AppPage {
             close()
         }
 
-        parent: Overlay.overlay
-        anchors.centerIn: Overlay.overlay
-        width: Math.min(Overlay.overlay.width - Design.Theme.space16 * 2, 430)
         title: qsTr("记录跑步机爬坡")
+        primaryText: qsTr("保存")
+        secondaryVisible: true
+        autoAccept: false
+        initialFocusItem: treadmillIncline.editorItem
+        onPrimaryRequested: submit()
         onOpened: {
             const target = cardioController.pendingTarget || {}
             const hasTarget = target.type === "TreadmillIncline"
@@ -123,7 +125,7 @@ AppPage {
             treadmillNotes.text = hasTarget ? String(target.notes || "") : ""
         }
         ColumnLayout {
-            anchors.fill: parent
+            width: parent.width
             spacing: Design.Theme.space12
             RowLayout {
                 Label { text: qsTr("时长（分钟）") }
@@ -179,30 +181,9 @@ AppPage {
                 message: treadmillDialog.formError
             }
         }
-        footer: Item {
-            implicitHeight: Design.Theme.controlHeight + Design.Theme.space16
-            RowLayout {
-                anchors.fill: parent
-                anchors.leftMargin: Design.Theme.space16
-                anchors.rightMargin: Design.Theme.space16
-                anchors.bottomMargin: Design.Theme.space8
-                spacing: Design.Theme.space8
-                AppButton {
-                    Layout.fillWidth: true
-                    text: qsTr("取消")
-                    variant: "secondary"
-                    onClicked: treadmillDialog.reject()
-                }
-                AppButton {
-                    Layout.fillWidth: true
-                    text: qsTr("保存")
-                    onClicked: treadmillDialog.submit()
-                }
-            }
-        }
     }
 
-    Dialog {
+    AppBottomSheet {
         id: stairDialog
         property string formError: ""
 
@@ -243,10 +224,12 @@ AppPage {
             close()
         }
 
-        parent: Overlay.overlay
-        anchors.centerIn: Overlay.overlay
-        width: Math.min(Overlay.overlay.width - Design.Theme.space16 * 2, 430)
         title: qsTr("记录爬楼机")
+        primaryText: qsTr("保存")
+        secondaryVisible: true
+        autoAccept: false
+        initialFocusItem: stairLevel.editorItem
+        onPrimaryRequested: submit()
         onOpened: {
             const target = cardioController.pendingTarget || {}
             const hasTarget = target.type === "StairClimber"
@@ -264,7 +247,7 @@ AppPage {
             stairNotes.text = hasTarget ? String(target.notes || "") : ""
         }
         ColumnLayout {
-            anchors.fill: parent
+            width: parent.width
             spacing: Design.Theme.space12
             RowLayout {
                 Label { text: qsTr("时长（分钟）") }
@@ -317,27 +300,6 @@ AppPage {
                 Layout.fillWidth: true
                 tone: "error"
                 message: stairDialog.formError
-            }
-        }
-        footer: Item {
-            implicitHeight: Design.Theme.controlHeight + Design.Theme.space16
-            RowLayout {
-                anchors.fill: parent
-                anchors.leftMargin: Design.Theme.space16
-                anchors.rightMargin: Design.Theme.space16
-                anchors.bottomMargin: Design.Theme.space8
-                spacing: Design.Theme.space8
-                AppButton {
-                    Layout.fillWidth: true
-                    text: qsTr("取消")
-                    variant: "secondary"
-                    onClicked: stairDialog.reject()
-                }
-                AppButton {
-                    Layout.fillWidth: true
-                    text: qsTr("保存")
-                    onClicked: stairDialog.submit()
-                }
             }
         }
     }
