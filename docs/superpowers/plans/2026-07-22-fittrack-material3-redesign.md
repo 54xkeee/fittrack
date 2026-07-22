@@ -9,7 +9,8 @@
 **执行记录（2026-07-22）：**
 - Round 1：已冻结 Android React/WebView 默认接管；QML 是唯一正式训练渲染路径；交互契约已落在 `docs/superpowers/specs/2026-07-22-fittrack-interaction-contract.md`。
 - Round 2（进行中）：已移除重复 `Spacing` 单例，文字尺寸统一由 `Typography` 计算，`WorkoutTheme` 改为训练领域适配层；已让 Qt Material 和语义色 Token 跟随系统明暗模式。Windows Qt 6.11.1 构建通过。
-- 待后续轮次：真机记录实际解析字体与字号；将现有页面迁移到文字角色；完成 App Shell、Sheet、Snackbar 与训练流程重构。
+- Round 3（进行中）：已建立 `AppScaffold`、Top App Bar、Navigation Bar、Bottom Sheet、Snackbar、OverlayHost 与 TaskFeedbackHost；主底部导航已迁移到 `AppNavigationBar`，保留原 `objectName`、焦点和无障碍页签语义。Windows Qt 6.11.1 构建通过。
+- 待后续轮次：真机记录实际解析字体与字号；将现有页面迁移到文字角色；把具体编辑/选择流程迁移到 Sheet 与全局反馈宿主。
 
 ---
 
