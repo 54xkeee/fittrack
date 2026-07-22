@@ -101,6 +101,8 @@ if(NOT ANDROID)
 endif()
 
 qt_add_executable(fittrack
+    src/app/hapticfeedback.cpp
+    src/app/hapticfeedback.h
     src/app/main.cpp
 )
 
@@ -260,6 +262,7 @@ if(ANDROID)
         NAME android.permission.WRITE_EXTERNAL_STORAGE
         ATTRIBUTES maxSdkVersion 27
     )
+    qt_add_android_permission(fittrack NAME android.permission.VIBRATE)
     set_target_properties(fittrack PROPERTIES
         QT_ANDROID_PACKAGE_NAME "com.xuke.fittrack"
         QT_ANDROID_APP_NAME "训迹"

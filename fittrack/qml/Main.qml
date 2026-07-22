@@ -76,6 +76,15 @@ ApplicationWindow {
             workoutCompletionLoader.openPendingCompletion()
     }
 
+    function playHaptic(strong) {
+        if (typeof hapticFeedback === "undefined" || !hapticFeedback)
+            return
+        if (strong)
+            hapticFeedback.strongConfirm()
+        else
+            hapticFeedback.confirm()
+    }
+
     OverlayHost {
         id: globalOverlayHost
     }
@@ -248,6 +257,7 @@ ApplicationWindow {
                 onPlanStartRequested: dayId => window.requestPlanDay(dayId, 2)
                 onFreeStartRequested: name => window.requestFreeWorkout(name, 2)
                 onCurrentPlanSaved: window.feedbackHost.show(qsTr("已保存为个人计划"))
+                onSetHapticRequested: window.playHaptic(false)
             }
         }
 
@@ -294,6 +304,7 @@ ApplicationWindow {
     Connections {
         target: workoutController
         function onWorkoutFinished(sessionId) {
+            window.playHaptic(true)
             cardioController.setPendingSession(sessionId)
             workoutHistory.reload()
             window.presentWorkoutCompletion(sessionId)

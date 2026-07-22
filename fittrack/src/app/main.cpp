@@ -7,6 +7,7 @@
 #include "exercises/exerciselistmodel.h"
 #include "gyms/gymmanagementcontroller.h"
 #include "history/workouthistorycontroller.h"
+#include "app/hapticfeedback.h"
 #include "plans/planmanagementcontroller.h"
 #include "storage/databasemanager.h"
 #include "storage/exerciseseedimporter.h"
@@ -151,6 +152,7 @@ int main(int argc, char *argv[])
     fittrack::AndroidReactBridge androidReactBridge(&workoutController, &restTimer, &app);
 #endif
     fittrack::WorkoutHistoryController workoutHistory(databaseManager.database());
+    fittrack::HapticFeedback hapticFeedback;
     fittrack::AnalyticsDashboardController analyticsDashboard(databaseManager.database());
     fittrack::PlanManagementController planManagement(databaseManager.database());
     fittrack::CardioController cardioController(databaseManager.database());
@@ -167,6 +169,7 @@ int main(int argc, char *argv[])
     engine.rootContext()->setContextProperty(QStringLiteral("cardioController"), &cardioController);
     engine.rootContext()->setContextProperty(QStringLiteral("gymManagement"), &gymManagement);
     engine.rootContext()->setContextProperty(QStringLiteral("backupService"), &backupService);
+    engine.rootContext()->setContextProperty(QStringLiteral("hapticFeedback"), &hapticFeedback);
 #ifdef FITTRACK_REACT_WEBENGINE
     engine.rootContext()->setContextProperty(QStringLiteral("reactTrainingEnabled"), true);
 #else

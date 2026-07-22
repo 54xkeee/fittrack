@@ -27,6 +27,7 @@ AppPage {
     signal planStartRequested(string dayId)
     signal freeStartRequested(string name)
     signal currentPlanSaved()
+    signal setHapticRequested()
     property string selectedExerciseId: ""
     property bool submittingSet: false
     property int sessionElapsedSeconds: 0
@@ -338,6 +339,7 @@ AppPage {
         }
 
         function onSetCompleted(restSeconds) {
+            page.setHapticRequested()
             page.Accessible.announce(
                         restSeconds > 0
                         ? qsTr("本组已保存，已开始 %1 秒休息计时").arg(restSeconds)
