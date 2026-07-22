@@ -72,7 +72,7 @@ ApplicationWindow {
     function presentWorkoutCompletion(sessionId) {
         pendingCompletionSessionId = String(sessionId || "")
         workoutCompletionLoader.active = true
-        if (workoutCompletionLoader.item)
+        if (workoutCompletionLoader.completionPage)
             workoutCompletionLoader.openPendingCompletion()
     }
 
@@ -85,8 +85,8 @@ ApplicationWindow {
     }
 
     function handleBack() {
-        if (workoutCompletionLoader.active && workoutCompletionLoader.item)
-            return workoutCompletionLoader.item.handleBack()
+        if (workoutCompletionLoader.active && workoutCompletionLoader.completionPage)
+            return workoutCompletionLoader.completionPage.handleBack()
         if (workoutController.preparing) {
             preparationPage.requestCancel()
             return true
@@ -379,9 +379,10 @@ ApplicationWindow {
         anchors.fill: parent
         z: 1001
         active: false
+        readonly property var completionPage: item
         function openPendingCompletion() {
-            if (item && window.pendingCompletionSessionId.length > 0) {
-                item.openCompletion(window.pendingCompletionSessionId)
+            if (completionPage && window.pendingCompletionSessionId.length > 0) {
+                completionPage.openCompletion(window.pendingCompletionSessionId)
                 window.pendingCompletionSessionId = ""
             }
         }
