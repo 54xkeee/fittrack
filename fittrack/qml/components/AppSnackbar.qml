@@ -53,6 +53,7 @@ Popup {
         }
 
         Button {
+            id: actionButton
             visible: root.actionText.length > 0
             text: root.actionText
             font.pixelSize: Design.Typography.label
@@ -62,13 +63,13 @@ Popup {
             onClicked: root.actionTriggered()
 
             contentItem: Label {
-                text: parent.text
+                text: actionButton.text
                 color: Design.Theme.primaryContainer
-                font: parent.font
+                font: actionButton.font
             }
             background: Rectangle {
                 radius: Design.Theme.radiusPill
-                color: parent.down ? Design.Theme.onSurfaceVariant : "transparent"
+                color: actionButton.down ? Design.Theme.onSurfaceVariant : "transparent"
             }
         }
 

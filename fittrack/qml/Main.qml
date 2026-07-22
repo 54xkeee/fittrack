@@ -26,8 +26,8 @@ ApplicationWindow {
     property int workoutSourceIndex: 0
     property string databaseRecoveryBackupPath: ""
     readonly property var loadedInsights: insightsLoader.item
-    readonly property Item feedbackHost: taskFeedbackHost
-    readonly property Item overlayHost: globalOverlayHost
+    readonly property var feedbackHost: taskFeedbackHost
+    readonly property var overlayHost: globalOverlayHost
     readonly property bool useReactTraining: reactTrainingEnabled
                                               && workoutController.active
 
