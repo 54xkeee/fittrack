@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Controls
+import QtQuick.Effects
 import "../theme" as Design
 
 Frame {
@@ -7,6 +8,7 @@ Frame {
     // Filled cards group dense content. Outlined and elevated cards are opt-in
     // so hierarchy comes from structure rather than repeated decoration.
     property string variant: "filled"
+    property int elevation: variant === "elevated" ? 1 : 0
     padding: Design.Theme.space16
     implicitWidth: Math.max(Design.Theme.touchTarget, maxChildImplicitWidth() + leftPadding + rightPadding)
     implicitHeight: Math.max(Design.Theme.touchTarget, maxChildImplicitHeight() + topPadding + bottomPadding)
@@ -29,20 +31,31 @@ Frame {
         readonly property bool elevated: root.variant === "elevated"
         readonly property bool outlined: root.variant === "outlined"
         readonly property bool tonal: root.variant === "tonal"
-        Rectangle {
-            x: 0
-            y: Design.Theme.shadowOffsetY
-            width: parent.width
-            height: parent.height
-            radius: Design.Theme.radiusCard
-            color: parent.elevated ? Design.Theme.shadowAmbient : "transparent"
+        RectangularShadow {
+            anchors.fill: surface
+            visible: root.elevation > 0
+            offset: Qt.vector2d(0, root.elevation > 1
+                                   ? Design.Theme.elevation2Offset
+                                   : Design.Theme.elevation1Offset)
+            color: root.elevation > 1
+                   ? Design.Theme.elevation2Shadow : Design.Theme.elevation1Shadow
+            blur: root.elevation > 1
+                  ? Design.Theme.elevation2Blur : Design.Theme.elevation1Blur
+            radius: surface.radius
+            spread: 0
+            cached: true
         }
 
         Rectangle {
+            id: surface
             anchors.fill: parent
             color: parent.tonal ? Design.Theme.primaryContainer
-                                : (parent.outlined ? Design.Theme.surface
-                                                   : Design.Theme.surfaceContainer)
+                                : (parent.elevated
+                                   ? (root.elevation > 1
+                                      ? Design.Theme.surfaceContainerHigh
+                                      : Design.Theme.surfaceContainerLow)
+                                   : (parent.outlined ? Design.Theme.surface
+                                                      : Design.Theme.surfaceContainer))
             radius: Design.Theme.radiusCard
             border.width: parent.outlined ? 1 : 0
             border.color: Design.Theme.outlineVariant

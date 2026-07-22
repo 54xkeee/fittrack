@@ -521,6 +521,7 @@ AppPage {
 
             AppTopAppBar {
                 Layout.fillWidth: true
+                elevated: true
                 title: qsTr("训练计划")
                 supportingText: qsTr("选择模板，复制后按你的器械和顺序调整")
                 trailingContent: Component {

@@ -50,6 +50,7 @@ Rectangle {
 
         AppTopAppBar {
             Layout.fillWidth: true
+            elevated: true
             title: workoutController.preparation.name || qsTr("训练准备")
             titleObjectName: "preparationTitle"
             supportingText: qsTr("%1 个动作 · 修改只影响本次训练")

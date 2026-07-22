@@ -46,7 +46,7 @@ Button {
             if (root.isDestructive)
                 return Design.Theme.errorForeground
             if (root.isTonal)
-                return Design.Theme.onSecondaryContainer
+                return Design.Theme.secondaryContainerText
             if (root.isText)
                 return Design.Theme.primary
             return Design.Theme.surfaceText

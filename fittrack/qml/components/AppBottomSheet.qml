@@ -98,7 +98,7 @@ Popup {
                 visible: root.title.length > 0
                 Layout.fillWidth: true
                 text: root.title
-                color: Design.Theme.onSurface
+                color: Design.Theme.surfaceText
                 font.pixelSize: Design.Typography.title
                 font.weight: Font.DemiBold
                 wrapMode: Text.WordWrap
@@ -108,7 +108,7 @@ Popup {
                 visible: root.supportingText.length > 0
                 Layout.fillWidth: true
                 text: root.supportingText
-                color: Design.Theme.onSurfaceVariant
+                color: Design.Theme.surfaceMuted
                 font.pixelSize: Design.Typography.bodyCompact
                 wrapMode: Text.WordWrap
             }

@@ -13,6 +13,8 @@ QtObject {
     readonly property color primary: Tokens.Theme.primary
     readonly property color primaryPressed: Tokens.Theme.primaryPressed
     readonly property color primarySoft: Tokens.Theme.primarySoft
+    readonly property color primaryForeground: Tokens.Theme.primaryForeground
+    readonly property color primaryContainerText: Tokens.Theme.primaryContainerText
     readonly property color inputBorder: Tokens.Theme.borderDefault
     readonly property color success: Tokens.Theme.success
     readonly property color successBackground: Tokens.Theme.successSoft

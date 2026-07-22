@@ -20,9 +20,9 @@ Rectangle {
 
     implicitHeight: 82
     radius: Design.WorkoutTheme.cardRadius
-    color: previewButton.down ? Design.WorkoutTheme.primarySoft
-                              : Design.WorkoutTheme.card
-    border.width: root.activeFocus ? 2 : 1
+    color: previewButton.down ? Design.Theme.surfaceContainerHigh
+                              : Design.Theme.surfaceContainerLow
+    border.width: root.activeFocus ? 2 : 0
     border.color: root.activeFocus ? Design.WorkoutTheme.primary
                                    : Design.WorkoutTheme.divider
     activeFocusOnTab: visible && enabled

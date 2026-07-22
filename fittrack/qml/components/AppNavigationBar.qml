@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Controls
+import QtQuick.Effects
 import QtQuick.Layouts
 import "../theme" as Design
 
@@ -17,10 +18,20 @@ Control {
     padding: 0
     Accessible.role: Accessible.PageTabList
 
-    background: Rectangle {
-        color: Design.Theme.surfaceContainerLowest
-        border.width: 1
-        border.color: Design.Theme.outlineVariant
+    background: Item {
+        RectangularShadow {
+            anchors.fill: navigationSurface
+            offset: Qt.vector2d(0, -Design.Theme.elevation1Offset)
+            color: Design.Theme.elevation1Shadow
+            blur: Design.Theme.elevation1Blur
+            radius: 0
+            cached: true
+        }
+        Rectangle {
+            id: navigationSurface
+            anchors.fill: parent
+            color: Design.Theme.surfaceContainer
+        }
     }
 
     contentItem: RowLayout {
@@ -51,12 +62,17 @@ Control {
                         Layout.preferredWidth: 64
                         Layout.preferredHeight: 32
                         Rectangle {
+                            id: indicator
                             anchors.centerIn: parent
                             width: 64
                             height: 32
                             radius: Design.Theme.radiusPill
                             color: root.currentIndex === navigationButton.index
                                    ? Design.Theme.primaryContainer : "transparent"
+
+                            Behavior on color {
+                                ColorAnimation { duration: Design.Theme.motionFast }
+                            }
                         }
                         AppIcon {
                             anchors.centerIn: parent
@@ -65,14 +81,14 @@ Control {
                             height: 20
                             color: root.currentIndex === navigationButton.index
                                    ? Design.Theme.primaryContainerText
-                                   : Design.Theme.textSecondary
+                                   : Design.Theme.surfaceMuted
                         }
                     }
                     Label {
                         Layout.alignment: Qt.AlignHCenter
                         text: navigationButton.modelData.label
                         color: root.currentIndex === navigationButton.index
-                               ? Design.Theme.primary : Design.Theme.textSecondary
+                               ? Design.Theme.primary : Design.Theme.surfaceMuted
                         font.pixelSize: Design.Typography.meta
                         font.weight: root.currentIndex === navigationButton.index
                                      ? Font.DemiBold : Font.Normal
@@ -81,9 +97,14 @@ Control {
 
                 background: Rectangle {
                     radius: Design.Theme.radiusSmall
-                    color: "transparent"
+                    color: navigationButton.down
+                           ? Design.Theme.surfaceContainerHigh : "transparent"
                     border.width: navigationButton.activeFocus ? 1 : 0
                     border.color: Design.Theme.primary
+
+                    Behavior on color {
+                        ColorAnimation { duration: Design.Theme.motionFast }
+                    }
                 }
             }
         }

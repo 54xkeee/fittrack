@@ -31,7 +31,7 @@ Popup {
     }
 
     background: Rectangle {
-        color: Design.Theme.onSurface
+        color: Design.Theme.surfaceText
         radius: Design.Theme.radiusMedium
         Accessible.role: Accessible.AlertMessage
         Accessible.name: root.message
@@ -69,7 +69,7 @@ Popup {
             }
             background: Rectangle {
                 radius: Design.Theme.radiusPill
-                color: actionButton.down ? Design.Theme.onSurfaceVariant : "transparent"
+                color: actionButton.down ? Design.Theme.surfaceMuted : "transparent"
             }
         }
 

@@ -6,8 +6,8 @@ TextField {
     id: root
 
     implicitHeight: Design.Theme.controlHeight
-    color: Design.Theme.onSurface
-    placeholderTextColor: Design.Theme.onSurfaceVariant
+    color: Design.Theme.surfaceText
+    placeholderTextColor: Design.Theme.surfaceMuted
     font.pixelSize: Design.Typography.body
     leftPadding: Design.Theme.space12
     rightPadding: Design.Theme.space12

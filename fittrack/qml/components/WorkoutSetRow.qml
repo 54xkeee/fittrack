@@ -32,10 +32,18 @@ Rectangle {
         root.draftChanged(setWeight.numericValue, setReps.numericValue)
     }
 
-    implicitHeight: Design.WorkoutTheme.rowHeight
+    implicitHeight: root.active ? 64 : Design.WorkoutTheme.rowHeight
     radius: Design.WorkoutTheme.controlRadius
-    color: completed ? Design.WorkoutTheme.successBackground
-                     : (active ? Design.WorkoutTheme.primarySoft : "transparent")
+    color: completed ? Design.Theme.surfaceContainerLow
+                     : (active ? Design.Theme.primaryContainer : "transparent")
+
+    Behavior on color {
+        ColorAnimation { duration: Design.Theme.motionFast }
+    }
+
+    Behavior on implicitHeight {
+        NumberAnimation { duration: Design.Theme.motionStandard }
+    }
 
     Rectangle {
         visible: root.active
@@ -66,7 +74,8 @@ Rectangle {
         Label {
             Layout.preferredWidth: Design.WorkoutTheme.setColumnWidth
             text: root.setNumber
-            color: root.active ? Design.WorkoutTheme.primary : Design.WorkoutTheme.text
+            color: root.active ? Design.WorkoutTheme.primaryContainerText
+                               : Design.WorkoutTheme.text
             font.pixelSize: Design.WorkoutTheme.typeSetValue
             font.weight: root.active ? Font.DemiBold : Font.Normal
             font.features: ({ "tnum": 1 })
@@ -91,7 +100,7 @@ Rectangle {
             accessibleName: qsTr("实际重量")
             subtleBorder: root.active
             cornerRadius: Design.WorkoutTheme.controlRadius
-            fillColor: root.active ? Design.WorkoutTheme.primarySoft : "transparent"
+            fillColor: root.active ? Design.Theme.surfaceContainerLowest : "transparent"
             fieldHeight: Design.WorkoutTheme.inputHeight
             textPixelSize: Design.WorkoutTheme.typeSetValue
             fontFeatures: ({ "tnum": 1 })
@@ -127,7 +136,7 @@ Rectangle {
             accessibleName: qsTr("实际次数")
             subtleBorder: true
             cornerRadius: Design.WorkoutTheme.controlRadius
-            fillColor: Design.WorkoutTheme.primarySoft
+            fillColor: Design.Theme.surfaceContainerLowest
             fieldHeight: Design.WorkoutTheme.inputHeight
             textPixelSize: Design.WorkoutTheme.typeSetValue
             fontFeatures: ({ "tnum": 1 })
@@ -192,8 +201,10 @@ Rectangle {
                 implicitWidth: 28
                 implicitHeight: 28
                 radius: 14
-                color: root.completed ? Design.WorkoutTheme.success : "transparent"
-                border.width: root.completed ? 0 : 1
+                color: root.completed ? Design.WorkoutTheme.success
+                                      : (root.active ? Design.WorkoutTheme.primary
+                                                     : "transparent")
+                border.width: root.completed || root.active ? 0 : 1
                 border.color: root.validationError ? Design.WorkoutTheme.danger
                                                    : (root.active
                                                       ? Design.WorkoutTheme.primary
@@ -201,8 +212,8 @@ Rectangle {
 
                 AppIcon {
                     anchors.centerIn: parent
-                    name: root.completed ? "success" : ""
-                    color: "white"
+                    name: root.completed || root.active ? "success" : ""
+                    color: root.active ? Design.WorkoutTheme.primaryForeground : "white"
                 }
             }
             background: Item { }

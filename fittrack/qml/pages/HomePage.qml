@@ -167,108 +167,80 @@ AppPage {
         ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
 
         ColumnLayout {
+            id: homeContent
             width: scroller.availableWidth
             spacing: Design.Theme.space16
+            opacity: 0
+            transform: Translate {
+                id: homeEntrance
+                y: Design.Theme.space12
+            }
 
-            ColumnLayout {
-                Layout.fillWidth: true
-                spacing: Design.Theme.space4
-
-                Label {
-                    text: qsTr("FITTRACK")
-                    color: Design.Theme.primary
-                    font.pixelSize: Design.Theme.typeCaption
-                    font.weight: Font.DemiBold
+            ParallelAnimation {
+                running: true
+                NumberAnimation {
+                    target: homeContent
+                    property: "opacity"
+                    to: 1
+                    duration: Design.Theme.motionSlow
+                    easing.type: Design.Theme.easingEnter
                 }
-
-                Label {
-                    Layout.fillWidth: true
-                    text: qsTr("训迹")
-                    color: Design.Theme.backgroundText
-                    font.pixelSize: Design.Theme.typeDisplay
-                    font.weight: Font.Bold
-                }
-
-                Label {
-                    Layout.fillWidth: true
-                    text: qsTr("记录每一组，看见长期进步")
-                    color: Design.Theme.surfaceMuted
-                    font.pixelSize: Design.Theme.typeLabel
-                    wrapMode: Text.WordWrap
+                NumberAnimation {
+                    target: homeEntrance
+                    property: "y"
+                    to: 0
+                    duration: Design.Theme.motionSlow
+                    easing.type: Design.Theme.easingEnter
                 }
             }
 
             AppCard {
                 Layout.fillWidth: true
-                padding: Design.Theme.space16
-                variant: "tonal"
+                padding: Design.Theme.space20
+                variant: "elevated"
+                elevation: 2
 
                 ColumnLayout {
                     anchors.fill: parent
                     spacing: Design.Theme.space16
 
-                    RowLayout {
+                    ColumnLayout {
                         Layout.fillWidth: true
-                        spacing: Design.Theme.space12
+                        spacing: Design.Theme.space4
 
-                        ColumnLayout {
-                            Layout.fillWidth: true
-                            spacing: Design.Theme.space4
-
-                            Label {
-                                text: workoutController.active || workoutController.hasUnfinished
-                                      ? qsTr("继续上次") : qsTr("下一训练日")
-                                color: workoutController.active || workoutController.hasUnfinished
-                                       ? Design.Theme.warningContainerText
-                                       : Design.Theme.primaryContainerText
-                                font.pixelSize: Design.Theme.typeCaption
-                                font.weight: Font.DemiBold
-                            }
-
-                            Label {
-                                Layout.fillWidth: true
-                                text: workoutController.active
-                                      ? (workoutController.sessionName || qsTr("进行中的训练"))
-                                      : workoutController.hasUnfinished
-                                        ? qsTr("未完成训练")
-                                        : (workoutController.suggestedDay.name
-                                           || qsTr("暂无可用训练日"))
-                                color: Design.Theme.primaryContainerText
-                                font.pixelSize: Design.Theme.typeTitle
-                                font.weight: Font.Bold
-                                wrapMode: Text.WordWrap
-                            }
-
-                            Label {
-                                Layout.fillWidth: true
-                                text: workoutController.active
-                                      ? qsTr("已完成的组均已自动保存")
-                                      : workoutController.hasUnfinished
-                                        ? qsTr("恢复进度，继续完成剩余动作")
-                                        : qsTr("谭成义三分化 · 训练前可替换动作")
-                                color: Design.Theme.primaryContainerText
-                                opacity: 0.78
-                                font.pixelSize: Design.Theme.typeCaption
-                                wrapMode: Text.WordWrap
-                            }
+                        Label {
+                            text: workoutController.active || workoutController.hasUnfinished
+                                  ? qsTr("继续上次") : qsTr("下一训练日")
+                            color: workoutController.active || workoutController.hasUnfinished
+                                   ? Design.Theme.warning : Design.Theme.primary
+                            font.pixelSize: Design.Theme.typeCaption
+                            font.weight: Font.DemiBold
                         }
 
-                        Rectangle {
-                            Layout.preferredWidth: 56
-                            Layout.preferredHeight: 56
-                            radius: Design.Theme.radiusMedium
-                            color: workoutController.active || workoutController.hasUnfinished
-                                   ? Design.Theme.warningContainer : Design.Theme.surfaceContainerLowest
+                        Label {
+                            Layout.fillWidth: true
+                            text: workoutController.active
+                                  ? (workoutController.sessionName || qsTr("进行中的训练"))
+                                  : workoutController.hasUnfinished
+                                    ? qsTr("未完成训练")
+                                    : (workoutController.suggestedDay.name
+                                       || qsTr("暂无可用训练日"))
+                            color: Design.Theme.surfaceText
+                            font.pixelSize: Design.Theme.typeTitle
+                            font.weight: Font.Bold
+                            wrapMode: Text.WordWrap
+                        }
 
-                            Label {
-                                anchors.centerIn: parent
-                                text: workoutController.active || workoutController.hasUnfinished
-                                      ? qsTr("续") : qsTr("练")
-                                color: workoutController.active || workoutController.hasUnfinished
-                                       ? Design.Theme.warningContainerText : Design.Theme.primary
-                                font.pixelSize: Design.Theme.typeTitle
-                                font.weight: Font.Bold
-                            }
+                        Label {
+                            Layout.fillWidth: true
+                            text: workoutController.active
+                                  ? qsTr("已完成的组均已自动保存")
+                                  : workoutController.hasUnfinished
+                                    ? qsTr("恢复进度，继续完成剩余动作")
+                                    : qsTr("谭成义三分化 · 训练前可替换动作")
+                            color: Design.Theme.surfaceMuted
+                            font.pixelSize: Design.Theme.typeCaption
+                            wrapMode: Text.WordWrap
                         }
                     }
 
@@ -349,7 +321,7 @@ AppPage {
                     Layout.fillWidth: true
                     visible: page.hasWorkoutData || page.hasCardioData
                     padding: Design.Theme.space16
-                    variant: "outlined"
+                    variant: "filled"
 
                     ColumnLayout {
                         anchors.fill: parent
@@ -397,25 +369,38 @@ AppPage {
                     }
                 }
 
-                AppCard {
+                Item {
                     Layout.fillWidth: true
+                    Layout.preferredHeight: 236
                     visible: !page.hasWorkoutData && !page.hasCardioData
-                    padding: Design.Theme.space24
-                    variant: "outlined"
 
                     ColumnLayout {
-                        anchors.fill: parent
+                        anchors.centerIn: parent
+                        width: parent.width
                         spacing: Design.Theme.space8
 
-                        Image {
+                        Item {
                             Layout.alignment: Qt.AlignHCenter
                             Layout.preferredWidth: 176
-                            Layout.preferredHeight: 132
-                            source: "qrc:/images/illustrations/empty-workout.png"
-                            fillMode: Image.PreserveAspectFit
-                            asynchronous: true
-                            Accessible.role: Accessible.Graphic
-                            Accessible.name: qsTr("开始记录训练进度的插画")
+                            Layout.preferredHeight: 144
+
+                            Rectangle {
+                                anchors.centerIn: parent
+                                width: 132
+                                height: 132
+                                radius: 66
+                                color: Design.Theme.primaryContainer
+                                opacity: 0.42
+                            }
+
+                            Image {
+                                anchors.fill: parent
+                                source: "qrc:/images/illustrations/empty-workout.png"
+                                fillMode: Image.PreserveAspectFit
+                                asynchronous: true
+                                Accessible.role: Accessible.Graphic
+                                Accessible.name: qsTr("开始记录训练进度的插画")
+                            }
                         }
 
                         Label {
@@ -427,14 +412,6 @@ AppPage {
                             horizontalAlignment: Text.AlignHCenter
                         }
 
-                        Label {
-                            Layout.fillWidth: true
-                            text: qsTr("完成第一组后，这里会显示最近训练和有氧摘要。")
-                            color: Design.Theme.surfaceMuted
-                            font.pixelSize: Design.Theme.typeLabel
-                            wrapMode: Text.WordWrap
-                            horizontalAlignment: Text.AlignHCenter
-                        }
                     }
                 }
             }

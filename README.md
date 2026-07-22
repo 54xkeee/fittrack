@@ -1,71 +1,67 @@
-# 项目工作区
+<div align="center">
 
-> 当前持续开发目标是 [`fittrack/`](fittrack/) 中的 Android 健身训练伙伴“训迹 FitTrack”，不是成绩管理系统。根目录的学生成绩管理系统是保留的独立旧项目，两者不共享业务代码。
+# 训迹 FitTrack
 
-## 学生成绩管理系统（保留项目）
+一款离线优先的 Android 健身记录应用。
 
-Qt 6 Widgets 大作业，使用 Qt Designer `.ui` 文件、qmake、MinGW 和 C++17 实现。界面根据 Stitch 生成的现代校园蓝方案使用 QSS 复刻。
+[![Release](https://img.shields.io/github/v/release/54xkeee/fittrack?display_name=tag&sort=semver)](https://github.com/54xkeee/fittrack/releases/latest)
+![Android](https://img.shields.io/badge/Android-10%2B-3DDC84?logo=android&logoColor=white)
+![Qt](https://img.shields.io/badge/Qt-6.11-41CD52?logo=qt&logoColor=white)
 
-FitTrack 的构建、测试和当前交付状态见 [`fittrack/README.md`](fittrack/README.md)。
+[下载最新版 APK](https://github.com/54xkeee/fittrack/releases/latest)
 
-后续开发建议见 [`docs/大作业开发流程与注意事项.md`](docs/大作业开发流程与注意事项.md)。
+</div>
 
-## 账号
+## 界面
 
-- 管理员：`xmu123` / `123456`
-- 学生：`231202501` ~ `231202560`
-- 学生密码：`password01` ~ `password60`
+<table>
+  <tr>
+    <td align="center"><img src="docs/screenshots/home.png" width="260" alt="首页"><br>首页</td>
+    <td align="center"><img src="docs/screenshots/training.png" width="260" alt="记录训练"><br>记录训练</td>
+    <td align="center"><img src="docs/screenshots/training-dark.png" width="260" alt="深色主题"><br>深色主题</td>
+  </tr>
+</table>
 
 ## 功能
 
-- 启动时自动加载 `grade.csv`
-- 管理员导入、添加、删除、按总分排序、导出
-- 学生查看英语、语文、数学、总分、平均分和排名
-- 并列总分使用竞赛排名，例如 `1、2、2、4`
+- 训练计划与自由训练
+- 逐组记录重量、次数与休息时间
+- 训练历史、容量与趋势分析
+- 本地备份与恢复
+- 浅色、深色主题
 
-## 数据格式
+## 安装
 
-CSV/TXT 使用 UTF-8、无表头、8 列：
+1. 打开 [Releases](https://github.com/54xkeee/fittrack/releases/latest)。
+2. 下载 `FitTrack-0.1.0-debug-arm64-v8a.apk`。
+3. 在 Android 10 或更高版本的 ARM64 手机上安装。
+
+首次侧载时，系统可能要求允许“安装未知应用”。覆盖安装会保留本地数据；卸载前建议先在应用内导出备份。
+
+## 技术栈
+
+- Qt 6 Quick / QML
+- C++17
+- SQLite
+- CMake + Ninja
+- Material 3
+
+## 构建
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\fittrack\scripts\build-android.ps1
+```
+
+APK 输出到 `fittrack/build-android-arm64-debug/android-build/fittrack.apk`。
+
+## 目录
 
 ```text
-学号,姓名,性别,英语,语文,数学,总分,排名
+fittrack/qml/        界面与组件
+fittrack/src/        业务与数据层
+fittrack/resources/  内置数据与图片
+fittrack/tests/      自动化测试
+docs/                项目文档
 ```
 
-程序会重新计算总分、平均分和排名。
-
-## 环境
-
-Qt 已通过 MSYS2 配置：
-
-- Qt 6.9.1 Widgets/Test
-- qmake 3.1
-- MinGW-w64 GCC
-
-如需重新安装：
-
-```powershell
-C:\msys64\usr\bin\pacman.exe -S --needed mingw-w64-x86_64-qt6-base
-```
-
-## 测试
-
-```powershell
-$env:PATH = "C:\msys64\mingw64\bin;$env:PATH"
-New-Item -ItemType Directory -Force build-tests | Out-Null
-Push-Location build-tests
-qmake6 ..\tests\tests.pro
-mingw32-make -j2
-.\release\test_core.exe -o test-results.txt,txt
-Get-Content test-results.txt
-Pop-Location
-```
-
-## Release 打包
-
-```powershell
-.\scripts\build-release.ps1
-```
-
-输出位于 `dist\StudentGradeSystem\`，可直接运行 `StudentGradeSystem.exe`。
-
-Stitch 设计项目：<https://stitch.withgoogle.com/projects/2823835893686043597?pli=1>
+第三方组件和图片许可见 [第三方说明](docs/fittrack-third-party-notices.md) 与 [媒体署名](docs/fittrack-media-credits.md)。

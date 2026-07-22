@@ -11,9 +11,8 @@ Rectangle {
 
     implicitHeight: 66
     radius: Design.WorkoutTheme.cardRadius
-    color: Design.WorkoutTheme.card
-    border.width: 1
-    border.color: Design.WorkoutTheme.divider
+    color: Design.Theme.surfaceContainerLow
+    border.width: 0
 
     RowLayout {
         anchors.fill: parent
