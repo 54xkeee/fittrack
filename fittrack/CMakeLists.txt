@@ -11,8 +11,8 @@ option(FITTRACK_ENABLE_REACT_WEBENGINE
     "Render the active workout with the bundled React UI in Qt WebEngine"
     OFF)
 option(FITTRACK_ENABLE_REACT_ANDROID_WEBVIEW
-    "Render the active workout with the bundled React UI in Android WebView"
-    ${ANDROID})
+    "EXPERIMENTAL: render the active workout with the bundled React UI in Android WebView"
+    OFF)
 if(FITTRACK_ENABLE_REACT_WEBENGINE AND ANDROID)
     message(FATAL_ERROR
         "Qt WebEngine is desktop-only. Keep this option OFF for Android and use the native Android WebView integration path.")
@@ -105,6 +105,8 @@ qt_add_executable(fittrack
 )
 
 if(ANDROID AND FITTRACK_ENABLE_REACT_ANDROID_WEBVIEW)
+    message(WARNING
+        "The Android React WebView workout renderer is experimental and is not part of the production training flow.")
     target_sources(fittrack PRIVATE
         src/app/androidreactbridge.cpp
         src/app/androidreactbridge.h

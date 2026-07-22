@@ -1,7 +1,7 @@
 # FitTrack React UI
 
-This directory contains the React presentation layer used by the optional
-Qt WebEngine workout page.
+This directory contains a frozen React workout prototype for visual experiments.
+It is not part of the production training flow.
 
 ```powershell
 cd fittrack/frontend
@@ -17,10 +17,9 @@ cmake -S fittrack -B BUILD_DIR `
   -DCMAKE_PREFIX_PATH=QT_PREFIX
 ```
 
-The native QML workout remains the default. The React page is selected only
-when the WebEngine feature is compiled in, so the current application stays
-buildable while the WebEngine and WebChannel Qt modules are being installed.
+The native QML workout is the production renderer. The React page can only be
+selected explicitly for desktop prototype work with the WebEngine option.
 
-Qt WebEngine is used only by the Windows prototype. The Android APK requires
-the system Android WebView integration rather than Qt WebEngine; that bridge is
-the next migration stage.
+The Android WebView bridge is intentionally disabled by default. Do not enable
+it for production builds while the Material 3 interaction architecture is being
+consolidated around the native QML workout flow.
