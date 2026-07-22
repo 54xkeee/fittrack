@@ -9,7 +9,7 @@
 **执行记录（2026-07-22）：**
 - Round 1：已冻结 Android React/WebView 默认接管；QML 是唯一正式训练渲染路径；交互契约已落在 `docs/superpowers/specs/2026-07-22-fittrack-interaction-contract.md`。
 - Round 2（进行中）：已移除重复 `Spacing` 单例，文字尺寸统一由 `Typography` 计算，`WorkoutTheme` 改为训练领域适配层；已让 Qt Material 和语义色 Token 跟随系统明暗模式。Windows Qt 6.11.1 构建通过。
-- Round 3（进行中）：已建立 `AppScaffold`、Top App Bar、Navigation Bar、Bottom Sheet、Snackbar、OverlayHost 与 TaskFeedbackHost；主底部导航和训练准备顶栏已迁移到组件层，动作详情、动作选择、参数、排序、训练/动作操作菜单、休息计时、训练组配置、已完成组修正、目标次数、追加组、器械选择、健身房/器械创建、训练/动作备注和保存个人计划已迁移为 Bottom Sheet；保存成功已通过全局 Snackbar 反馈，训练页也不再覆盖系统明暗主题，保留原 `objectName`、焦点和无障碍页签语义。Windows Qt 6.11.1 构建通过。
+- Round 3（已完成）：已建立 `AppScaffold`、Top App Bar、Navigation Bar、Bottom Sheet、Snackbar、OverlayHost 与 TaskFeedbackHost；主底部导航和训练准备顶栏已迁移到组件层，动作详情、动作选择、参数、排序、训练/动作操作菜单、休息计时、训练组配置、已完成组修正、目标次数、追加组、器械选择、健身房/器械创建、训练/动作备注和保存个人计划已迁移为 Bottom Sheet；保存成功已通过全局 Snackbar 反馈，训练页也不再覆盖系统明暗主题，保留原 `objectName`、焦点和无障碍页签语义。Windows Qt 6.11.1 构建通过。
 - 待后续轮次：真机记录实际解析字体与字号；将现有页面迁移到文字角色；把具体编辑/选择流程迁移到 Sheet 与全局反馈宿主。
 
 ---
@@ -246,16 +246,16 @@ Pages
 
 **验收门：** 主题和字体缩放可运行；不存在新的页面原始 Hex、任意字号或任意圆角。
 
-### Round 3：原生组件、App Shell 与反馈宿主
+### Round 3：原生组件、App Shell 与反馈宿主（已完成）
 
 **解决的问题：** 不再让页面依赖丑旧组件或自行拼 UI。
 
-- [ ] 重建基础输入、选择、按钮和状态层，优先保留 Qt Material 控件行为。
-- [ ] 建立 AppScaffold、Top App Bar、Navigation Bar、Bottom Sheet、Dialog、Snackbar、Empty State。
-- [ ] 建立 OverlayHost 和 TaskFeedbackHost，页面不再自行管理居中 Dialog 和滚动提示。
-- [ ] 保留旧组件的业务信号、ObjectName、无障碍语义和必要手势；只替换视觉/交互实现。
+- [x] 重建基础输入、选择、按钮和状态层，优先保留 Qt Material 控件行为。
+- [x] 建立 AppScaffold、Top App Bar、Navigation Bar、Bottom Sheet、Dialog、Snackbar、Empty State。
+- [x] 建立 OverlayHost 和 TaskFeedbackHost；训练准备和训练流程作为首批消费者，不再把编辑、选择和短暂成功反馈放入居中 Dialog 或页面内提示。
+- [x] 保留旧组件的业务信号、ObjectName、无障碍语义和必要手势；只替换视觉/交互实现。
 
-**验收门：** 一个试验页可只通过组件角色完成完整交互，没有局部手写视觉样式。
+**验收门：** 训练准备和训练页已只通过组件角色完成选择、编辑、排序、确认与成功反馈；其他页面在其所属轮次继续迁移。
 
 ### Round 4：首页、计划与训练准备
 

@@ -2,7 +2,7 @@
 
 > 本文件用于快速了解运行结构；完整分层、状态机、函数调用链和发布边界见 [`../docs/fittrack-global-architecture.md`](../docs/fittrack-global-architecture.md)。
 
-本文描述截至 2026-07-15 已在代码中存在的桌面与 Android 共用实现，不把尚未完成的真机验收写成已完成事实。
+本文描述截至 2026-07-22 已在代码中存在的桌面与 Android 共用实现，不把尚未完成的真机验收写成已完成事实。
 
 ## 运行结构
 
@@ -106,7 +106,7 @@ SQLite v8
 
 一级导航为首页、计划、训练、动作、分析。分析页内部包含趋势、历史、有氧和管理四个页签。训练完成后会保留会话编号并打开训练总结，用户明确选择后返回首页或继续附加有氧；系统不会强制进入有氧表单。
 
-Graphite & Lime 视觉令牌集中在 `qml/theme/Theme.qml`，页面通过 `AppPage`、`AppButton`、`AppIcon`、`IconButton`、`NumberField`、`AppDialog`、`ConfirmDialog`、`InlineFeedback`、`TrendChart`、`RestTimerBar` 等组件复用安全区、触控尺寸、颜色、间距和状态反馈。`AppIcon` 统一用 `PathSvg` 绘制线性图标，QML 门禁禁止重新引入已淘汰的字符图标。训练页的 14 个操作弹层与 4 个危险确认框全部使用统一组件；大字体时按钮自动纵向排列，危险确认默认聚焦“取消”。首页、训练、计划、动作库、趋势、历史、有氧和管理均已纳入移动单列体系，准备页与训练页长标题可响应换行，计划/训练动作预览至少 48dp，训练动作卡提供可见键盘焦点。可操作控件使用至少 3:1 的边界对比度，纯信息卡片使用独立的弱轮廓令牌；趋势图同时提供触摸、键盘和辅助技术可读摘要。
+Material 3 语义令牌集中在 `qml/theme/Theme.qml` 与 `Typography.qml`；`WorkoutTheme.qml` 只保留训练领域的适配别名。生产训练路径固定为 QML，React/WebView 仅保留为显式开启的实验原型。页面通过 `AppPage`、`AppButton`、`AppIcon`、`IconButton`、`NumberField`、`AppBottomSheet`、`AppDialog`、`ConfirmDialog`、`AppSnackbar`、`TaskFeedbackHost`、`AppTopAppBar` 与 `AppNavigationBar` 复用安全区、触控尺寸、颜色、间距和反馈。选择、编辑、排序、详情与训练操作使用 Bottom Sheet；破坏性操作保留确认 Dialog；短暂成功反馈从页面信号交由全局 Snackbar 呈现。`AppIcon` 统一用 `PathSvg` 绘制线性图标，QML 门禁禁止重新引入已淘汰的字符图标。
 
 生产应用不注册或打包自定义字体，直接继承 Android/Windows 系统字体。Android 启动和回到前台时读取系统 `fontScale`，并通过 `Theme.fontScale` 统一缩放字号；自动化覆盖 1.0、1.3、1.5 和 2.0 倍。QML 测试在 Windows 离屏渲染时仅在测试进程加载本机微软雅黑，以避免无窗口平台选择到不可读的通用别名，这不影响生产包。
 

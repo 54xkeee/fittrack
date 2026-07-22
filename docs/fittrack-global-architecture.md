@@ -1,6 +1,6 @@
 # FitTrack 0.1.0 全局架构
 
-> 本文基于 2026-07-15 的提交 `1234539` 核验，描述当前实现，而不是未来规划。
+> 本文基于 2026-07-22 的 `codex/material-refactor` 分支核验，描述当前实现，而不是未来规划。
 > 当前应用版本仍为 `versionName 0.1.0`、`versionCode 1`。
 
 ## 1. 产品定位与架构边界
@@ -205,11 +205,11 @@ sequenceDiagram
 
 共用组件集中在 `qml/components/`：
 
-- `AppPage`、`AppDialog`、`ConfirmDialog` 统一页面和弹窗边界；
-- `ExerciseDetailSheet`、共享的 `ExercisePickerSheet`、`ExerciseOrderSheet` 复用动作预览、选择和排序；
-- `NumberField`、`AppButton`、`IconButton` 统一触控尺寸与无障碍语义；
-- `CurrentSetInputPanel` 承担当前组输入与提交，`TrainingRestTimer` 封装计时弹层、`RestTimerBar` 和后台提醒状态，`EquipmentChoiceDialog` 承担训练器械选择；
-- `TrainingPage` 保留训练流程、弹层和三个已拆组件之间的总体编排。
+- `Theme.qml`、`Typography.qml` 与训练领域适配 `WorkoutTheme.qml` 提供 Material 3 语义颜色、尺寸、排版和动效令牌；生产训练渲染器固定为 QML，React/WebView 只保留为显式开启的实验原型。
+- `AppPage`、`AppTopAppBar`、`AppNavigationBar`、`AppBottomSheet`、`AppDialog`、`ConfirmDialog`、`AppSnackbar`、`OverlayHost` 与 `TaskFeedbackHost` 统一页面、表面和短暂反馈边界。
+- `ExerciseDetailSheet`、共享的 `ExercisePickerSheet`、`ExerciseOrderSheet`、`EquipmentChoiceDialog` 已建立在 Bottom Sheet 语义上；删除、放弃与结束仍使用确认 Dialog。
+- `NumberField`、`AppButton`、`IconButton` 统一触控尺寸与无障碍语义；`CurrentSetInputPanel` 承担当前组输入与提交，`TrainingRestTimer` 封装固定休息栏、Bottom Sheet 设置与后台提醒状态。
+- `TrainingPage` 仍负责任务流编排，但训练准备和训练中的编辑、选择、创建与备注不再各自实现居中 Dialog。
 
 ## 6. SQLite 数据架构
 
