@@ -314,22 +314,25 @@ Rectangle {
         }
     }
 
-    AppDialog {
+    AppBottomSheet {
         id: savePreparationDialog
         objectName: "savePreparationDialog"
         title: qsTr("保存到个人计划")
         primaryText: qsTr("保存个人计划")
+        secondaryVisible: true
+        initialFocusItem: savedPlanName
         primaryEnabled: savedPlanName.text.trim().length > 0
                         && savedDayName.text.trim().length > 0
         autoAccept: false
         onPrimaryRequested: {
             if (workoutController.savePreparationAsPlan(
                         savedPlanName.text, savedDayName.text))
-                accept()
+                close()
             else
                 showError(workoutController.errorMessage)
         }
-        contentItem: ColumnLayout {
+        ColumnLayout {
+            width: parent.width
             spacing: Design.Theme.space8
             TextField {
                 id: savedPlanName
