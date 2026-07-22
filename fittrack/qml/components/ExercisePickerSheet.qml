@@ -3,7 +3,7 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import "../theme" as Design
 
-AppDialog {
+AppBottomSheet {
     id: root
 
     property var exerciseModel
@@ -23,15 +23,14 @@ AppDialog {
     }
 
     objectName: "sharedExercisePickerSheet"
-    width: Math.min(520, safeAvailableWidth)
-    height: Math.min(680, safeAvailableHeight)
     title: mode === "replace" ? qsTr("替换动作") : qsTr("添加动作")
     primaryText: qsTr("关闭")
     primaryVariant: "secondary"
     secondaryVisible: false
     initialFocusItem: pickerSearch
 
-    contentItem: ColumnLayout {
+    ColumnLayout {
+        width: parent.width
         spacing: Design.Theme.space8
         TextField {
             id: pickerSearch
@@ -43,7 +42,7 @@ AppDialog {
         }
         ListView {
             Layout.fillWidth: true
-            Layout.fillHeight: true
+            Layout.preferredHeight: Math.min(480, Math.max(240, count * 72))
             model: root.exerciseModel
             clip: true
             boundsBehavior: Flickable.StopAtBounds

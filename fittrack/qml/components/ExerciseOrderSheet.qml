@@ -5,7 +5,7 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import "../theme" as Design
 
-AppDialog {
+AppBottomSheet {
     id: root
 
     property var draftItems: []
@@ -73,7 +73,8 @@ AppDialog {
     autoAccept: false
     onPrimaryRequested: root.saveRequested(root.orderedIds())
 
-    contentItem: ColumnLayout {
+    ColumnLayout {
+        width: parent.width
         implicitHeight: instruction.implicitHeight
                         + Math.min(480, root.draftItems.length * 124)
                         + spacing
@@ -93,14 +94,6 @@ AppDialog {
             objectName: "exerciseOrderList"
             Layout.fillWidth: true
             Layout.preferredHeight: Math.min(480, root.draftItems.length * 124)
-            Layout.maximumHeight: Math.max(
-                                      124,
-                                      root.safeAvailableHeight
-                                      - root.header.implicitHeight
-                                      - root.footer.implicitHeight
-                                      - root.topPadding - root.bottomPadding
-                                      - instruction.implicitHeight
-                                      - parent.spacing)
             model: root.draftItems
             clip: true
             boundsBehavior: Flickable.StopAtBounds

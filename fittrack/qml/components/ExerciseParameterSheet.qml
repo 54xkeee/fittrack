@@ -3,7 +3,7 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import "../theme" as Design
 
-AppDialog {
+AppBottomSheet {
     id: root
 
     property var exercise: ({})
@@ -32,7 +32,8 @@ AppDialog {
                             String(exercise.draftId || exercise.id || ""),
                             setsInput.value, repsInput.text.trim(), restInput.value)
 
-    contentItem: ColumnLayout {
+    ColumnLayout {
+        width: parent.width
         spacing: Design.Theme.space12
 
         Label { text: qsTr("正式组数"); color: Design.Theme.surfaceMuted }
