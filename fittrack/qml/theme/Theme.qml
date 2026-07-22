@@ -1,6 +1,7 @@
 pragma Singleton
 
 import QtQuick
+import "." as Tokens
 
 QtObject {
     // Material 3 semantic roles. The current blue brand remains the only
@@ -116,12 +117,13 @@ QtObject {
     readonly property int radiusLarge: 28
     readonly property int radiusPill: 999
 
-    readonly property int typeCaption: Math.round(12 * fontScale)
-    readonly property int typeLabel: Math.round(14 * fontScale)
-    readonly property int typeBody: Math.round(14 * fontScale)
-    readonly property int typeTitle: Math.round(20 * fontScale)
-    readonly property int typeDisplay: Math.round(24 * fontScale)
-    readonly property int typeMetric: Math.round(22 * fontScale)
+    // Compatibility aliases. Typography.qml owns all font-size calculations.
+    readonly property int typeCaption: Tokens.Typography.meta
+    readonly property int typeLabel: Tokens.Typography.label
+    readonly property int typeBody: Tokens.Typography.bodyCompact
+    readonly property int typeTitle: Tokens.Typography.title
+    readonly property int typeDisplay: Tokens.Typography.pageTitle
+    readonly property int typeMetric: Tokens.Typography.metricValue
 
     property bool reducedMotion: Preferences.reducedMotion
     readonly property int motionFast: reducedMotion ? 0 : 120

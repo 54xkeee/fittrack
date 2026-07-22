@@ -1233,7 +1233,7 @@ AppPage {
 
         ColumnLayout {
             width: trainingScroll.availableWidth
-            spacing: Design.Spacing.section
+            spacing: Design.Theme.space24
 
             WorkoutTopBar {
                 visible: workoutController.active
