@@ -51,9 +51,8 @@ Control {
             Label {
                 text: root.timeText
                 color: root.endingSoon ? Design.Theme.warning : Design.Theme.textPrimary
-                font.pixelSize: Design.Typography.exerciseTitle
+                font.pixelSize: Design.Typography.trainingNumber
                 font.weight: Font.DemiBold
-                font.family: "monospace"
 
                 Behavior on color {
                     ColorAnimation { duration: Design.Theme.motionFast }
