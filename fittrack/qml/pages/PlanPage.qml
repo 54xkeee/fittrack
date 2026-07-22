@@ -79,46 +79,27 @@ AppPage {
         return qsTr("爬楼机 · %1 分钟%2").arg(cardio.durationMinutes).arg(level)
     }
 
-    Dialog {
+    AppBottomSheet {
         id: textDialog
 
         property string mode: "createPlan"
         property string targetId: ""
 
-        parent: Overlay.overlay
-        anchors.centerIn: Overlay.overlay
-        width: Math.min(392, Overlay.overlay ? Overlay.overlay.width - Design.Theme.space16 * 2 : 392)
-        modal: true
-        focus: true
-        padding: Design.Theme.space24
-        closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
         title: mode === "createPlan" ? qsTr("新建计划")
              : mode === "copyPlan" ? qsTr("复制为个人版")
              : mode === "renamePlan" ? qsTr("重命名计划")
              : mode === "addDay" ? qsTr("添加训练日")
              : mode === "renameDay" ? qsTr("重命名训练日")
              : mode === "addSection" ? qsTr("新建动作分组") : qsTr("重命名动作分组")
+        primaryText: mode === "copyPlan" ? qsTr("复制计划") : qsTr("保存")
+        secondaryVisible: true
+        primaryEnabled: valueInput.text.trim().length > 0
+        autoAccept: false
+        initialFocusItem: valueInput
+        onPrimaryRequested: page.submitTextDialog()
 
-        Overlay.modal: Rectangle { color: Design.Theme.scrim }
-
-        background: Rectangle {
-            color: Design.Theme.surface
-            radius: Design.Theme.radiusLarge
-            border.width: 1
-            border.color: Design.Theme.outline
-        }
-
-        header: Label {
-            text: textDialog.title
-            color: Design.Theme.surfaceText
-            font.pixelSize: Design.Theme.typeTitle
-            font.weight: Font.DemiBold
-            leftPadding: Design.Theme.space24
-            rightPadding: Design.Theme.space24
-            topPadding: Design.Theme.space24
-        }
-
-        contentItem: ColumnLayout {
+        ColumnLayout {
+            width: parent.width
             spacing: Design.Theme.space12
 
             Label {
@@ -145,32 +126,6 @@ AppPage {
                     radius: Design.Theme.radiusSmall
                     border.width: valueInput.activeFocus ? 2 : 1
                     border.color: valueInput.activeFocus ? Design.Theme.primary : Design.Theme.outline
-                }
-            }
-        }
-
-        footer: Item {
-            implicitHeight: Design.Theme.controlHeight + Design.Theme.space24
-
-            RowLayout {
-                anchors.fill: parent
-                anchors.leftMargin: Design.Theme.space24
-                anchors.rightMargin: Design.Theme.space24
-                anchors.bottomMargin: Design.Theme.space24
-                spacing: Design.Theme.space8
-
-                AppButton {
-                    text: qsTr("取消")
-                    variant: "secondary"
-                    Layout.fillWidth: true
-                    onClicked: textDialog.close()
-                }
-
-                AppButton {
-                    text: textDialog.mode === "copyPlan" ? qsTr("复制计划") : qsTr("保存")
-                    Layout.fillWidth: true
-                    enabled: valueInput.text.trim().length > 0
-                    onClicked: page.submitTextDialog()
                 }
             }
         }
@@ -226,56 +181,19 @@ AppPage {
         }
     }
 
-    Dialog {
+    AppBottomSheet {
         id: actionPicker
 
         property string dayId: ""
         property string replacePlanExerciseId: ""
 
-        parent: Overlay.overlay
-        anchors.centerIn: Overlay.overlay
-        width: Math.min(440, Overlay.overlay ? Overlay.overlay.width - Design.Theme.space16 * 2 : 440)
-        height: Math.min(680, Overlay.overlay ? Overlay.overlay.height - Design.Theme.space24 * 2 : 680)
-        modal: true
-        focus: true
-        padding: 0
-        closePolicy: Popup.CloseOnEscape
+        title: replacePlanExerciseId.length > 0 ? qsTr("替换动作") : qsTr("添加动作")
+        primaryText: qsTr("关闭")
+        secondaryVisible: false
 
-        Overlay.modal: Rectangle { color: Design.Theme.scrim }
-
-        background: Rectangle {
-            color: Design.Theme.surface
-            radius: Design.Theme.radiusLarge
-            border.width: 1
-            border.color: Design.Theme.outline
-        }
-
-        contentItem: ColumnLayout {
+        ColumnLayout {
+            width: parent.width
             spacing: 0
-
-            RowLayout {
-                Layout.fillWidth: true
-                Layout.leftMargin: Design.Theme.space16
-                Layout.rightMargin: Design.Theme.space8
-                Layout.topMargin: Design.Theme.space12
-                Layout.bottomMargin: Design.Theme.space8
-                spacing: Design.Theme.space8
-
-                Label {
-                    text: actionPicker.replacePlanExerciseId.length > 0
-                          ? qsTr("替换动作") : qsTr("添加动作")
-                    color: Design.Theme.surfaceText
-                    font.pixelSize: Design.Theme.typeTitle
-                    font.weight: Font.DemiBold
-                    Layout.fillWidth: true
-                }
-
-                IconButton {
-                    iconName: "close"
-                    accessibleName: qsTr("关闭动作选择")
-                    onClicked: actionPicker.close()
-                }
-            }
 
             TextField {
                 id: exerciseSearch
@@ -305,7 +223,7 @@ AppPage {
 
             ListView {
                 Layout.fillWidth: true
-                Layout.fillHeight: true
+                Layout.preferredHeight: Math.min(480, Math.max(240, count * 60))
                 model: planExerciseModel
                 clip: true
                 boundsBehavior: Flickable.StopAtBounds
