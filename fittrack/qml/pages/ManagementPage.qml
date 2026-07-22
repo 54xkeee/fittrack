@@ -413,17 +413,35 @@ AppPage {
                     anchors.fill: parent
                     spacing: Design.Theme.space8
 
-                    Label {
-                        text: qsTr("数据备份")
-                        color: Design.Theme.surfaceText
-                        font.pixelSize: Design.Theme.typeBody
-                        font.weight: Font.DemiBold
-                    }
-                    Label {
+                    RowLayout {
                         Layout.fillWidth: true
-                        text: qsTr("JSON用于完整恢复；SQLite快照用于原始数据留档。恢复JSON会替换当前本地数据。")
-                        color: Design.Theme.surfaceMuted
-                        wrapMode: Text.WordWrap
+                        spacing: Design.Theme.space12
+
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            spacing: Design.Theme.space4
+
+                            Label {
+                                text: qsTr("数据备份")
+                                color: Design.Theme.surfaceText
+                                font.pixelSize: Design.Theme.typeBody
+                                font.weight: Font.DemiBold
+                            }
+                            Label {
+                                Layout.fillWidth: true
+                                text: qsTr("JSON用于完整恢复；SQLite快照用于原始数据留档。恢复JSON会替换当前本地数据。")
+                                color: Design.Theme.surfaceMuted
+                                wrapMode: Text.WordWrap
+                            }
+                        }
+
+                        Image {
+                            Layout.preferredWidth: 88
+                            Layout.preferredHeight: 88
+                            source: "qrc:/images/illustrations/data-backup.png"
+                            fillMode: Image.PreserveAspectFit
+                            Accessible.ignored: true
+                        }
                     }
                     RowLayout {
                         Layout.fillWidth: true
