@@ -160,6 +160,7 @@ qt_add_qml_module(fittrack
         qml/components/TrainingNoteSheet.qml
         qml/components/EquipmentChoiceDialog.qml
         qml/components/SectionHeader.qml
+        qml/components/SaveWorkoutPlanSheet.qml
         qml/components/SetRow.qml
         qml/components/StatCard.qml
         qml/components/TrendChart.qml

@@ -406,10 +406,7 @@ AppPage {
                 onClicked: {
                     sessionMenu.close()
                     Qt.callLater(function() {
-                        savedPlanName.text = workoutController.sessionName
-                        savedDayName.text = workoutController.sessionName
-                        savedSectionName.text = ""
-                        savePlanDialog.open()
+                        savePlanDialog.openWithDefaults(workoutController.sessionName)
                     })
                 }
             }
@@ -1099,60 +1096,18 @@ AppPage {
         }
     }
 
-    AppBottomSheet {
+    SaveWorkoutPlanSheet {
         id: savePlanDialog
         objectName: "savePlanDialog"
-        title: qsTr("保存为个人计划")
-        primaryText: qsTr("保存计划")
-        primaryEnabled: savedPlanName.text.trim().length > 0
-                        && savedDayName.text.trim().length > 0
-        autoAccept: false
-        initialFocusItem: savedPlanName
-        onPrimaryRequested: {
+        onSaveRequested: (planName, dayName, sectionName) => {
             if (workoutController.saveCurrentAsPlan(
-                        savedPlanName.text, savedDayName.text, savedSectionName.text)) {
+                        planName, dayName, sectionName)) {
                 close()
                 page.currentPlanSaved()
             } else
                 showError(workoutController.errorMessage.length > 0
                           ? workoutController.errorMessage
                           : qsTr("个人计划保存失败，请重试。"))
-        }
-        ScrollView {
-            id: savePlanFormScroll
-            width: parent.width
-            implicitHeight: Math.min(savePlanForm.implicitHeight,
-                                     Overlay.overlay ? Overlay.overlay.height * 0.45 : 360)
-            clip: true
-            contentWidth: availableWidth
-            ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
-
-            ColumnLayout {
-                id: savePlanForm
-                width: savePlanFormScroll.availableWidth
-                spacing: Design.Theme.space8
-                TextField {
-                    id: savedPlanName
-                    Layout.fillWidth: true
-                    placeholderText: qsTr("计划名称")
-                    implicitHeight: Design.Theme.controlHeight
-                    Accessible.name: qsTr("计划名称")
-                }
-                TextField {
-                    id: savedDayName
-                    Layout.fillWidth: true
-                    placeholderText: qsTr("训练日名称，例如 Push A")
-                    implicitHeight: Design.Theme.controlHeight
-                    Accessible.name: qsTr("训练日名称")
-                }
-                TextField {
-                    id: savedSectionName
-                    Layout.fillWidth: true
-                    placeholderText: qsTr("动作分组名称，可选")
-                    implicitHeight: Design.Theme.controlHeight
-                    Accessible.name: qsTr("动作分组名称")
-                }
-            }
         }
     }
 

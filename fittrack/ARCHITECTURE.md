@@ -106,7 +106,7 @@ SQLite v8
 
 一级导航为首页、计划、训练、动作、分析。分析页内部包含趋势、历史、有氧和管理四个页签。训练完成后会保留会话编号并打开独立训练总结，用户明确选择后返回实际训练来源或继续附加有氧；系统不会强制进入有氧表单。
 
-Material 3 语义令牌集中在 `qml/theme/Theme.qml` 与 `Typography.qml`；`WorkoutTheme.qml` 只保留训练领域的适配别名。生产训练路径固定为 QML，React/WebView 仅保留为显式开启的实验原型。页面通过 `AppPage`、`AppButton`、`AppTextField`、`AppIcon`、`IconButton`、`NumberField`、`AppBottomSheet`、`AppDialog`、`ConfirmDialog`、`AppSnackbar`、`TaskFeedbackHost`、`AppTopAppBar` 与 `AppNavigationBar` 复用安全区、触控尺寸、颜色、间距和反馈。选择、编辑、排序、详情与训练操作使用 Bottom Sheet；破坏性操作保留确认 Dialog；短暂成功反馈从页面信号交由全局 Snackbar 呈现。训练/动作备注共享 `TrainingNoteSheet`，避免在训练页重复维护文本编辑表面。`AppIcon` 统一用 `PathSvg` 绘制线性图标，QML 门禁禁止重新引入已淘汰的字符图标。完成组和完成训练通过 `HapticFeedback` 在 Android 上提供两级短触感，桌面实现保持无操作。
+Material 3 语义令牌集中在 `qml/theme/Theme.qml` 与 `Typography.qml`；`WorkoutTheme.qml` 只保留训练领域的适配别名。生产训练路径固定为 QML，React/WebView 仅保留为显式开启的实验原型。页面通过 `AppPage`、`AppButton`、`AppTextField`、`AppIcon`、`IconButton`、`NumberField`、`AppBottomSheet`、`AppDialog`、`ConfirmDialog`、`AppSnackbar`、`TaskFeedbackHost`、`AppTopAppBar` 与 `AppNavigationBar` 复用安全区、触控尺寸、颜色、间距和反馈。选择、编辑、排序、详情与训练操作使用 Bottom Sheet；破坏性操作保留确认 Dialog；短暂成功反馈从页面信号交由全局 Snackbar 呈现。训练/动作备注共享 `TrainingNoteSheet`，保存个人计划使用 `SaveWorkoutPlanSheet`，避免在训练页重复维护表单表面。`AppIcon` 统一用 `PathSvg` 绘制线性图标，QML 门禁禁止重新引入已淘汰的字符图标。完成组和完成训练通过 `HapticFeedback` 在 Android 上提供两级短触感，桌面实现保持无操作。
 
 生产应用不注册或打包自定义字体，直接继承 Android/Windows 系统字体。Android 启动和回到前台时读取系统 `fontScale`，并通过 `Theme.fontScale` 统一缩放字号；自动化覆盖 1.0、1.3、1.5 和 2.0 倍。QML 测试在 Windows 离屏渲染时仅在测试进程加载本机微软雅黑，以避免无窗口平台选择到不可读的通用别名，这不影响生产包。
 
