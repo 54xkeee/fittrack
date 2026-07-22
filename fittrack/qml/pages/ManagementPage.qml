@@ -20,7 +20,7 @@ AppPage {
 
     function localPath(url) { return url.toString() }
 
-    Dialog {
+    AppBottomSheet {
         id: gymDialog
         property string formError: ""
 
@@ -45,13 +45,16 @@ AppPage {
             close()
         }
 
-        parent: Overlay.overlay
-        anchors.centerIn: Overlay.overlay
-        width: Math.min(Overlay.overlay.width - Design.Theme.space16 * 2, 420)
         title: page.editId.length ? qsTr("重命名健身房") : qsTr("新建健身房")
+        primaryText: qsTr("保存")
+        secondaryVisible: true
+        primaryEnabled: gymName.text.trim().length > 0
+        autoAccept: false
+        initialFocusItem: gymName
+        onPrimaryRequested: submit()
         onOpened: formError = ""
         ColumnLayout {
-            anchors.fill: parent
+            width: parent.width
             spacing: Design.Theme.space8
             TextField {
                 id: gymName
@@ -66,30 +69,9 @@ AppPage {
                 message: gymDialog.formError
             }
         }
-        footer: Item {
-            implicitHeight: Design.Theme.controlHeight + Design.Theme.space16
-            RowLayout {
-                anchors.fill: parent
-                anchors.leftMargin: Design.Theme.space16
-                anchors.rightMargin: Design.Theme.space16
-                anchors.bottomMargin: Design.Theme.space8
-                spacing: Design.Theme.space8
-                AppButton {
-                    Layout.fillWidth: true
-                    text: qsTr("取消")
-                    variant: "secondary"
-                    onClicked: gymDialog.reject()
-                }
-                AppButton {
-                    Layout.fillWidth: true
-                    text: qsTr("保存")
-                    onClicked: gymDialog.submit()
-                }
-            }
-        }
     }
 
-    Dialog {
+    AppBottomSheet {
         id: equipmentDialog
         property string formError: ""
 
@@ -118,13 +100,16 @@ AppPage {
             close()
         }
 
-        parent: Overlay.overlay
-        anchors.centerIn: Overlay.overlay
-        width: Math.min(Overlay.overlay.width - Design.Theme.space16 * 2, 420)
         title: page.editId.length ? qsTr("编辑器械") : qsTr("新增器械")
+        primaryText: qsTr("保存")
+        secondaryVisible: true
+        primaryEnabled: equipmentName.text.trim().length > 0
+        autoAccept: false
+        initialFocusItem: equipmentName
+        onPrimaryRequested: submit()
         onOpened: formError = ""
         ColumnLayout {
-            anchors.fill: parent
+            width: parent.width
             spacing: Design.Theme.space8
             TextField {
                 id: equipmentName
@@ -139,27 +124,6 @@ AppPage {
                 Layout.fillWidth: true
                 tone: "error"
                 message: equipmentDialog.formError
-            }
-        }
-        footer: Item {
-            implicitHeight: Design.Theme.controlHeight + Design.Theme.space16
-            RowLayout {
-                anchors.fill: parent
-                anchors.leftMargin: Design.Theme.space16
-                anchors.rightMargin: Design.Theme.space16
-                anchors.bottomMargin: Design.Theme.space8
-                spacing: Design.Theme.space8
-                AppButton {
-                    Layout.fillWidth: true
-                    text: qsTr("取消")
-                    variant: "secondary"
-                    onClicked: equipmentDialog.reject()
-                }
-                AppButton {
-                    Layout.fillWidth: true
-                    text: qsTr("保存")
-                    onClicked: equipmentDialog.submit()
-                }
             }
         }
     }
