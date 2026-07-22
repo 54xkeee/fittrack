@@ -62,9 +62,9 @@ fittrack/
 - M5 已完成 58 个目标动作的数据导入、58 张可分发动作图、三分化/焚诀动作集合、收藏、自定义动作增删改、组合筛选和恢复系统动作；每张图均带标题、真实来源、许可证和修改说明。资料深度分为 29 个详细动作和 29 个标准动作。
 - M6 已完成首页与分析页的训练次数、正式组、容量、最高重量、对应次数/组数、e1RM、肌群分布、单动作趋势和有氧时长统计。
 - M7 桌面能力已完成：跑步机爬坡、爬楼机、力量训练后附加有氧、个人训练日单段有氧目标及训练快照、健身房/器械管理、JSON 事务恢复和 SQLite 快照导出。
-- Material 3 重构的基础阶段已完成：语义 `Theme` 与 `Typography` 令牌跟随系统明暗模式，QML 是唯一正式训练渲染路径；`AppTopAppBar`、`AppNavigationBar`、`AppBottomSheet`、`AppSnackbar`、`OverlayHost` 与 `TaskFeedbackHost` 已建立。训练准备和训练流程的详情、选择、编辑、排序、创建与短暂成功反馈已迁移到这些组件，其他页面在后续轮次继续迁移。
-- 已完成 Qt 6.11.1 `SafeArea.margins` 接入、组与组备注修正、历史训练删除和训练完成总结；生产应用直接使用系统字体，不再打包 Inter。`TrainingPage.qml` 仍约 1600 行，是下一阶段需要继续拆分流程编排的维护热点；当前组输入、休息计时和器械选择分别由 `CurrentSetInputPanel`、`TrainingRestTimer` 和 `EquipmentChoiceDialog` 承担。
-- 当前共有 15 项自动化测试，包含五个主入口、训练准备零写入、共享动作详情、参数保存/恢复、可编辑个人计划、训练进行中、训练完成总结、带真实数据的历史详情、非空分析、有氧、管理和性能 SQL 门禁。QML 额外覆盖字符图标门禁、1.0/1.3/1.5/2.0 四档字体、标题完整换行、计划/训练动作预览 48dp、训练动作卡焦点、当前动作详情真实打开、TalkBack 语义和真实 `QTouchEvent`。2026-07-14 的 Qt 6.11.1 干净构建已通过 15/15，随后聚焦 `qmlnavigation` 再次通过。
+- Material 3 重构的基础、日常入口和次级页面阶段已完成：语义 `Theme` 与 `Typography` 令牌跟随系统明暗模式，QML 是唯一正式训练渲染路径；`AppTopAppBar`、`AppNavigationBar`、`AppBottomSheet`、`AppSnackbar`、`OverlayHost` 与 `TaskFeedbackHost` 已建立。动作、分析、历史、有氧和管理已使用同一表面与反馈规则，训练流程继续做最终职责拆分。
+- 已完成 Qt 6.11.1 `SafeArea.margins` 接入、组与组备注修正、历史训练删除和独立训练完成总结；生产应用直接使用系统字体，不再打包 Inter。`TrainingPage.qml` 仍约 1600 行，是收尾阶段继续拆分流程编排的维护热点；当前组输入、休息计时和器械选择分别由 `CurrentSetInputPanel`、`TrainingRestTimer` 和 `EquipmentChoiceDialog` 承担，Android 完成组与完成训练已接入两级触感。
+- 当前共有 15 项自动化测试。2026-07-22 的 Qt 6.11.1 构建与 14 项非视觉测试通过；`qmlnavigation` 在当前 Windows headless 环境进入测试输出前超时，继续作为独立发布验证项排查。其覆盖的字符图标门禁、四档字体、触控目标、TalkBack、真实触摸和视觉基准目前不记为本轮已通过。
 - Android 工具链已安装在 `D:\FitTrackToolchains`：Qt 6.11.1、JDK 21、SDK/Build Tools 36、NDK 27.2.12479018，并已具备 `arm64-v8a` 手机包与 `x86_64` 模拟器包构建入口。迁移后的最终 APK/AAB 仍需重新完成 Lint、API/ABI/包名、签名、对齐和媒体白名单校验。
 - Debug 侧载包已改为脚本化生成：输出只含 1 个 APK，并附 27 份许可正文、3 份实际 Qt SBOM、NDK NOTICE、媒体署名、源码/重新链接说明和逐文件 SHA-256；`dist/` 不进入 Git，待发布提交后需再生成一次。
 - Android 前台计时服务、运行中通知与一次完成提示、系统返回层级、`content://` SAF 备份恢复、Adaptive Icon 和启动页已经落地；升级后的最终包尚未完成一加 Ace 5 Pro 安装、ColorOS 后台、锁屏通知和 SAF 兼容性回归。
