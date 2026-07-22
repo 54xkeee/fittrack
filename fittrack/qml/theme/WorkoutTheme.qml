@@ -39,6 +39,7 @@ QtObject {
     readonly property int rowHeight: Tokens.Theme.touchTarget
     readonly property int inputHeight: Tokens.Theme.heightDefault
     readonly property int iconTarget: 44
+    readonly property int statusIndicatorSize: 28
     readonly property int tableColumnSpacing: 8
     readonly property int setColumnWidth: 36
     readonly property int weightColumnWidth: 72

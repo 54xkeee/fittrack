@@ -199,10 +199,10 @@ AppPage {
         property string detail: ""
 
         implicitHeight: Math.max(96, metricContent.implicitHeight + Design.Theme.space24)
-        radius: Design.Theme.radiusMedium
+        radius: Design.Theme.radiusSelection
         color: Design.Theme.surface
         border.width: 1
-        border.color: Design.Theme.outline
+        border.color: Design.Theme.outlineVariant
 
         ColumnLayout {
             id: metricContent
@@ -269,7 +269,7 @@ AppPage {
 
             RowLayout {
                 Layout.fillWidth: true
-                spacing: Design.Theme.space8
+                spacing: 0
 
                 NumberField {
                     id: editWeight
@@ -519,11 +519,18 @@ AppPage {
                     }
                 }
 
-                background: Rectangle {
-                    color: sessionRow.down ? Design.Theme.surfacePressed : Design.Theme.surface
-                    radius: Design.Theme.radiusMedium
-                    border.width: 1
-                    border.color: Design.Theme.outline
+                background: Item {
+                    Rectangle {
+                        anchors.fill: parent
+                        color: sessionRow.down ? Design.Theme.surfacePressed : "transparent"
+                    }
+                    Rectangle {
+                        anchors.left: parent.left
+                        anchors.right: parent.right
+                        anchors.bottom: parent.bottom
+                        height: 1
+                        color: Design.Theme.outlineVariant
+                    }
                 }
             }
 
@@ -660,6 +667,7 @@ AppPage {
 
                 AppCard {
                     Layout.fillWidth: true
+                    variant: "outlined"
 
                     ColumnLayout {
                         anchors.fill: parent
@@ -740,6 +748,7 @@ AppPage {
 
                 AppCard {
                     Layout.fillWidth: true
+                    variant: "outlined"
 
                     ColumnLayout {
                         anchors.fill: parent
@@ -798,6 +807,7 @@ AppPage {
 
                         Layout.fillWidth: true
                         padding: 0
+                        variant: "outlined"
 
                         ColumnLayout {
                             anchors.fill: parent

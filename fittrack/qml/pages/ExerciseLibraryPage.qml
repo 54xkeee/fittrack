@@ -417,7 +417,7 @@ AppPage {
 
             ColumnLayout {
                 anchors.fill: parent
-                spacing: 0
+                spacing: Design.Theme.space8
 
                 Rectangle {
                     Layout.alignment: Qt.AlignHCenter
@@ -1223,7 +1223,7 @@ AppPage {
 
         RowLayout {
             Layout.fillWidth: true
-            spacing: Design.Theme.space8
+            spacing: 0
 
             ColumnLayout {
                 Layout.fillWidth: true
@@ -1324,7 +1324,7 @@ AppPage {
             Layout.fillWidth: true
             Layout.fillHeight: true
             clip: true
-            spacing: Design.Theme.space8
+            spacing: 0
             model: page.sourceModel
             boundsBehavior: Flickable.StopAtBounds
 
@@ -1399,11 +1399,18 @@ AppPage {
                                         .arg(recommendedSets).arg(recommendedReps)
                 Accessible.onPressAction: openDetail()
 
-                background: Rectangle {
-                    color: exerciseDelegate.down ? Design.Theme.surfacePressed : Design.Theme.surface
-                    radius: Design.Theme.radiusMedium
-                    border.width: exerciseDelegate.activeFocus ? 2 : 1
-                    border.color: exerciseDelegate.activeFocus ? Design.Theme.primary : Design.Theme.outline
+                background: Item {
+                    Rectangle {
+                        anchors.fill: parent
+                        color: exerciseDelegate.down ? Design.Theme.surfacePressed : "transparent"
+                    }
+                    Rectangle {
+                        anchors.left: parent.left
+                        anchors.right: parent.right
+                        anchors.bottom: parent.bottom
+                        height: 1
+                        color: Design.Theme.outlineVariant
+                    }
                 }
 
                 contentItem: RowLayout {

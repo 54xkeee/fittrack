@@ -561,10 +561,10 @@ AppPage {
 
                         background: Rectangle {
                             color: highlighted ? Design.Theme.primaryContainer : Design.Theme.surface
-                            radius: Design.Theme.radiusMedium
+                            radius: Design.Theme.radiusSelection
                             border.width: 1
                             border.color: planOption.activeFocus || highlighted
-                                          ? Design.Theme.primary : Design.Theme.outline
+                                          ? Design.Theme.primary : Design.Theme.outlineVariant
                         }
 
                         contentItem: RowLayout {

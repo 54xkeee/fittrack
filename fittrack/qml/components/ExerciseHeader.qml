@@ -62,13 +62,9 @@ RowLayout {
         background: Item { }
     }
 
-    Button {
-        Layout.preferredWidth: Design.WorkoutTheme.iconTarget
-        Layout.preferredHeight: Design.WorkoutTheme.iconTarget
-        flat: true
-        Accessible.name: qsTr("%1更多操作").arg(root.exerciseName)
+    IconButton {
+        iconName: "more"
+        accessibleName: qsTr("%1更多操作").arg(root.exerciseName)
         onClicked: root.optionsRequested()
-        contentItem: AppIcon { name: "more"; color: Design.WorkoutTheme.textSecondary }
-        background: Item { }
     }
 }

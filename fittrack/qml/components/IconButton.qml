@@ -37,7 +37,7 @@ Button {
     }
 
     background: Rectangle {
-        radius: Design.Theme.radiusInput
+        radius: Design.Theme.radiusIconButton
         color: root.selected ? Design.Theme.primarySoft :
                (root.down ? Design.Theme.surfacePressed : "transparent")
         border.width: root.activeFocus ? 1 : 0

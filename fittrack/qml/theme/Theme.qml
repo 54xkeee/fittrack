@@ -122,7 +122,9 @@ QtObject {
     readonly property int radiusSmall: 8
     readonly property int radiusInput: 12
     readonly property int radiusButton: 12
+    readonly property int radiusIconButton: 12
     readonly property int radiusMedium: 16
+    readonly property int radiusSelection: 16
     readonly property int radiusCard: 16
     readonly property int radiusLarge: 28
     readonly property int radiusPill: 999

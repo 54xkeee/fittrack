@@ -34,14 +34,10 @@ Control {
     contentItem: RowLayout {
         spacing: Design.WorkoutTheme.space8
 
-        Button {
-            Layout.preferredWidth: Design.WorkoutTheme.iconTarget
-            Layout.preferredHeight: Design.WorkoutTheme.iconTarget
-            flat: true
-            Accessible.name: qsTr("返回")
+        IconButton {
+            iconName: "back"
+            accessibleName: qsTr("返回")
             onClicked: root.backRequested()
-            contentItem: AppIcon { name: "back"; color: Design.WorkoutTheme.text }
-            background: Item { }
         }
 
         ColumnLayout {
@@ -63,14 +59,10 @@ Control {
             }
         }
 
-        Button {
-            Layout.preferredWidth: Design.WorkoutTheme.iconTarget
-            Layout.preferredHeight: Design.WorkoutTheme.iconTarget
-            flat: true
-            Accessible.name: qsTr("休息计时")
+        IconButton {
+            iconName: "history"
+            accessibleName: qsTr("休息计时")
             onClicked: root.timerRequested()
-            contentItem: AppIcon { name: "history"; color: Design.WorkoutTheme.textSecondary }
-            background: Item { }
         }
 
         Button {

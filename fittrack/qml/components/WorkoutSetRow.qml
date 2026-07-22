@@ -32,10 +32,9 @@ Rectangle {
         root.draftChanged(setWeight.numericValue, setReps.numericValue)
     }
 
-    implicitHeight: root.active ? 64 : Design.WorkoutTheme.rowHeight
-    radius: Design.WorkoutTheme.controlRadius
-    color: completed ? Design.Theme.surfaceContainerLow
-                     : (active ? Design.Theme.primaryContainer : "transparent")
+    implicitHeight: root.active ? 56 : Design.WorkoutTheme.rowHeight
+    radius: 0
+    color: active ? Design.Theme.primaryContainer : "transparent"
 
     Behavior on color {
         ColorAnimation { duration: Design.Theme.motionFast }
@@ -46,19 +45,7 @@ Rectangle {
     }
 
     Rectangle {
-        visible: root.active
         anchors.left: parent.left
-        anchors.top: parent.top
-        anchors.bottom: parent.bottom
-        width: 3
-        radius: 2
-        color: Design.WorkoutTheme.primary
-    }
-
-    Rectangle {
-        visible: root.state === "pending"
-        anchors.left: parent.left
-        anchors.leftMargin: 0
         anchors.right: parent.right
         anchors.bottom: parent.bottom
         height: 1
@@ -197,23 +184,26 @@ Rectangle {
                 root.completeRequested(root.pureBodyweight ? 0 : setWeight.numericValue,
                                        setReps.numericValue)
             }
-            contentItem: Rectangle {
-                implicitWidth: 28
-                implicitHeight: 28
-                radius: 14
-                color: root.completed ? Design.WorkoutTheme.success
-                                      : (root.active ? Design.WorkoutTheme.primary
-                                                     : "transparent")
-                border.width: root.completed || root.active ? 0 : 1
-                border.color: root.validationError ? Design.WorkoutTheme.danger
-                                                   : (root.active
-                                                      ? Design.WorkoutTheme.primary
-                                                      : Design.WorkoutTheme.divider)
-
-                AppIcon {
+            contentItem: Item {
+                Rectangle {
                     anchors.centerIn: parent
-                    name: root.completed || root.active ? "success" : ""
-                    color: root.active ? Design.WorkoutTheme.primaryForeground : "white"
+                    width: Design.WorkoutTheme.statusIndicatorSize
+                    height: width
+                    radius: width / 2
+                    color: root.completed ? Design.WorkoutTheme.success
+                                          : (root.active ? Design.WorkoutTheme.primary
+                                                         : "transparent")
+                    border.width: root.completed || root.active ? 0 : 1
+                    border.color: root.validationError ? Design.WorkoutTheme.danger
+                                                       : (root.active
+                                                          ? Design.WorkoutTheme.primary
+                                                          : Design.WorkoutTheme.divider)
+
+                    AppIcon {
+                        anchors.centerIn: parent
+                        name: root.completed || root.active ? "success" : ""
+                        color: root.active ? Design.WorkoutTheme.primaryForeground : "white"
+                    }
                 }
             }
             background: Item { }

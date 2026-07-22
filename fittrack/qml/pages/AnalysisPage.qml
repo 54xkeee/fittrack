@@ -93,10 +93,10 @@ AppPage {
 
         Layout.fillWidth: true
         Layout.preferredHeight: 94
-        radius: Design.Theme.radiusMedium
+        radius: Design.Theme.radiusSelection
         color: Design.Theme.surface
         border.width: 1
-        border.color: Design.Theme.outline
+        border.color: Design.Theme.outlineVariant
 
         ColumnLayout {
             anchors.fill: parent
@@ -141,9 +141,7 @@ AppPage {
 
             SectionHeader {
                 Layout.fillWidth: true
-                eyebrow: qsTr("ANALYTICS")
                 title: qsTr("训练趋势")
-                subtitle: qsTr("一次只看一个问题，避免不同器械与指标混在一起。")
             }
 
             RowLayout {
@@ -190,12 +188,10 @@ AppPage {
                 SummaryTile {
                     label: qsTr("力量时长")
                     value: page.minutes(analyticsDashboard.overview.durationSeconds) + qsTr(" 分")
-                    detail: qsTr("所选时间范围")
                 }
                 SummaryTile {
                     label: qsTr("训练容量")
                     value: page.compactVolume(analyticsDashboard.overview.totalVolume)
-                    detail: qsTr("仅已完成正式组")
                 }
                 SummaryTile {
                     label: qsTr("有氧训练")
@@ -208,6 +204,7 @@ AppPage {
                 visible: page.hasStrengthData
                 Layout.fillWidth: true
                 padding: Design.Theme.space16
+                variant: "outlined"
 
                 ColumnLayout {
                     anchors.fill: parent
