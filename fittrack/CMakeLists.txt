@@ -80,8 +80,6 @@ set(FITTRACK_SERVICE_SOURCES
     src/gyms/gymmanagementcontroller.h
     src/history/workouthistorycontroller.cpp
     src/history/workouthistorycontroller.h
-    src/overview/projectoverviewcontroller.cpp
-    src/overview/projectoverviewcontroller.h
     src/plans/planmanagementcontroller.cpp
     src/plans/planmanagementcontroller.h
     src/timer/resttimercontroller.cpp
