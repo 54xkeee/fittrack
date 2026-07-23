@@ -4,7 +4,7 @@
 
 **离线优先的力量训练记录应用**
 
-用于编辑训练计划、逐组记录训练，并在历史和分析页面查看结果。
+训迹是一款使用 Qt Quick 和 C++ 开发的离线健身记录应用，支持训练计划、逐组记录、休息计时、动作资料、历史分析、有氧记录、场馆器械管理和本地备份。
 
 [![Release](https://img.shields.io/github/v/release/54xkeee/fittrack?display_name=tag&sort=semver)](https://github.com/54xkeee/fittrack/releases/latest)
 ![Android](https://img.shields.io/badge/Android-10%2B-3DDC84?logo=android&logoColor=white)
@@ -26,23 +26,46 @@
 - 有氧记录、场馆与器械管理
 - 本地 SQLite 存储、备份与恢复；不要求账号
 
-## 项目能力
+## 核心实现
 
-### 动作资料库
+### 动作数据处理
 
-动作资料包含中文名、英文名、别名、肌群、器械、动作步骤、注意事项、发力要点、常见错误、图片和来源信息。动作详情显示媒体署名与许可信息；个人动作可用于计划和训练记录。
+动作种子导入器将内置动作资料写入本地数据库。每个动作可包含中文名、英文名、别名、主要与辅助肌群、器械、动作步骤、注意事项、发力要点、常见错误、图片和来源信息。动作详情显示媒体署名与许可信息；个人动作也可用于计划和训练记录。
 
-### 面向训练业务的关系数据
+### 数据库设计
 
-SQLite Schema v8 保存动作与肌群、图片与替代动作、计划与训练日、场馆与器械、训练会话与动作、正式组与追加组、有氧记录等关系。训练准备内容先保存在草稿中；开始训练时，应用使用事务创建训练会话和本次动作快照。之后编辑计划不会改写已经开始的训练。
+SQLite Schema v8 保存动作、肌群、图片、替代动作、训练计划、训练日、训练会话、组记录、有氧记录、健身房和器械等数据。表之间使用外键关联；场馆与器械通过归档而不是直接删除，避免已有训练历史失去引用。数据库包含版本升级、完整性检查、备份恢复和 SQLite 快照导出。
 
-### 训练记录
+```text
+训练计划 → 训练日 → 计划动作
 
-准备页支持增删、替换和排序。训练页提供当前动作和当前组操作、休息计时、备注、追加组与未完成训练恢复。力量训练和有氧记录可在历史与分析页面查询。
+训练会话 → 本次训练动作 → 组记录
+         └→ 有氧目标 / 有氧记录
 
-### Android 与桌面交付
+动作 → 肌群 / 图片 / 替代动作
+健身房 → 器械
+```
 
-界面使用 Qt Quick / QML，训练、计划、历史、备份与数据访问逻辑使用 C++。本次 Release 提供 Android APK 和 Windows 桌面包。界面采用 Material 3，支持浅色、深色主题和系统字体缩放。
+### 训练业务逻辑
+
+训练准备阶段的数据保存在内存草稿中。用户可以添加、替换、删除和调整动作顺序，此时不会创建正式训练记录。确认开始后，程序在同一事务中创建训练会话、动作快照、组记录和有氧目标。每完成一组，结果立即写入数据库；异常退出后可以恢复未完成训练。后续修改原训练计划不会影响已经开始或已经完成的训练。
+
+### 跨平台适配
+
+界面使用 Qt Quick / QML，训练、计划、历史、分析、数据库和备份逻辑使用 C++，Android 与 Windows 共用主要业务代码。Android 端包含休息计时桥接、通知权限与系统设置入口、触感反馈和文档 URI 文件访问；Windows 包使用 Qt 部署工具生成独立运行目录。本次 Release 提供 Android APK 和 Windows 桌面包。
+
+| 部分 | 实现内容 |
+| --- | --- |
+| 界面 | Qt Quick / QML、Material 3、深浅色主题、系统字体缩放 |
+| 业务逻辑 | C++ 控制器、训练状态管理、草稿与快照 |
+| 数据存储 | SQLite、多表关联、外键、事务、版本升级 |
+| 数据资源 | 动作种子、图片映射、来源与许可记录 |
+| 平台 | Android APK、Windows 桌面包 |
+| 可靠性 | 未完成训练恢复、数据库检查、备份恢复、自动化测试 |
+
+## 技术架构
+
+![FitTrack 架构图](docs/diagrams/fittrack-architecture.svg)
 
 ## 实现细节
 
@@ -67,21 +90,23 @@ SQLite Schema v8 保存动作与肌群、图片与替代动作、计划与训练
 - **估算 1RM**：对非自重动作使用 Epley 公式 `重量 × (1 + 次数 / 30)`，在一次训练或时间范围内取最大的有效结果。自重动作不生成 1RM。
 - **趋势与肌群统计**：按训练结束时间聚合已完成记录；容量、最高重量和 1RM 分别计算。肌群统计通过动作与肌群关联表汇总正式组，可切换主要刺激和次要参与。
 
-### 备份与性能处理
+### 备份、性能与测试
 
-备份与恢复由应用内服务处理；动作和计划种子使用内容摘要避免重复导入。动作列表、历史记录和有氧列表按页面需要加载，历史和有氧记录使用分页查询。构建使用 CMake + Ninja，Android 构建脚本可输出 ARM64 手机 APK 与 x86_64 模拟器 APK。
+备份与恢复由应用内服务处理；动作和计划种子使用内容摘要避免重复导入。动作列表、历史记录和有氧列表按页面需要加载，历史和有氧记录使用分页查询。
+
+项目测试覆盖训练分析、数据库初始化、动作与计划导入、训练会话、训练历史、趋势分析、有氧记录、场馆器械和备份恢复；另保留可选的 QML 导航与视觉测试。构建使用 CMake + Ninja，Android 脚本可输出 ARM64 手机 APK 与 x86_64 模拟器 APK。
 
 ## 截图
 
 <table>
   <tr>
-    <td align="center"><img src="docs/screenshots/home-with-history.png" width="220" alt="有训练记录的首页"><br><b>训练首页</b></td>
-    <td align="center"><img src="docs/screenshots/preparation.png" width="220" alt="训练准备"><br><b>训练准备</b></td>
-    <td align="center"><img src="docs/screenshots/training.png" width="220" alt="逐组训练记录"><br><b>逐组记录</b></td>
+    <td align="center"><img src="docs/screenshots/home-with-history.png" width="220" alt="有训练记录的首页"><br><b>首页：统计与最近活动</b></td>
+    <td align="center"><img src="docs/screenshots/preparation.png" width="220" alt="训练准备"><br><b>准备：动作参数、替换与排序</b></td>
+    <td align="center"><img src="docs/screenshots/training.png" width="220" alt="逐组训练记录"><br><b>训练：逐组记录与休息计时</b></td>
   </tr>
   <tr>
-    <td align="center"><img src="docs/screenshots/library.png" width="220" alt="动作资料库"><br><b>动作资料库</b></td>
-    <td align="center"><img src="docs/screenshots/training-dark.png" width="220" alt="深色主题训练记录"><br><b>深色主题</b></td>
+    <td align="center"><img src="docs/screenshots/library.png" width="220" alt="动作资料库"><br><b>动作：图片、部位与建议参数</b></td>
+    <td align="center"><img src="docs/screenshots/training-dark.png" width="220" alt="深色主题训练记录"><br><b>深色主题下的训练记录</b></td>
   </tr>
 </table>
 

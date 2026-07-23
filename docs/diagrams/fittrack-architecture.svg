@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="430" viewBox="0 0 960 430" role="img" aria-labelledby="title desc">
+  <title id="title">FitTrack architecture</title>
+  <desc id="desc">QML pages call C++ controllers and models, which access SQLite through storage services.</desc>
+  <rect width="960" height="430" fill="#f8f9ff"/>
+  <style>
+    .box{stroke:#7a7f8a;stroke-width:2;rx:22}.h{font:700 26px 'Microsoft YaHei',sans-serif;fill:#1b1b20}.t{font:18px 'Microsoft YaHei',sans-serif;fill:#4d5058}.s{font:16px 'Microsoft YaHei',sans-serif;fill:#5d6070}.arrow{stroke:#1967d2;stroke-width:4;fill:none;marker-end:url(#a)}
+  </style>
+  <defs><marker id="a" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#1967d2"/></marker></defs>
+  <rect class="box" x="55" y="75" width="250" height="260" fill="#dce8ff"/>
+  <text class="h" x="90" y="125">QML 页面与组件</text>
+  <text class="t" x="90" y="168">首页 · 计划 · 训练</text><text class="t" x="90" y="202">动作 · 历史 · 分析</text>
+  <text class="s" x="90" y="258">Material 3 主题</text><text class="s" x="90" y="286">页面状态与交互</text>
+  <rect class="box" x="355" y="45" width="270" height="320" fill="#e6f5ec"/>
+  <text class="h" x="390" y="95">C++ 控制器与模型</text>
+  <text class="t" x="390" y="140">training · plans · exercises</text><text class="t" x="390" y="174">history · analytics · cardio</text><text class="t" x="390" y="208">gyms · backup · timer</text>
+  <text class="s" x="390" y="268">草稿、快照、事务与聚合计算</text><text class="s" x="390" y="297">QAbstractListModel / context properties</text>
+  <rect class="box" x="675" y="75" width="230" height="260" fill="#fff3d7"/>
+  <text class="h" x="715" y="125">SQLite</text>
+  <text class="t" x="715" y="168">动作与肌群</text><text class="t" x="715" y="202">计划与训练记录</text><text class="t" x="715" y="236">有氧、场馆与器械</text>
+  <text class="s" x="715" y="286">外键 · 索引 · 事务 · 升级</text>
+  <path class="arrow" d="M305 205 H345"/><path class="arrow" d="M625 205 H665"/>
+  <text class="s" x="307" y="187">signals / models</text><text class="s" x="627" y="187">QSqlDatabase</text>
+</svg>
