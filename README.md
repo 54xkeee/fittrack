@@ -4,7 +4,7 @@
 
 **离线优先的力量训练记录应用**
 
-从训练计划、逐组记录到历史趋势，将一次训练沉淀为可回看的个人数据。
+用于编辑训练计划、逐组记录训练，并在历史和分析页面查看结果。
 
 [![Release](https://img.shields.io/github/v/release/54xkeee/fittrack?display_name=tag&sort=semver)](https://github.com/54xkeee/fittrack/releases/latest)
 ![Android](https://img.shields.io/badge/Android-10%2B-3DDC84?logo=android&logoColor=white)
@@ -18,7 +18,7 @@
 
 ## 概览
 
-训迹把**计划、训练、动作资料、训练环境、历史分析与有氧记录**放进同一套离线流程：训练前可调整内容，训练时逐组记录，训练后用日历、容量、动作趋势和肌群分布回看变化。
+训迹提供计划编辑、逐组训练记录、动作资料查询、场馆器械管理、历史分析和有氧记录。训练数据保存在本地，可通过备份与恢复迁移。
 
 - 系统计划、个人计划与自由训练
 - 重量、次数、力竭、备注、器械与逐组进度记录
@@ -28,31 +28,33 @@
 
 ## 项目能力
 
-### 动作资料库，而不是页面里硬编码的名称列表
+### 动作资料库
 
-内置动作通过数据整理流程统一进入应用：中文名、英文名、别名、肌群、器械、动作步骤、注意事项、发力要点、常见错误、图片和来源信息均可关联查询。动作详情保留媒体署名与许可信息，个人动作也能进入同一训练与历史流程。
+动作资料包含中文名、英文名、别名、肌群、器械、动作步骤、注意事项、发力要点、常见错误、图片和来源信息。动作详情显示媒体署名与许可信息；个人动作可用于计划和训练记录。
 
 ### 面向训练业务的关系数据
 
-SQLite Schema v8 覆盖动作与肌群、图片与替代动作、计划与训练日、场馆与器械、训练会话与动作、正式组与追加组、有氧记录等实体关系。训练准备阶段只维护草稿；确认开始时才以事务创建训练会话与本次动作快照，之后修改计划不会改写已开始的训练。
+SQLite Schema v8 保存动作与肌群、图片与替代动作、计划与训练日、场馆与器械、训练会话与动作、正式组与追加组、有氧记录等关系。训练准备内容先保存在草稿中；开始训练时，应用使用事务创建训练会话和本次动作快照。之后编辑计划不会改写已经开始的训练。
 
-### 完整的训练闭环
+### 训练记录
 
-`空闲 → 训练准备 → 正在训练 → 训练总结 / 历史分析`
-
-准备页支持增删、替换和排序；训练页围绕当前动作与当前组组织操作，并衔接休息计时、备注、追加组与恢复未完成训练。完成后，力量训练和有氧记录进入同一历史与分析入口。
+准备页支持增删、替换和排序。训练页提供当前动作和当前组操作、休息计时、备注、追加组与未完成训练恢复。力量训练和有氧记录可在历史与分析页面查询。
 
 ### Android 与桌面交付
 
-项目使用 Qt Quick / QML 构建界面，C++ 承担训练、计划、历史、备份与数据访问逻辑；同一代码库可构建 Android APK 和 Windows 桌面包。界面采用 Material 3，适配浅色与深色主题，并跟随系统字体缩放。
+界面使用 Qt Quick / QML，训练、计划、历史、备份与数据访问逻辑使用 C++。本次 Release 提供 Android APK 和 Windows 桌面包。界面采用 Material 3，支持浅色、深色主题和系统字体缩放。
 
 ## 截图
 
 <table>
   <tr>
-    <td align="center"><img src="docs/screenshots/home.png" width="240" alt="训迹训练首页"><br><b>训练首页</b></td>
-    <td align="center"><img src="docs/screenshots/training.png" width="240" alt="逐组训练记录"><br><b>逐组记录</b></td>
-    <td align="center"><img src="docs/screenshots/training-dark.png" width="240" alt="深色主题训练记录"><br><b>深色主题</b></td>
+    <td align="center"><img src="docs/screenshots/home-with-history.png" width="220" alt="有训练记录的首页"><br><b>训练首页</b></td>
+    <td align="center"><img src="docs/screenshots/preparation.png" width="220" alt="训练准备"><br><b>训练准备</b></td>
+    <td align="center"><img src="docs/screenshots/training.png" width="220" alt="逐组训练记录"><br><b>逐组记录</b></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="docs/screenshots/library.png" width="220" alt="动作资料库"><br><b>动作资料库</b></td>
+    <td align="center"><img src="docs/screenshots/training-dark.png" width="220" alt="深色主题训练记录"><br><b>深色主题</b></td>
   </tr>
 </table>
 
