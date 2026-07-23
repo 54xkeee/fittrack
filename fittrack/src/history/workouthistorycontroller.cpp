@@ -412,6 +412,7 @@ bool WorkoutHistoryController::selectSession(const QString &sessionId)
             {QStringLiteral("equipmentName"), exercise.value(3)},
             {QStringLiteral("notes"), exercise.value(4)},
             {QStringLiteral("volume"), exerciseVolume},
+            {QStringLiteral("highestWeight"), highest ? highest->weightKg : 0.0},
             {QStringLiteral("sets"), setDetailsByExercise.value(workoutExerciseId)},
         });
     }

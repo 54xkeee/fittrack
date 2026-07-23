@@ -8,6 +8,7 @@
 #include "gyms/gymmanagementcontroller.h"
 #include "history/workouthistorycontroller.h"
 #include "app/hapticfeedback.h"
+#include "overview/projectoverviewcontroller.h"
 #include "plans/planmanagementcontroller.h"
 #include "storage/databasemanager.h"
 #include "storage/exerciseseedimporter.h"
@@ -158,6 +159,7 @@ int main(int argc, char *argv[])
     fittrack::CardioController cardioController(databaseManager.database());
     fittrack::GymManagementController gymManagement(databaseManager.database());
     fittrack::BackupService backupService(databaseManager.database());
+    fittrack::ProjectOverviewController projectOverview(databaseManager.database());
     QString timerSessionId = workoutController.sessionId();
     engine.rootContext()->setContextProperty(QStringLiteral("exerciseModel"), &exerciseModel);
     engine.rootContext()->setContextProperty(QStringLiteral("planExerciseModel"), &planExerciseModel);
@@ -169,6 +171,7 @@ int main(int argc, char *argv[])
     engine.rootContext()->setContextProperty(QStringLiteral("cardioController"), &cardioController);
     engine.rootContext()->setContextProperty(QStringLiteral("gymManagement"), &gymManagement);
     engine.rootContext()->setContextProperty(QStringLiteral("backupService"), &backupService);
+    engine.rootContext()->setContextProperty(QStringLiteral("projectOverview"), &projectOverview);
     engine.rootContext()->setContextProperty(QStringLiteral("hapticFeedback"), &hapticFeedback);
 #ifdef FITTRACK_REACT_WEBENGINE
     engine.rootContext()->setContextProperty(QStringLiteral("reactTrainingEnabled"), true);
@@ -202,6 +205,16 @@ int main(int argc, char *argv[])
         planExerciseModel.reload();
         planManagement.reload();
         workoutController.reloadAfterRestore();
+        workoutHistory.reload();
+        analyticsDashboard.reload();
+        cardioController.reload();
+        gymManagement.reload();
+        projectOverview.reload();
+    });
+    QObject::connect(&projectOverview, &fittrack::ProjectOverviewController::demoDataCreated, [&] {
+        exerciseModel.reload();
+        planExerciseModel.reload();
+        planManagement.reload();
         workoutHistory.reload();
         analyticsDashboard.reload();
         cardioController.reload();

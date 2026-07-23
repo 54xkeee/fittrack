@@ -8,7 +8,10 @@ import "../theme" as Design
 AppPage {
     id: page
     implicitWidth: 0
-    Component.onCompleted: gymManagement.ensureLoaded()
+    Component.onCompleted: {
+        gymManagement.ensureLoaded()
+        projectOverview.reload()
+    }
     leftPadding: SafeArea.margins.left
     rightPadding: SafeArea.margins.right
     topPadding: SafeArea.margins.top
@@ -20,6 +23,54 @@ AppPage {
     signal feedbackRequested(string message)
 
     function localPath(url) { return url.toString() }
+    function summaryValue(key, fallbackValue) {
+        const value = projectOverview.summary[key]
+        return value === undefined || value === null ? fallbackValue : value
+    }
+
+    component DataTile: Rectangle {
+        id: tile
+        property string label: ""
+        property string value: ""
+        property string detail: ""
+
+        Layout.fillWidth: true
+        Layout.preferredHeight: 88
+        radius: Design.Theme.radiusSelection
+        color: Design.Theme.surfaceContainerLowest
+        border.width: 1
+        border.color: Design.Theme.outlineVariant
+
+        ColumnLayout {
+            anchors.fill: parent
+            anchors.margins: Design.Theme.space12
+            spacing: Design.Theme.space4
+
+            Label {
+                Layout.fillWidth: true
+                text: tile.label
+                color: Design.Theme.surfaceMuted
+                font.pixelSize: Design.Theme.typeCaption
+                elide: Text.ElideRight
+            }
+            Label {
+                Layout.fillWidth: true
+                text: tile.value
+                color: Design.Theme.surfaceText
+                font.pixelSize: Design.Theme.typeTitle
+                font.weight: Font.DemiBold
+                elide: Text.ElideRight
+            }
+            Label {
+                visible: tile.detail.length > 0
+                Layout.fillWidth: true
+                text: tile.detail
+                color: Design.Theme.surfaceMuted
+                font.pixelSize: Design.Theme.typeCaption
+                elide: Text.ElideRight
+            }
+        }
+    }
 
     AppBottomSheet {
         id: gymDialog
@@ -210,9 +261,129 @@ AppPage {
                 Layout.fillWidth: true
                 Layout.leftMargin: Design.Theme.space16
                 Layout.rightMargin: Design.Theme.space16
-                eyebrow: qsTr("SETUP")
-                title: qsTr("场地与数据")
-                subtitle: qsTr("保存同一健身房、同一器械的数据，趋势才有比较意义。")
+                title: qsTr("项目与数据")
+            }
+
+            AppCard {
+                Layout.fillWidth: true
+                Layout.leftMargin: Design.Theme.space16
+                Layout.rightMargin: Design.Theme.space16
+                variant: "outlined"
+
+                ColumnLayout {
+                    anchors.fill: parent
+                    spacing: Design.Theme.space12
+
+                    Label {
+                        text: qsTr("项目亮点")
+                        color: Design.Theme.surfaceText
+                        font.pixelSize: Design.Theme.typeBody
+                        font.weight: Font.DemiBold
+                    }
+
+                    GridLayout {
+                        Layout.fillWidth: true
+                        columns: 2
+                        rowSpacing: Design.Theme.space8
+                        columnSpacing: Design.Theme.space8
+
+                        DataTile {
+                            label: qsTr("动作库数据流水线")
+                            value: qsTr("%1 条动作").arg(page.summaryValue("exerciseCount", 0))
+                            detail: qsTr("别名、肌群、器械、步骤、来源")
+                        }
+                        DataTile {
+                            label: qsTr("SQLite 关系数据")
+                            value: qsTr("Schema v%1").arg(page.summaryValue("schemaVersion", "?"))
+                            detail: qsTr("外键、事务、完整性检查")
+                        }
+                        DataTile {
+                            label: qsTr("训练状态流")
+                            value: qsTr("%1 次已完成").arg(page.summaryValue("workoutCount", 0))
+                            detail: qsTr("准备、记录、恢复、完成")
+                        }
+                        DataTile {
+                            label: qsTr("跨平台交付")
+                            value: qsTr("Qt Quick + C++")
+                            detail: qsTr("Windows 桌面与 Android APK")
+                        }
+                    }
+                }
+            }
+
+            AppCard {
+                Layout.fillWidth: true
+                Layout.leftMargin: Design.Theme.space16
+                Layout.rightMargin: Design.Theme.space16
+                variant: "outlined"
+
+                ColumnLayout {
+                    anchors.fill: parent
+                    spacing: Design.Theme.space12
+
+                    RowLayout {
+                        Layout.fillWidth: true
+                        Label {
+                            Layout.fillWidth: true
+                            text: qsTr("数据库概览")
+                            color: Design.Theme.surfaceText
+                            font.pixelSize: Design.Theme.typeBody
+                            font.weight: Font.DemiBold
+                        }
+                        Label {
+                            text: page.summaryValue("integrityOk", false)
+                                  ? qsTr("完整性正常") : qsTr("需要检查")
+                            color: page.summaryValue("integrityOk", false)
+                                   ? Design.Theme.success : Design.Theme.error
+                            font.pixelSize: Design.Theme.typeCaption
+                            font.weight: Font.DemiBold
+                        }
+                    }
+
+                    GridLayout {
+                        Layout.fillWidth: true
+                        columns: 2
+                        rowSpacing: Design.Theme.space8
+                        columnSpacing: Design.Theme.space8
+
+                        DataTile {
+                            label: qsTr("训练计划")
+                            value: qsTr("%1 个").arg(page.summaryValue("planCount", 0))
+                            detail: qsTr("%1 个训练日").arg(page.summaryValue("planDayCount", 0))
+                        }
+                        DataTile {
+                            label: qsTr("训练记录")
+                            value: qsTr("%1 次").arg(page.summaryValue("workoutCount", 0))
+                            detail: qsTr("%1 个已完成组").arg(page.summaryValue("setCount", 0))
+                        }
+                        DataTile {
+                            label: qsTr("有氧记录")
+                            value: qsTr("%1 条").arg(page.summaryValue("cardioCount", 0))
+                            detail: qsTr("可在分析页查看趋势")
+                        }
+                        DataTile {
+                            label: qsTr("训练环境")
+                            value: qsTr("%1 个场地").arg(page.summaryValue("gymCount", 0))
+                            detail: qsTr("%1 台器械").arg(page.summaryValue("equipmentCount", 0))
+                        }
+                    }
+
+                    AppButton {
+                        Layout.fillWidth: true
+                        text: qsTr("一键载入演示数据")
+                        onClicked: {
+                            if (projectOverview.createDemoData())
+                                page.feedbackRequested(qsTr("已生成 8 次演示训练，可前往历史和分析页查看。"))
+                        }
+                    }
+
+                    InlineFeedback {
+                        visible: projectOverview.errorMessage.length > 0
+                        Layout.fillWidth: true
+                        tone: "error"
+                        message: projectOverview.errorMessage
+                    }
+                }
             }
 
             AppCard {
