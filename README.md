@@ -2,138 +2,125 @@
 
 # 训迹 FitTrack
 
-**离线优先的力量训练记录应用**
+**连接训练计划、动作资料与长期训练记录的离线健身应用**
 
-训迹是一款使用 Qt Quick 和 C++ 开发的离线健身记录应用，支持训练计划、逐组记录、休息计时、动作资料、历史分析、有氧记录、场馆器械管理和本地备份。
+Qt Quick · C++ · SQLite · Android · Windows
 
-[![Release](https://img.shields.io/github/v/release/54xkeee/fittrack?display_name=tag&sort=semver)](https://github.com/54xkeee/fittrack/releases/latest)
-![Android](https://img.shields.io/badge/Android-10%2B-3DDC84?logo=android&logoColor=white)
-![Windows](https://img.shields.io/badge/Windows-Desktop-0078D4?logo=windows&logoColor=white)
-![Qt](https://img.shields.io/badge/Qt-6.11-41CD52?logo=qt&logoColor=white)
-![Material 3](https://img.shields.io/badge/Material-3-6750A4?logo=materialdesign&logoColor=white)
+[下载 Android 版](https://github.com/54xkeee/fittrack/releases/latest) · [下载 Windows 版](https://github.com/54xkeee/fittrack/releases/latest) · [查看文档](docs)
 
-[Android 下载](https://github.com/54xkeee/fittrack/releases/latest) · [Windows 下载](https://github.com/54xkeee/fittrack/releases/latest) · [问题反馈](https://github.com/54xkeee/fittrack/issues)
+<br>
+
+<img src="docs/screenshots/hero.png" width="920" alt="FitTrack 应用界面">
 
 </div>
 
-## 概览
+## 项目主张
 
-训迹提供计划编辑、逐组训练记录、动作资料查询、场馆器械管理、历史分析和有氧记录。训练数据保存在本地，可通过备份与恢复迁移。
+训练计划用于安排训练内容，动作资料提供训练参考，训练记录保存实际完成结果。FitTrack 使用同一套本地数据模型管理这三类信息。
 
-- 系统计划、个人计划与自由训练
-- 重量、次数、力竭、备注、器械与逐组进度记录
-- 训练日历、历史详情、容量与动作趋势
-- 有氧记录、场馆与器械管理
-- 本地 SQLite 存储、备份与恢复；不要求账号
-
-## 核心实现
-
-### 动作数据处理
-
-动作种子导入器将内置动作资料写入本地数据库。每个动作可包含中文名、英文名、别名、主要与辅助肌群、器械、动作步骤、注意事项、发力要点、常见错误、图片和来源信息。动作详情显示媒体署名与许可信息；个人动作也可用于计划和训练记录。
-
-### 数据库设计
-
-SQLite Schema v8 保存动作、肌群、图片、替代动作、训练计划、训练日、训练会话、组记录、有氧记录、健身房和器械等数据。表之间使用外键关联；场馆与器械通过归档而不是直接删除，避免已有训练历史失去引用。数据库包含版本升级、完整性检查、备份恢复和 SQLite 快照导出。
+计划引用动作资料；开始训练时，计划内容保存为本次训练的独立快照；重量、次数、器械和备注写入历史记录；分析页面基于已完成记录计算训练容量、力量表现和肌群分布。
 
 ```text
-训练计划 → 训练日 → 计划动作
-
-训练会话 → 本次训练动作 → 组记录
-         └→ 有氧目标 / 有氧记录
-
-动作 → 肌群 / 图片 / 替代动作
-健身房 → 器械
+训练计划 → 训练准备草稿 → 本次训练快照 → 逐组训练记录 → 历史与趋势分析
 ```
 
-### 训练业务逻辑
+## 运行机制
 
-训练准备阶段的数据保存在内存草稿中。用户可以添加、替换、删除和调整动作顺序，此时不会创建正式训练记录。确认开始后，程序在同一事务中创建训练会话、动作快照、组记录和有氧目标。每完成一组，结果立即写入数据库；异常退出后可以恢复未完成训练。后续修改原训练计划不会影响已经开始或已经完成的训练。
+### 计划定义训练结构
 
-### 跨平台适配
+系统计划、个人计划和自由训练使用同一套训练模型。计划可包含训练日、动作顺序、组数、目标次数、休息时间和有氧目标。
 
-界面使用 Qt Quick / QML，训练、计划、历史、分析、数据库和备份逻辑使用 C++，Android 与 Windows 共用主要业务代码。Android 端包含休息计时桥接、通知权限与系统设置入口、触感反馈和文档 URI 文件访问；Windows 包使用 Qt 部署工具生成独立运行目录。本次 Release 提供 Android APK 和 Windows 桌面包。
+### 动作资料提供训练上下文
 
-| 部分 | 实现内容 |
-| --- | --- |
-| 界面 | Qt Quick / QML、Material 3、深浅色主题、系统字体缩放 |
-| 业务逻辑 | C++ 控制器、训练状态管理、草稿与快照 |
-| 数据存储 | SQLite、多表关联、外键、事务、版本升级 |
-| 数据资源 | 动作种子、图片映射、来源与许可记录 |
-| 平台 | Android APK、Windows 桌面包 |
-| 可靠性 | 未完成训练恢复、数据库检查、备份恢复、自动化测试 |
+动作资料包含中英文名称、别名、肌群、器械、步骤、发力要点、注意事项、常见错误、图片和来源信息。动作可用于计划选择、训练准备、训练过程和历史查询。
 
-## 技术架构
+### 快照保存当次训练
 
-![FitTrack 架构图](docs/diagrams/fittrack-architecture.svg)
+训练准备阶段的修改只存在于内存草稿中。用户可以替换动作、调整顺序、修改组数或选择器械。确认开始后，程序在同一 SQLite 事务中创建训练会话、动作快照、组记录和有氧目标。之后编辑原训练计划，不会改变已经开始或已经完成的训练。
 
-## 实现细节
+### 实际结果进入分析
 
-### 模块划分
+完成训练组时，重量、次数和完成状态立即写入数据库。未完成训练可以在应用重新启动后恢复。历史和分析模块基于实际完成记录计算训练容量、最高重量、估算 1RM、动作趋势和肌群训练分布。
 
-`qml/` 保存页面、主题和通用组件；`src/` 按训练、计划、动作、历史、分析、有氧、场馆、备份和存储划分控制器与业务代码；`resources/` 保存内置动作、计划和图片资源；`android/` 保存 Android 平台配置；`tests/` 保存计算、数据库、导入、训练、历史、分析、有氧、场馆和备份测试。
+## 核心设计
 
-### 本地数据
+### 统一训练模型
 
-应用使用 SQLite。动作相关数据包括 `exercise`、`muscle`、`exercise_muscle`、`exercise_media`、`exercise_alternative` 和收藏记录；训练计划由计划、训练日、分组、动作和有氧目标组成；一次训练会保存会话、动作、正式组、追加组和有氧结果。健身房与器械独立保存，并可关联到训练记录。
+计划、动作、训练会话和历史记录使用关联数据表达。
 
-数据库初始化时启用外键。当前 Schema 为 v8，包含版本记录、索引、触发器和升级逻辑。训练开始、计划排序、删除动作等需要同时修改多条记录的操作使用 SQLite 事务；失败时回滚，避免留下半完成数据。
+```text
+TrainingPlan → PlanDay → PlanExercise
 
-### 训练快照与恢复
+Exercise → Muscle / Media / Alternative
 
-训练准备阶段在内存中维护草稿，修改动作、组数、顺序和有氧目标不会提前写入训练历史。用户开始训练后，应用创建训练会话，并把本次动作、组和有氧目标写入数据库。已开始训练保留自己的记录，后续编辑原计划不会影响历史。未完成训练可在下次启动后继续或放弃。
+WorkoutSession → WorkoutExercise → SetRecord
+                                 └→ AppendSetRecord
+```
+
+同一个动作可以出现在不同计划和训练中，并保留统一的资料、肌群和媒体信息。
+
+### 训练快照
+
+训练计划表达未来安排，训练快照保存某一次真实执行。快照保存当时的动作、顺序、目标组数、休息时间和器械信息，因此历史记录不依赖计划的当前状态。
+
+### 本地关系数据
+
+FitTrack 使用 SQLite 保存动作、肌群、训练计划、训练会话、组记录、有氧记录、健身房和器械。数据库层处理外键和业务约束、多表事务与失败回滚、Schema 版本升级、完整性检查、JSON 备份恢复和 SQLite 一致性快照导出。核心功能可在无网络环境下使用。
+
+### 动作资料导入
+
+内置动作、计划和媒体资源随应用提供。动作种子导入器将资源中的结构化资料写入本地数据库，并保存内容摘要以避免重复导入。资料字段包括名称和别名、器械、肌群关系、动作说明、图片、来源与许可信息。
 
 ### 关键计算
 
-- **训练容量**：每个已完成组按 `重量 × 实际次数 × 负重系数` 累加。双哑铃动作的系数为 2；单侧动作仅在标记为双侧完成时乘以 2；自重动作只有记录了额外负重时才计入重量容量。追加组使用同一规则。
-- **最高重量**：只比较已完成且重量、次数均大于 0 的训练组。重量相同的组会合并统计组数，并保留其中最大的次数。
-- **估算 1RM**：对非自重动作使用 Epley 公式 `重量 × (1 + 次数 / 30)`，在一次训练或时间范围内取最大的有效结果。自重动作不生成 1RM。
-- **趋势与肌群统计**：按训练结束时间聚合已完成记录；容量、最高重量和 1RM 分别计算。肌群统计通过动作与肌群关联表汇总正式组，可切换主要刺激和次要参与。
+- 训练容量按 `重量 × 实际次数 × 负重系数` 计算；双哑铃和双侧动作按规则乘以 2，自重动作仅在记录额外负重时计入重量容量。
+- 最高重量只比较已完成且重量、次数均有效的训练组；相同重量合并统计组数并保留最大次数。
+- 非自重动作使用 Epley 公式 `重量 × (1 + 次数 / 30)` 估算 1RM，并取有效结果中的最大值。
+- 趋势和肌群统计按训练结束时间、动作与肌群关联表聚合已完成记录。
 
-### 备份、性能与测试
+## 架构
 
-备份与恢复由应用内服务处理；动作和计划种子使用内容摘要避免重复导入。动作列表、历史记录和有氧列表按页面需要加载，历史和有氧记录使用分页查询。
+![FitTrack 架构图](docs/diagrams/fittrack-architecture.svg)
 
-项目测试覆盖训练分析、数据库初始化、动作与计划导入、训练会话、训练历史、趋势分析、有氧记录、场馆器械和备份恢复；另保留可选的 QML 导航与视觉测试。构建使用 CMake + Ninja，Android 脚本可输出 ARM64 手机 APK 与 x86_64 模拟器 APK。
+Android 与 Windows 共用主要 QML 和 C++ 业务代码。Android 端补充休息计时桥接、通知权限与系统设置入口、触感反馈和文档 URI 文件访问；Windows 端使用 Qt 部署工具生成独立运行目录。
 
-## 截图
+更多状态流、数据库结构和平台边界见：
+
+- [当前架构](fittrack/ARCHITECTURE.md)
+- [全局架构说明](docs/fittrack-global-architecture.md)
+- [Android 构建说明](docs/fittrack-android-build.md)
+
+## 界面
 
 <table>
   <tr>
-    <td align="center"><img src="docs/screenshots/home-with-history.png" width="220" alt="有训练记录的首页"><br><b>首页：统计与最近活动</b></td>
-    <td align="center"><img src="docs/screenshots/preparation.png" width="220" alt="训练准备"><br><b>准备：动作参数、替换与排序</b></td>
-    <td align="center"><img src="docs/screenshots/training.png" width="220" alt="逐组训练记录"><br><b>训练：逐组记录与休息计时</b></td>
-  </tr>
-  <tr>
-    <td align="center"><img src="docs/screenshots/library.png" width="220" alt="动作资料库"><br><b>动作：图片、部位与建议参数</b></td>
-    <td align="center"><img src="docs/screenshots/training-dark.png" width="220" alt="深色主题训练记录"><br><b>深色主题下的训练记录</b></td>
+    <td align="center"><img src="docs/screenshots/preparation.png" width="270" alt="训练准备"><br><b>训练准备：参数、替换与排序</b></td>
+    <td align="center"><img src="docs/screenshots/training.png" width="270" alt="逐组训练"><br><b>逐组训练：记录与休息计时</b></td>
+    <td align="center"><img src="docs/screenshots/analysis.png" width="270" alt="训练分析"><br><b>训练分析：容量、1RM 与肌群分布</b></td>
   </tr>
 </table>
 
-## 下载与安装
+## 测试与构建
 
-前往 [GitHub Releases](https://github.com/54xkeee/fittrack/releases/latest)：
+测试覆盖训练分析、数据库初始化、动作与计划导入、训练会话、训练历史、趋势分析、有氧记录、场馆器械和备份恢复，并保留可选的 QML 导航与视觉测试。
 
-- **Android**：下载 `FitTrack-*-arm64-v8a.apk`，适用于 Android 10+ 的 ARM64 设备。
-- **Windows**：下载 `FitTrack-*-windows-x64.zip`，解压后运行 `fittrack.exe`。
-
-APK 为可侧载开发包；首次安装时，Android 可能要求允许当前应用安装未知来源应用。
-
-## 技术栈
-
-`Qt 6 Quick / QML` · `C++17` · `SQLite` · `CMake + Ninja` · `Material 3` · `Android SDK / NDK`
-
-## 本地构建
-
-准备 Qt 6.11、CMake、Ninja、JDK 21，以及 Android SDK 36 与 NDK r27c 后，在仓库根目录执行：
+项目使用 Qt 6.11、C++17、CMake 和 Ninja。Android 构建脚本可输出 ARM64 手机 APK 与 x86_64 模拟器 APK：
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\fittrack\scripts\build-android.ps1
 ```
 
-更多构建与架构资料见 [docs](docs)。
+测试、发布、签名和平台配置见 [`docs`](docs)。
 
-## 许可与致谢
+## 下载
 
-- [第三方说明](docs/fittrack-third-party-notices.md)
+前往 [GitHub Releases](https://github.com/54xkeee/fittrack/releases/latest)。
+
+- Android：`FitTrack-*-arm64-v8a.apk`，适用于 Android 10 及以上的 ARM64 设备。
+- Windows：`FitTrack-*-windows-x64.zip`，解压后运行 `fittrack.exe`。
+
+## 第三方内容
+
+- [第三方组件与许可](docs/fittrack-third-party-notices.md)
 - [动作媒体署名](docs/fittrack-media-credits.md)
+- [动作数据映射报告](docs/fittrack-exercise-mapping.md)
