@@ -582,7 +582,7 @@ AppPage {
                 wrapMode: Text.WordWrap
                 Layout.fillWidth: true
             }
-            ComboBox {
+            AppComboBox {
                 id: cardioTypeBox
                 Layout.fillWidth: true
                 implicitHeight: Design.Theme.controlHeight
@@ -741,7 +741,7 @@ AppPage {
                         background: Rectangle {
                             color: highlighted ? Design.Theme.primaryContainer : Design.Theme.surface
                             radius: Design.Theme.radiusMedium
-                            border.width: planOption.activeFocus || highlighted ? 2 : 1
+                            border.width: 1
                             border.color: planOption.activeFocus || highlighted
                                           ? Design.Theme.primary : Design.Theme.outline
                         }
@@ -825,7 +825,7 @@ AppPage {
                 color: Design.Theme.surface
                 radius: Design.Theme.radiusLarge
                 border.width: 1
-                border.color: page.selectedPlanReadOnly ? Design.Theme.info : Design.Theme.outline
+                border.color: Design.Theme.borderDefault
 
                 ColumnLayout {
                     id: selectedPlanHeader
@@ -833,7 +833,7 @@ AppPage {
                     anchors.left: parent.left
                     anchors.right: parent.right
                     anchors.top: parent.top
-                    anchors.margins: Design.Theme.space24
+                    anchors.margins: Design.Theme.space16
                     spacing: Design.Theme.space12
 
                     RowLayout {
@@ -848,7 +848,7 @@ AppPage {
                                 text: planManagement.selectedPlan.name || ""
                                 color: Design.Theme.surfaceText
                                 font.pixelSize: Design.Theme.typeTitle
-                                font.weight: Font.Bold
+                                font.weight: Font.DemiBold
                                 wrapMode: Text.WordWrap
                                 maximumLineCount: 2
                                 elide: Text.ElideRight

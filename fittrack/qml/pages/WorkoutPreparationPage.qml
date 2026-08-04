@@ -113,7 +113,7 @@ Rectangle {
                     color: Design.Theme.surfaceMuted
                     font.pixelSize: Design.Theme.typeLabel
                 }
-                ComboBox {
+                AppComboBox {
                     Layout.fillWidth: true
                     implicitHeight: Design.Theme.controlHeight
                     model: workoutController.gyms

@@ -90,6 +90,10 @@ public:
     Q_INVOKABLE bool moveExercise(int fromIndex, int toIndex);
     Q_INVOKABLE bool reorderExercises(const QStringList &orderedWorkoutExerciseIds);
     Q_INVOKABLE bool removeExercise(int exerciseIndex);
+    Q_INVOKABLE bool addSetFromFirstSet(int exerciseIndex,
+                                        const QVariant &firstWeightKg = {},
+                                        const QVariant &firstReps = {});
+    Q_INVOKABLE bool setSetWeight(int exerciseIndex, int setIndex, double weightKg);
     Q_INVOKABLE bool configureExercise(int exerciseIndex, double weightKg, int targetReps, int setCount);
     Q_INVOKABLE bool configureExerciseParameters(int exerciseIndex, double weightKg,
                                                  const QString &targetReps, int setCount,

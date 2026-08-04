@@ -25,8 +25,9 @@ AppCard {
         Label {
             text: card.value
             color: Design.Theme.surfaceText
-            font.pixelSize: Design.Theme.typeTitle
-            font.weight: Font.Bold
+            font.pixelSize: Design.Theme.typeMetric
+            font.weight: Font.DemiBold
+            font.features: ({ "tnum": 1 })
             elide: Text.ElideRight
             Layout.fillWidth: true
         }

@@ -1631,6 +1631,89 @@ bool WorkoutSessionController::removeExercise(int exerciseIndex)
     return loadSession(m_sessionId);
 }
 
+bool WorkoutSessionController::addSetFromFirstSet(
+    int exerciseIndex, const QVariant &firstWeightKg, const QVariant &firstReps)
+{
+    clearError();
+    if (!active() || exerciseIndex < 0 || exerciseIndex >= m_exercises.size()) {
+        return fail(QStringLiteral("动作序号无效"));
+    }
+
+    const QVariantMap exercise = m_exercises.at(exerciseIndex).toMap();
+    const QVariantList sets = exercise.value(QStringLiteral("sets")).toList();
+    QVariant weight;
+    QVariant reps;
+    if (!sets.isEmpty()) {
+        const QVariantMap firstSet = sets.first().toMap();
+        weight = firstSet.value(QStringLiteral("weightKg"));
+        reps = firstSet.value(QStringLiteral("completed")).toBool()
+            ? firstSet.value(QStringLiteral("actualReps"))
+            : firstSet.value(QStringLiteral("targetReps"));
+    }
+
+    bool weightOk = false;
+    const double weightOverride = firstWeightKg.toDouble(&weightOk);
+    if (firstWeightKg.isValid() && !firstWeightKg.isNull() && weightOk
+        && qIsFinite(weightOverride) && weightOverride >= 0.0) {
+        weight = weightOverride;
+    }
+    bool repsOk = false;
+    const int repsOverride = firstReps.toInt(&repsOk);
+    if (firstReps.isValid() && !firstReps.isNull() && repsOk && repsOverride >= 0) {
+        reps = repsOverride;
+    }
+
+    QSqlQuery order(m_database);
+    order.prepare(QStringLiteral(
+        "SELECT COALESCE(MAX(set_order),-1)+1 FROM set_record WHERE workout_exercise_id=?"));
+    order.addBindValue(exercise.value(QStringLiteral("id")));
+    if (!order.exec() || !order.next()) {
+        return fail(order.lastError().text());
+    }
+
+    QSqlQuery insert(m_database);
+    insert.prepare(QStringLiteral(
+        "INSERT INTO set_record(id,workout_exercise_id,set_order,weight_kg,target_reps) "
+        "VALUES(?,?,?,?,?)"));
+    insert.addBindValue(newId());
+    insert.addBindValue(exercise.value(QStringLiteral("id")));
+    insert.addBindValue(order.value(0).toInt());
+    insert.addBindValue(weight.isValid() && !weight.isNull() ? weight : QVariant{});
+    insert.addBindValue(reps.isValid() && !reps.isNull() ? reps : QVariant{});
+    if (!insert.exec()) {
+        return fail(insert.lastError().text());
+    }
+    return loadSession(m_sessionId);
+}
+
+bool WorkoutSessionController::setSetWeight(int exerciseIndex, int setIndex, double weightKg)
+{
+    clearError();
+    if (!active() || exerciseIndex < 0 || exerciseIndex >= m_exercises.size()
+        || !qIsFinite(weightKg) || weightKg < 0.0 || weightKg > 9999.0) {
+        return fail(QStringLiteral("组重量无效"));
+    }
+    const QVariantMap exercise = m_exercises.at(exerciseIndex).toMap();
+    const QVariantList sets = exercise.value(QStringLiteral("sets")).toList();
+    if (setIndex < 0 || setIndex >= sets.size()) {
+        return fail(QStringLiteral("组序号无效"));
+    }
+
+    QSqlQuery update(m_database);
+    update.prepare(QStringLiteral(
+        "UPDATE set_record SET weight_kg=? WHERE id=? AND workout_exercise_id=?"));
+    update.addBindValue(weightKg);
+    update.addBindValue(sets.at(setIndex).toMap().value(QStringLiteral("id")));
+    update.addBindValue(exercise.value(QStringLiteral("id")));
+    if (!update.exec()) {
+        return fail(update.lastError().text());
+    }
+    if (update.numRowsAffected() != 1) {
+        return fail(QStringLiteral("找不到训练组"));
+    }
+    return loadSession(m_sessionId);
+}
+
 bool WorkoutSessionController::completeSet(
     int exerciseIndex, int setIndex, double weightKg, int actualReps, bool toFailure,
     const QString &bodyweightLoadType)

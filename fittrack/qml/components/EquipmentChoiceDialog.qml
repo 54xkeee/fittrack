@@ -43,7 +43,7 @@ AppDialog {
         anchors.fill: parent
         spacing: Design.Theme.space12
 
-        ComboBox {
+        AppComboBox {
             id: equipmentChoice
             Layout.fillWidth: true
             implicitHeight: Design.Theme.controlHeight

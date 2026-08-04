@@ -244,8 +244,8 @@ AppPage {
 
             SectionHeader {
                 Layout.fillWidth: true
-                Layout.leftMargin: 16
-                Layout.rightMargin: 16
+                Layout.leftMargin: Design.Theme.space16
+                Layout.rightMargin: Design.Theme.space16
                 eyebrow: qsTr("SETUP")
                 title: qsTr("场地与数据")
                 subtitle: qsTr("保存同一健身房、同一器械的数据，趋势才有比较意义。")
@@ -253,12 +253,49 @@ AppPage {
 
             AppCard {
                 Layout.fillWidth: true
-                Layout.leftMargin: 16
-                Layout.rightMargin: 16
+                Layout.leftMargin: Design.Theme.space16
+                Layout.rightMargin: Design.Theme.space16
+
+                RowLayout {
+                    anchors.fill: parent
+                    spacing: Design.Theme.space12
+
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        spacing: Design.Theme.space4
+
+                        Label {
+                            text: qsTr("减少动态效果")
+                            color: Design.Theme.surfaceText
+                            font.pixelSize: Design.Theme.typeBody
+                            font.weight: Font.DemiBold
+                        }
+                        Label {
+                            Layout.fillWidth: true
+                            text: qsTr("关闭按钮、弹窗和数据图表的过渡动画。")
+                            color: Design.Theme.surfaceMuted
+                            font.pixelSize: Design.Theme.typeLabel
+                            wrapMode: Text.WordWrap
+                        }
+                    }
+
+                    AppSwitch {
+                        id: reducedMotionSwitch
+                        Accessible.name: qsTr("减少动态效果")
+                        checked: Design.Preferences.reducedMotion
+                        onToggled: Design.Preferences.reducedMotion = checked
+                    }
+                }
+            }
+
+            AppCard {
+                Layout.fillWidth: true
+                Layout.leftMargin: Design.Theme.space16
+                Layout.rightMargin: Design.Theme.space16
 
                 ColumnLayout {
                     anchors.fill: parent
-                    spacing: 10
+                    spacing: Design.Theme.space8
 
                     RowLayout {
                         Layout.fillWidth: true
@@ -280,7 +317,7 @@ AppPage {
                         }
                     }
 
-                    ComboBox {
+                    AppComboBox {
                         Layout.fillWidth: true
                         model: gymManagement.gyms
                         textRole: "name"
@@ -291,7 +328,7 @@ AppPage {
                     RowLayout {
                         visible: gymManagement.selectedGymId.length > 0
                         Layout.fillWidth: true
-                        spacing: 8
+                        spacing: Design.Theme.space8
                         ActionPill {
                             Layout.fillWidth: true
                             text: qsTr("重命名")
@@ -340,16 +377,16 @@ AppPage {
                 delegate: AppCard {
                     required property var modelData
                     Layout.fillWidth: true
-                    Layout.leftMargin: 16
-                    Layout.rightMargin: 16
+                    Layout.leftMargin: Design.Theme.space16
+                    Layout.rightMargin: Design.Theme.space16
 
                     RowLayout {
                         anchors.fill: parent
-                        spacing: 10
+                        spacing: Design.Theme.space8
 
                         ColumnLayout {
                             Layout.fillWidth: true
-                            spacing: 4
+                            spacing: Design.Theme.space4
                             Label {
                                 text: modelData.name + (modelData.code.length ? " · " + modelData.code : "")
                                 color: Design.Theme.surfaceText
@@ -405,12 +442,12 @@ AppPage {
 
             AppCard {
                 Layout.fillWidth: true
-                Layout.leftMargin: 16
-                Layout.rightMargin: 16
+                Layout.leftMargin: Design.Theme.space16
+                Layout.rightMargin: Design.Theme.space16
 
                 ColumnLayout {
                     anchors.fill: parent
-                    spacing: 10
+                    spacing: Design.Theme.space8
 
                     Label {
                         text: qsTr("数据备份")
@@ -426,7 +463,7 @@ AppPage {
                     }
                     RowLayout {
                         Layout.fillWidth: true
-                        spacing: 8
+                        spacing: Design.Theme.space8
                         ActionPill { Layout.fillWidth: true; text: qsTr("导出JSON"); onClicked: exportJsonDialog.open() }
                         ActionPill { Layout.fillWidth: true; text: qsTr("导出SQLite"); onClicked: exportDbDialog.open() }
                     }
@@ -442,8 +479,8 @@ AppPage {
             InlineFeedback {
                 visible: backupService.errorMessage.length > 0 || gymManagement.errorMessage.length > 0
                 Layout.fillWidth: true
-                Layout.leftMargin: 16
-                Layout.rightMargin: 16
+                Layout.leftMargin: Design.Theme.space16
+                Layout.rightMargin: Design.Theme.space16
                 tone: "error"
                 message: backupService.errorMessage.length
                          ? backupService.errorMessage : gymManagement.errorMessage
@@ -452,8 +489,8 @@ AppPage {
             InlineFeedback {
                 visible: page.feedbackMessage.length > 0
                 Layout.fillWidth: true
-                Layout.leftMargin: 16
-                Layout.rightMargin: 16
+                Layout.leftMargin: Design.Theme.space16
+                Layout.rightMargin: Design.Theme.space16
                 tone: page.feedbackTone
                 message: page.feedbackMessage
             }

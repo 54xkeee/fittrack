@@ -45,10 +45,10 @@
                       {
                           "type":  "localImage",
                           "localPath":  "qrc:/images/exercises/shareable/single-leg-deadlift.jpg",
-                          "url":  "https://www.flickr.com/photos/personaltrainertoronto/28920837767/",
-                          "title":  "Single Leg Deadlift Video",
-                          "source":  "Eric Astrauskas / Flickr",
-                          "license":  "CC BY 2.0"
+                          "url":  "https://creativecommons.org/publicdomain/zero/1.0/",
+                          "title":  "单腿硬拉 · FitTrack 生成动作示意图",
+                          "source":  "FitTrack 项目生成（OpenAI image generation）",
+                          "license":  "CC0 1.0"
                       }
                   ],
         "sources":  [
@@ -141,10 +141,10 @@
                       {
                           "type":  "localImage",
                           "localPath":  "qrc:/images/exercises/shareable/bulgarian-split-squat.jpg",
-                          "url":  "https://wger.de/api/v2/exerciseimage/383/",
-                          "title":  "Bulgarian split squat exercise image",
-                          "source":  "Franpol / wger",
-                          "license":  "CC BY-SA 4.0"
+                          "url":  "https://creativecommons.org/publicdomain/zero/1.0/",
+                          "title":  "单腿保加利亚蹲 · FitTrack 生成动作示意图",
+                          "source":  "FitTrack 项目生成（OpenAI image generation）",
+                          "license":  "CC0 1.0"
                       }
                   ],
         "sources":  [
@@ -231,10 +231,10 @@
                       {
                           "type":  "localImage",
                           "localPath":  "qrc:/images/exercises/shareable/goblet-squat.jpg",
-                          "url":  "https://commons.wikimedia.org/wiki/File:Artemis_Program_Physical_Exercise_(7654258).jpg",
-                          "title":  "Goblet squat during physical training",
-                          "source":  "U.S. Marine Corps photo by Lance Cpl. Kristy Ordonez / Wikimedia Commons",
-                          "license":  "Public domain (U.S. federal government work)"
+                          "url":  "https://creativecommons.org/publicdomain/zero/1.0/",
+                          "title":  "高脚杯深蹲 · FitTrack 生成动作示意图",
+                          "source":  "FitTrack 项目生成（OpenAI image generation）",
+                          "license":  "CC0 1.0"
                       }
                   ],
         "sources":  [
@@ -322,10 +322,10 @@
                       {
                           "type":  "localImage",
                           "localPath":  "qrc:/images/exercises/shareable/romanian-deadlift.jpg",
-                          "url":  "https://commons.wikimedia.org/wiki/File:Romanian-deadlift-2.png",
-                          "title":  "Romanian deadlift illustration",
-                          "source":  "Everkinetic / Wikimedia Commons",
-                          "license":  "CC BY-SA 3.0"
+                          "url":  "https://creativecommons.org/publicdomain/zero/1.0/",
+                          "title":  "杠铃罗马尼亚硬拉 · FitTrack 生成动作示意图",
+                          "source":  "FitTrack 项目生成（OpenAI image generation）",
+                          "license":  "CC0 1.0"
                       }
                   ],
         "sources":  [
@@ -411,10 +411,10 @@
                       {
                           "type":  "localImage",
                           "localPath":  "qrc:/images/exercises/shareable/back-extension.jpg",
-                          "url":  "https://commons.wikimedia.org/wiki/File:Roman_chair_(hyperextension)_animation.gif",
-                          "title":  "Roman chair back extension illustration",
-                          "source":  "O\u0027Dea / Wikimedia Commons",
-                          "license":  "CC BY-SA 4.0"
+                          "url":  "https://creativecommons.org/publicdomain/zero/1.0/",
+                          "title":  "山羊挺身 · FitTrack 生成动作示意图",
+                          "source":  "FitTrack 项目生成（OpenAI image generation）",
+                          "license":  "CC0 1.0"
                       }
                   ],
         "sources":  [
@@ -502,10 +502,10 @@
                       {
                           "type":  "localImage",
                           "localPath":  "qrc:/images/exercises/shareable/hack-squat.jpg",
-                          "url":  "https://commons.wikimedia.org/wiki/File:Hack_squat_machine_1.svg",
-                          "title":  "Hack squat machine illustration",
-                          "source":  "Everkinetic / Wikimedia Commons",
-                          "license":  "CC BY-SA 3.0"
+                          "url":  "https://creativecommons.org/publicdomain/zero/1.0/",
+                          "title":  "黑客深蹲 · FitTrack 生成动作示意图",
+                          "source":  "FitTrack 项目生成（OpenAI image generation）",
+                          "license":  "CC0 1.0"
                       }
                   ],
         "sources":  [
@@ -588,10 +588,10 @@
                       {
                           "type":  "localImage",
                           "localPath":  "qrc:/images/exercises/shareable/barbell-back-squat.jpg",
-                          "url":  "https://commons.wikimedia.org/wiki/File:Squats.svg",
-                          "title":  "Barbell back squat illustration",
-                          "source":  "Everkinetic; SVG by Urutseg / Wikimedia Commons",
-                          "license":  "CC BY-SA 3.0"
+                          "url":  "https://creativecommons.org/publicdomain/zero/1.0/",
+                          "title":  "杠铃深蹲 · FitTrack 生成动作示意图",
+                          "source":  "FitTrack 项目生成（OpenAI image generation）",
+                          "license":  "CC0 1.0"
                       }
                   ],
         "sources":  [
@@ -674,10 +674,10 @@
                       {
                           "type":  "localImage",
                           "localPath":  "qrc:/images/exercises/shareable/leg-press.jpg",
-                          "url":  "https://commons.wikimedia.org/wiki/File:Leg-press-2-1024x670.png",
-                          "title":  "Leg press illustration",
-                          "source":  "Everkinetic / Wikimedia Commons",
-                          "license":  "CC BY-SA 3.0"
+                          "url":  "https://creativecommons.org/publicdomain/zero/1.0/",
+                          "title":  "腿部推蹬 · FitTrack 生成动作示意图",
+                          "source":  "FitTrack 项目生成（OpenAI image generation）",
+                          "license":  "CC0 1.0"
                       }
                   ],
         "sources":  [
@@ -759,8 +759,8 @@
                           "type":  "localImage",
                           "localPath":  "qrc:/images/exercises/shareable/hip-adduction-machine.jpg",
                           "url":  "https://creativecommons.org/publicdomain/zero/1.0/",
-                          "title":  "腿内收原创动作示意图",
-                          "source":  "FitTrack 项目原创",
+                          "title":  "大腿内收机 · FitTrack 生成动作示意图",
+                          "source":  "FitTrack 项目生成（OpenAI image generation）",
                           "license":  "CC0 1.0"
                       }
                   ],
@@ -841,8 +841,8 @@
                           "type":  "localImage",
                           "localPath":  "qrc:/images/exercises/shareable/hip-abduction-machine.jpg",
                           "url":  "https://creativecommons.org/publicdomain/zero/1.0/",
-                          "title":  "腿外展原创动作示意图",
-                          "source":  "FitTrack 项目原创",
+                          "title":  "大腿外展机 · FitTrack 生成动作示意图",
+                          "source":  "FitTrack 项目生成（OpenAI image generation）",
                           "license":  "CC0 1.0"
                       }
                   ],
@@ -923,10 +923,10 @@
                       {
                           "type":  "localImage",
                           "localPath":  "qrc:/images/exercises/shareable/leg-extension.jpg",
-                          "url":  "https://commons.wikimedia.org/wiki/File:Leg-extensions-1-672x1024.png",
-                          "title":  "坐姿腿屈伸起始位置示意图",
-                          "source":  "Everkinetic / Wikimedia Commons",
-                          "license":  "CC BY-SA 3.0"
+                          "url":  "https://creativecommons.org/publicdomain/zero/1.0/",
+                          "title":  "坐姿腿屈伸（三种模式） · FitTrack 生成动作示意图",
+                          "source":  "FitTrack 项目生成（OpenAI image generation）",
+                          "license":  "CC0 1.0"
                       }
                   ],
         "sources":  [
@@ -1010,10 +1010,10 @@
                       {
                           "type":  "localImage",
                           "localPath":  "qrc:/images/exercises/shareable/lying-leg-curl.jpg",
-                          "url":  "https://commons.wikimedia.org/wiki/File:Lying_leg_curl_machine_1.svg",
-                          "title":  "俯卧腿弯举器械起始位置示意图",
-                          "source":  "Everkinetic / Wikimedia Commons",
-                          "license":  "CC BY-SA 3.0"
+                          "url":  "https://creativecommons.org/publicdomain/zero/1.0/",
+                          "title":  "卧姿腿弯举 · FitTrack 生成动作示意图",
+                          "source":  "FitTrack 项目生成（OpenAI image generation）",
+                          "license":  "CC0 1.0"
                       }
                   ],
         "sources":  [
@@ -1090,10 +1090,10 @@
                       {
                           "type":  "localImage",
                           "localPath":  "qrc:/images/exercises/shareable/seated-leg-curl.jpg",
-                          "url":  "https://commons.wikimedia.org/wiki/File:Seated-leg-curl-1.png",
-                          "title":  "Seated leg curl illustration",
-                          "source":  "Everkinetic / Wikimedia Commons",
-                          "license":  "CC BY-SA 3.0"
+                          "url":  "https://github.com/yuhonas/free-exercise-db/tree/main/exercises/Seated_Leg_Curl",
+                          "title":  "坐姿腿弯举 · Free Exercise DB 实拍",
+                          "source":  "Free Exercise DB（yuhonas/free-exercise-db；FitTrack 裁切并重编码）",
+                          "license":  "Unlicense"
                       }
                   ],
         "sources":  [
@@ -1172,8 +1172,8 @@
                           "type":  "localImage",
                           "localPath":  "qrc:/images/exercises/shareable/barbell-hip-thrust.jpg",
                           "url":  "https://creativecommons.org/publicdomain/zero/1.0/",
-                          "title":  "杠铃臀推原创动作示意图",
-                          "source":  "FitTrack 项目原创",
+                          "title":  "杠铃臀推 · FitTrack 生成动作示意图",
+                          "source":  "FitTrack 项目生成（OpenAI image generation）",
                           "license":  "CC0 1.0"
                       }
                   ],
@@ -1251,10 +1251,10 @@
                       {
                           "type":  "localImage",
                           "localPath":  "qrc:/images/exercises/shareable/standing-calf-raise.jpg",
-                          "url":  "https://commons.wikimedia.org/wiki/File:Standing-calf-raises-1.gif",
-                          "title":  "Standing calf raise illustration",
-                          "source":  "Everkinetic / Wikimedia Commons",
-                          "license":  "CC BY-SA 3.0"
+                          "url":  "https://github.com/yuhonas/free-exercise-db/tree/main/exercises/Standing_Calf_Raises",
+                          "title":  "站姿提踵 · Free Exercise DB 实拍",
+                          "source":  "Free Exercise DB（yuhonas/free-exercise-db；FitTrack 裁切并重编码）",
+                          "license":  "Unlicense"
                       }
                   ],
         "sources":  [
@@ -1332,10 +1332,10 @@
                       {
                           "type":  "localImage",
                           "localPath":  "qrc:/images/exercises/shareable/seated-calf-raise.jpg",
-                          "url":  "https://commons.wikimedia.org/wiki/File:Seated_calf_raise_using_machine_1.svg",
-                          "title":  "Seated calf raise using machine illustration",
-                          "source":  "Everkinetic / Wikimedia Commons",
-                          "license":  "CC BY-SA 3.0"
+                          "url":  "https://github.com/yuhonas/free-exercise-db/tree/main/exercises/Seated_Calf_Raise",
+                          "title":  "坐姿提踵 · Free Exercise DB 实拍",
+                          "source":  "Free Exercise DB（yuhonas/free-exercise-db；FitTrack 裁切并重编码）",
+                          "license":  "Unlicense"
                       }
                   ],
         "sources":  [
@@ -1418,10 +1418,10 @@
                       {
                           "type":  "localImage",
                           "localPath":  "qrc:/images/exercises/shareable/smith-machine-squat.jpg",
-                          "url":  "https://commons.wikimedia.org/wiki/File:Smith_machine_squats_1.svg",
-                          "title":  "Smith machine squat illustration",
-                          "source":  "Everkinetic / Wikimedia Commons",
-                          "license":  "CC BY-SA 3.0"
+                          "url":  "https://creativecommons.org/publicdomain/zero/1.0/",
+                          "title":  "史密斯机器深蹲 · FitTrack 生成动作示意图",
+                          "source":  "FitTrack 项目生成（OpenAI image generation）",
+                          "license":  "CC0 1.0"
                       }
                   ],
         "sources":  [

@@ -1,5 +1,6 @@
 import QtQuick 6.9
 import QtQuick.Controls
+import QtQuick.Controls.Material
 import QtQuick.Layouts
 import "../components"
 import "../theme" as Design
@@ -8,11 +9,18 @@ AppPage {
     id: page
     objectName: "trainingPage"
 
-    leftPadding: Design.Spacing.page + SafeArea.margins.left
-    rightPadding: Design.Spacing.page + SafeArea.margins.right
-    topPadding: Design.Spacing.lg + SafeArea.margins.top
+    leftPadding: (workoutController.active ? Design.WorkoutTheme.space16
+                                           : Design.Theme.space12) + SafeArea.margins.left
+    rightPadding: (workoutController.active ? Design.WorkoutTheme.space16
+                                            : Design.Theme.space12) + SafeArea.margins.right
+    topPadding: (workoutController.active ? Design.WorkoutTheme.space8
+                                          : Design.Theme.space12) + SafeArea.margins.top
 
-    background: Rectangle { color: Design.Theme.canvas }
+    Material.theme: workoutController.active ? Material.Light : Material.Dark
+    background: Rectangle {
+        color: workoutController.active ? Design.WorkoutTheme.background
+                                        : Design.Theme.canvas
+    }
 
     implicitWidth: 0
     implicitHeight: 0
@@ -20,6 +28,7 @@ AppPage {
     signal freeStartRequested(string name)
     property string selectedExerciseId: ""
     property bool submittingSet: false
+    property int sessionElapsedSeconds: 0
     readonly property var trainingExerciseModel: exerciseModel
     readonly property real inputMethodOverlap: {
         const keyboard = Qt.inputMethod.keyboardRectangle
@@ -88,6 +97,21 @@ AppPage {
         return count
     }
 
+    function completedExerciseVolume(exercise) {
+        if (!exercise || !exercise.sets)
+            return 0
+        let volume = 0
+        for (let index = 0; index < exercise.sets.length; ++index) {
+            const set = exercise.sets[index]
+            if (!set.completed || (exercise.loadMode === "Bodyweight"
+                                   && set.bodyweightLoadType !== "Added"))
+                continue
+            volume += Number(set.weightKg || 0) * Number(set.actualReps || 0)
+                    * (Boolean(set.bothSides) ? 2 : 1)
+        }
+        return volume
+    }
+
     function nextIncompleteExerciseId(afterIndex) {
         const items = workoutController.exercises
         if (items.length === 0)
@@ -114,11 +138,6 @@ AppPage {
 
     function selectExercise(exerciseId) {
         selectedExerciseId = exerciseId
-        Qt.callLater(loadCurrentSetInputs)
-    }
-
-    function loadCurrentSetInputs() {
-        currentSetInput.loadInputs()
     }
 
     function gymIndex(gymId) {
@@ -146,6 +165,107 @@ AppPage {
         return qsTr("上次：") + values.join("  ·  ")
     }
 
+    function previousSetText(setIndex) {
+        if (!currentExercise || !currentExercise.previousSets
+                || setIndex < 0 || setIndex >= currentExercise.previousSets.length)
+            return qsTr("—")
+        const previous = currentExercise.previousSets[setIndex]
+        return Number(previous.weightKg) + " × " + previous.reps
+    }
+
+    function completedSessionSets() {
+        let count = 0
+        const exercises = workoutController.exercises || []
+        for (let exerciseIndex = 0; exerciseIndex < exercises.length; ++exerciseIndex)
+            count += completedSetCount(exercises[exerciseIndex])
+        return count
+    }
+
+    function completedSessionVolume() {
+        let volume = 0
+        const exercises = workoutController.exercises || []
+        for (let exerciseIndex = 0; exerciseIndex < exercises.length; ++exerciseIndex) {
+            const exercise = exercises[exerciseIndex]
+            const sets = exercise.sets || []
+            for (let setIndex = 0; setIndex < sets.length; ++setIndex) {
+                const set = sets[setIndex]
+                if (!set.completed || (exercise.loadMode === "Bodyweight"
+                                       && set.bodyweightLoadType !== "Added"))
+                    continue
+                const sideFactor = Boolean(set.bothSides) ? 2 : 1
+                volume += Number(set.weightKg || 0) * Number(set.actualReps || 0)
+                        * sideFactor
+            }
+        }
+        return volume
+    }
+
+    function compactVolume(value) {
+        const volume = Number(value || 0)
+        return volume >= 1000 ? (volume / 1000).toFixed(1) + qsTr(" t")
+                              : Math.round(volume) + qsTr(" kg")
+    }
+
+    function sessionDurationText() {
+        const seconds = Math.max(0, sessionElapsedSeconds)
+        const hours = Math.floor(seconds / 3600)
+        const minutes = Math.floor((seconds % 3600) / 60)
+        const remainder = seconds % 60
+        return hours > 0
+                ? qsTr("%1时%2分").arg(hours).arg(minutes)
+                : String(minutes).padStart(2, "0") + ":"
+                  + String(remainder).padStart(2, "0")
+    }
+
+    function ensureSetRowVisible(rowItem) {
+        if (!rowItem || !rowItem.visible || !trainingScroll.contentItem)
+            return
+        const flickable = trainingScroll.contentItem
+        const mapped = rowItem.mapToItem(flickable, 0, 0)
+        const currentY = Number(flickable.contentY || 0)
+        const rowTop = mapped.y + currentY
+        const rowBottom = rowTop + rowItem.height
+        const viewportTop = currentY + Design.WorkoutTheme.space16
+        const viewportBottom = currentY + flickable.height
+                - Design.WorkoutTheme.space16
+        let targetY = currentY
+        if (rowTop < viewportTop)
+            targetY = rowTop - Design.WorkoutTheme.space16
+        else if (rowBottom > viewportBottom)
+            targetY = rowBottom - flickable.height
+                    + Design.WorkoutTheme.space16
+        const maximumY = Math.max(0, Number(flickable.contentHeight || 0)
+                                     - flickable.height)
+        flickable.contentY = Math.max(0, Math.min(maximumY, targetY))
+    }
+
+    function findDescendantByObjectName(item, name) {
+        if (!item)
+            return null
+        if (item.objectName === name)
+            return item
+        const items = item.children || []
+        for (let index = 0; index < items.length; ++index) {
+            const match = findDescendantByObjectName(items[index], name)
+            if (match)
+                return match
+        }
+        return null
+    }
+
+    function ensureCurrentSetVisible() {
+        ensureSetRowVisible(findDescendantByObjectName(
+                                trainingScroll.contentItem,
+                                "activeWorkoutSetRow"))
+    }
+
+    Timer {
+        interval: 1000
+        repeat: true
+        running: workoutController.active
+        onTriggered: page.sessionElapsedSeconds += 1
+    }
+
     function compactSessionName(name) {
         const value = String(name || qsTr("训练"))
         const fullWidthSeparator = value.indexOf("｜")
@@ -161,8 +281,37 @@ AppPage {
     readonly property int currentSetIndex: firstIncompleteSetIndex(currentExercise)
     readonly property var currentSet: currentExercise && currentSetIndex >= 0
             ? currentExercise.sets[currentSetIndex] : null
+    readonly property var currentExerciseDetail: currentExercise
+            ? exerciseModel.exerciseById(currentExercise.exerciseId) : ({})
+    readonly property var currentExerciseMedia: currentExerciseDetail.mediaItems
+            && currentExerciseDetail.mediaItems.length > 0
+            ? currentExerciseDetail.mediaItems[0] : ({})
     readonly property bool currentIsBodyweight: currentExercise
             && currentExercise.loadMode === "Bodyweight"
+    // Keep the workout flow visible without turning every exercise into a
+    // second editor.  The preview intentionally points at the next exercise
+    // that still has work to do, while the current card remains in place.
+    function nextPreviewExerciseId() {
+        const items = workoutController.exercises || []
+        if (currentExerciseIndex < 0 || items.length < 2)
+            return ""
+        for (let offset = 1; offset < items.length; ++offset) {
+            const index = (currentExerciseIndex + offset) % items.length
+            if (firstIncompleteSetIndex(items[index]) >= 0)
+                return String(items[index].id || "")
+        }
+        return ""
+    }
+
+    readonly property string nextPreviewId: nextPreviewExerciseId()
+    readonly property int nextPreviewIndex: exerciseIndexById(nextPreviewId)
+    readonly property var nextPreviewExercise: nextPreviewIndex >= 0
+            ? workoutController.exercises[nextPreviewIndex] : null
+    readonly property var nextPreviewDetail: nextPreviewExercise
+            ? exerciseModel.exerciseById(nextPreviewExercise.exerciseId) : ({})
+    readonly property var nextPreviewMedia: nextPreviewDetail.mediaItems
+            && nextPreviewDetail.mediaItems.length > 0
+            ? nextPreviewDetail.mediaItems[0] : ({})
     readonly property bool allExercisesComplete: workoutController.active
             && workoutController.exercises.length > 0
             && nextIncompleteExerciseId(-1).length === 0
@@ -171,7 +320,6 @@ AppPage {
         exerciseModel.ensureLoaded()
         planExerciseModel.ensureLoaded()
         ensureExerciseSelection()
-        Qt.callLater(loadCurrentSetInputs)
     }
 
     Connections {
@@ -180,12 +328,12 @@ AppPage {
         function onExercisesChanged() {
             page.submittingSet = false
             page.ensureExerciseSelection()
-            Qt.callLater(page.loadCurrentSetInputs)
         }
 
         function onSessionChanged() {
+            if (!workoutController.active)
+                page.sessionElapsedSeconds = 0
             page.ensureExerciseSelection()
-            Qt.callLater(page.loadCurrentSetInputs)
         }
 
         function onSetCompleted(restSeconds) {
@@ -194,16 +342,13 @@ AppPage {
                         ? qsTr("本组已保存，已开始 %1 秒休息计时").arg(restSeconds)
                         : qsTr("本组已保存"),
                         Accessible.Polite)
-            const completedExerciseIndex = page.exerciseIndexById(page.selectedExerciseId)
-            if (completedExerciseIndex >= 0
-                    && page.firstIncompleteSetIndex(workoutController.exercises[completedExerciseIndex]) < 0) {
-                const nextId = page.nextIncompleteExerciseId(completedExerciseIndex)
-                if (nextId.length > 0)
-                    page.selectedExerciseId = nextId
-            }
-            Qt.callLater(page.loadCurrentSetInputs)
+            // Do not advance the visual focus automatically.  The current
+            // exercise stays on screen so the user can review it; the compact
+            // next-exercise preview below is updated by the model signal and
+            // can be opened explicitly.
             if (restSeconds > 0)
                 restTimer.start(restSeconds)
+            Qt.callLater(page.ensureCurrentSetVisible)
         }
     }
 
@@ -639,7 +784,7 @@ AppPage {
                     decimals: 0
                     keyboardHints: Qt.ImhDigitsOnly
                 }
-                ComboBox {
+                AppComboBox {
                     id: editBodyweightMode
                     Layout.fillWidth: true
                     implicitHeight: Design.Theme.controlHeight
@@ -651,7 +796,7 @@ AppPage {
                         {"label": qsTr("辅助重量"), "value": "Assisted"}
                     ]
                 }
-                CheckBox {
+                AppCheckBox {
                     id: editFailure
                     objectName: "editSetFailureCheckBox"
                     Layout.fillWidth: true
@@ -797,7 +942,7 @@ AppPage {
                     Accessible.name: qsTr("短休秒数")
                 }
             }
-            CheckBox {
+            AppCheckBox {
                 id: appendFailure
                 objectName: "appendSetFailureCheckBox"
                 Layout.fillWidth: true
@@ -1090,44 +1235,29 @@ AppPage {
             width: trainingScroll.availableWidth
             spacing: Design.Spacing.section
 
-            RowLayout {
+            WorkoutTopBar {
+                visible: workoutController.active
                 Layout.fillWidth: true
-                spacing: Design.Theme.space8
-
-                ColumnLayout {
-                    Layout.fillWidth: true
-                    spacing: 0
-                    Label {
-                        objectName: "trainingSessionTitle"
-                        text: workoutController.active && page.currentExerciseIndex >= 0
-                              ? qsTr("%1 · %2/%3")
-                                .arg(page.compactSessionName(workoutController.sessionName))
-                                .arg(page.currentExerciseIndex + 1)
-                                .arg(workoutController.exercises.length)
-                              : (workoutController.active
-                                 ? workoutController.sessionName : qsTr("训练"))
-                        color: workoutController.active
-                               ? Design.Theme.textPrimary : Design.Theme.backgroundText
-                        font.pixelSize: Design.Typography.pageTitle
-                        font.weight: Font.DemiBold
-                        Layout.fillWidth: true
-                        Layout.minimumWidth: 0
-                        wrapMode: Text.WordWrap
-                    }
-                    Label {
-                        visible: workoutController.active
-                        text: page.currentExerciseIndex >= 0 ? qsTr("训练中") : qsTr("准备开始")
-                        color: Design.Theme.textTertiary
-                        font.pixelSize: Design.Typography.caption
-                    }
+                progressText: qsTr("%1 · 第%2/%3个动作")
+                              .arg(page.compactSessionName(workoutController.sessionName))
+                              .arg(Math.max(0, page.currentExerciseIndex + 1))
+                              .arg(workoutController.exercises.length)
+                onBackRequested: sessionMenu.open()
+                onTimerRequested: trainingRestTimer.open()
+                onFinishRequested: {
+                    if (page.allExercisesComplete)
+                        workoutController.finishWorkout()
+                    else
+                        finishWorkoutConfirm.open()
                 }
+            }
 
-                IconButton {
-                    visible: workoutController.active
-                    iconName: "more"
-                    accessibleName: qsTr("训练更多操作")
-                    onClicked: sessionMenu.open()
-                }
+            WorkoutSummaryBar {
+                visible: workoutController.active
+                Layout.fillWidth: true
+                durationText: page.sessionDurationText()
+                volumeText: page.compactVolume(page.completedSessionVolume())
+                completedSets: page.completedSessionSets()
             }
 
             InlineFeedback {
@@ -1201,7 +1331,7 @@ AppPage {
                             Layout.fillWidth: true
                         }
 
-                        ComboBox {
+                        AppComboBox {
                             Layout.fillWidth: true
                             implicitHeight: Design.Theme.controlHeight
                             model: workoutController.gyms
@@ -1225,7 +1355,9 @@ AppPage {
                             model: workoutController.planDays
                             delegate: AppButton {
                                 required property var modelData
+                                required property int index
                                 Layout.fillWidth: true
+                                variant: index === 0 ? "primary" : "secondary"
                                 text: modelData.planName + " · " + modelData.name
                                 onClicked: page.planStartRequested(modelData.dayId)
                             }
@@ -1244,306 +1376,7 @@ AppPage {
             ColumnLayout {
                 visible: workoutController.active
                 Layout.fillWidth: true
-                spacing: Design.Theme.space12
-
-                AppCard {
-                    visible: page.currentExercise !== null
-                    Layout.fillWidth: true
-                    padding: 0
-                    background: Item { }
-
-                    ColumnLayout {
-                        anchors.fill: parent
-                        spacing: Design.Spacing.md
-
-                        RowLayout {
-                            Layout.fillWidth: true
-                            Button {
-                                objectName: "currentExercisePreviewButton"
-                                Layout.fillWidth: true
-                                implicitHeight: Design.Theme.touchTarget
-                                flat: true
-                                padding: 0
-                                text: page.currentExercise ? page.currentExercise.name : ""
-                                Accessible.name: page.currentExercise
-                                                 ? qsTr("查看%1动作做法").arg(
-                                                       page.currentExercise.name)
-                                                 : qsTr("查看当前动作做法")
-                                Accessible.description: qsTr("查看动作做法")
-                                onClicked: if (page.currentExercise)
-                                               sharedExerciseDetail.openExercise(
-                                                   exerciseModel.exerciseById(
-                                                       page.currentExercise.exerciseId))
-                                contentItem: Label {
-                                    text: parent.text
-                                    color: Design.Theme.textPrimary
-                                    font.pixelSize: Design.Typography.exerciseTitle
-                                    font.weight: Font.DemiBold
-                                    elide: Text.ElideRight
-                                }
-                            }
-                            IconButton {
-                                iconName: "more"
-                                accessibleName: page.currentExercise
-                                                ? qsTr("%1更多操作").arg(page.currentExercise.name)
-                                                : qsTr("当前动作更多操作")
-                                onClicked: {
-                                    exerciseActions.targetExerciseId = page.selectedExerciseId
-                                    exerciseActions.open()
-                                }
-                            }
-                        }
-
-                        RowLayout {
-                            Layout.fillWidth: true
-                            spacing: Design.Spacing.md
-
-                            ColumnLayout {
-                                Layout.fillWidth: true
-                                spacing: 0
-                                Label {
-                                    Layout.alignment: Qt.AlignHCenter
-                                    text: page.currentExercise ? page.currentExercise.sets.length : 0
-                                    color: Design.Theme.textPrimary
-                                    font.pixelSize: Design.Typography.trainingNumber
-                                    font.weight: Font.DemiBold
-                                }
-                                Label {
-                                    Layout.alignment: Qt.AlignHCenter
-                                    text: qsTr("组")
-                                    color: Design.Theme.textTertiary
-                                    font.pixelSize: Design.Typography.caption
-                                }
-                            }
-                            Rectangle {
-                                Layout.preferredWidth: 1
-                                Layout.preferredHeight: 36
-                                color: Design.Theme.divider
-                            }
-                            ColumnLayout {
-                                Layout.fillWidth: true
-                                spacing: 0
-                                Label {
-                                    Layout.alignment: Qt.AlignHCenter
-                                    text: page.currentExercise
-                                          ? page.currentExercise.recommendedReps : "—"
-                                    color: Design.Theme.textPrimary
-                                    font.pixelSize: Design.Typography.trainingNumber
-                                    font.weight: Font.DemiBold
-                                }
-                                Label {
-                                    Layout.alignment: Qt.AlignHCenter
-                                    text: qsTr("目标次数")
-                                    color: Design.Theme.textTertiary
-                                    font.pixelSize: Design.Typography.caption
-                                }
-                            }
-                            Rectangle {
-                                Layout.preferredWidth: 1
-                                Layout.preferredHeight: 36
-                                color: Design.Theme.divider
-                            }
-                            ColumnLayout {
-                                Layout.fillWidth: true
-                                spacing: 0
-                                Label {
-                                    Layout.alignment: Qt.AlignHCenter
-                                    text: page.currentExercise
-                                          ? page.currentExercise.restSeconds : 0
-                                    color: Design.Theme.textPrimary
-                                    font.pixelSize: Design.Typography.trainingNumber
-                                    font.weight: Font.DemiBold
-                                }
-                                Label {
-                                    Layout.alignment: Qt.AlignHCenter
-                                    text: qsTr("休息秒")
-                                    color: Design.Theme.textTertiary
-                                    font.pixelSize: Design.Typography.caption
-                                }
-                            }
-                        }
-
-                        Label {
-                            Layout.fillWidth: true
-                            text: page.currentExercise ? page.previousText(page.currentExercise.previousSets) : ""
-                            color: Design.Theme.textSecondary
-                            font.pixelSize: Design.Typography.caption
-                            wrapMode: Text.WordWrap
-                        }
-
-                        RowLayout {
-                            Layout.fillWidth: true
-                            spacing: Design.Theme.space8
-                            Label {
-                                Layout.fillWidth: true
-                                text: page.currentExercise && page.currentExercise.equipmentName.length > 0
-                                      ? qsTr("器械：") + page.currentExercise.equipmentName
-                                      : qsTr("未指定具体器械")
-                                color: Design.Theme.textSecondary
-                                font.pixelSize: Design.Typography.caption
-                                elide: Text.ElideRight
-                            }
-                            AppButton {
-                                Layout.preferredWidth: 80
-                                variant: "secondary"
-                                flatSecondary: true
-                                cornerRadius: 14
-                                text: qsTr("选择")
-                                onClicked: page.openEquipmentChoice(page.selectedExerciseId)
-                            }
-                        }
-
-                        Rectangle {
-                            Layout.fillWidth: true
-                            implicitHeight: 1
-                            color: Design.Theme.divider
-                        }
-
-                        Label {
-                            Layout.fillWidth: true
-                            text: page.currentSetIndex >= 0
-                                  ? qsTr("已完成 %1 / %2 组")
-                                    .arg(page.completedSetCount(page.currentExercise))
-                                    .arg(page.currentExercise.sets.length)
-                                  : qsTr("本动作已完成")
-                            color: Design.Theme.textSecondary
-                            font.pixelSize: Design.Typography.caption
-                        }
-
-                        RowLayout {
-                            Layout.fillWidth: true
-                            spacing: Design.Spacing.sm
-                            Label {
-                                Layout.preferredWidth: 52
-                                text: qsTr("组")
-                                color: Design.Theme.textTertiary
-                                font.pixelSize: Design.Typography.caption
-                            }
-                            Label {
-                                Layout.fillWidth: true
-                                text: qsTr("训练记录")
-                                color: Design.Theme.textTertiary
-                                font.pixelSize: Design.Typography.caption
-                            }
-                            Label {
-                                Layout.preferredWidth: 96
-                                text: qsTr("操作")
-                                color: Design.Theme.textTertiary
-                                font.pixelSize: Design.Typography.caption
-                                horizontalAlignment: Text.AlignHCenter
-                            }
-                        }
-
-                        Repeater {
-                            model: page.currentExercise ? page.currentExercise.sets : []
-                            delegate: Rectangle {
-                                required property var modelData
-                                required property int index
-                                visible: modelData.completed
-                                Layout.fillWidth: true
-                                Layout.preferredHeight: visible ? implicitHeight : 0
-                                implicitHeight: completedSetRow.implicitHeight
-                                                + Design.Spacing.sm
-                                                + (appendSetColumn.visible
-                                                   ? appendSetColumn.implicitHeight + Design.Theme.space4 : 0)
-                                radius: 0
-                                color: "transparent"
-
-                                Rectangle {
-                                    anchors.left: parent.left
-                                    anchors.right: parent.right
-                                    anchors.bottom: parent.bottom
-                                    height: 1
-                                    color: Design.Theme.divider
-                                }
-
-                                RowLayout {
-                                    id: completedSetRow
-                                    anchors.left: parent.left
-                                    anchors.right: parent.right
-                                    anchors.top: parent.top
-                                    anchors.topMargin: Design.Theme.space4
-                                    anchors.leftMargin: 0
-                                    anchors.rightMargin: 0
-                                    spacing: Design.Theme.space8
-
-                                    Label {
-                                        Layout.preferredWidth: 52
-                                        text: String(modelData.number)
-                                        color: Design.Theme.success
-                                        font.pixelSize: Design.Typography.body
-                                        font.weight: Font.DemiBold
-                                    }
-                                    Label {
-                                        Layout.fillWidth: true
-                                        text: {
-                                            const loadText = page.currentIsBodyweight
-                                                    && modelData.bodyweightLoadType === "Bodyweight"
-                                                    ? qsTr("自重") : Number(modelData.weightKg) + " kg"
-                                            return loadText + " × " + modelData.actualReps
-                                                    + (modelData.toFailure ? qsTr(" · 力竭") : "")
-                                        }
-                                        color: Design.Theme.textPrimary
-                                        font.pixelSize: Design.Typography.body
-                                        elide: Text.ElideRight
-                                    }
-                                    IconButton {
-                                        iconName: "add"
-                                        accessibleName: qsTr("第 %1 组，添加短休追加组")
-                                                        .arg(modelData.number)
-                                        onClicked: appendSetDialog.openForSet(
-                                                       page.selectedExerciseId, modelData)
-                                    }
-                                    IconButton {
-                                        iconName: "edit"
-                                        accessibleName: qsTr("第 %1 组，修正已完成数据")
-                                                        .arg(modelData.number)
-                                        onClicked: editSetDialog.openForSet(
-                                                       page.selectedExerciseId,
-                                                       modelData,
-                                                       page.currentExercise.loadMode)
-                                    }
-                                }
-
-                                ColumnLayout {
-                                    id: appendSetColumn
-                                    anchors.left: parent.left
-                                    anchors.right: parent.right
-                                    anchors.top: completedSetRow.bottom
-                                    anchors.leftMargin: Design.Theme.space12
-                                    anchors.rightMargin: Design.Theme.space12
-                                    visible: String(modelData.notes || "").length > 0
-                                             || modelData.appendSets.length > 0
-
-                                    Label {
-                                        visible: String(modelData.notes || "").length > 0
-                                        Layout.fillWidth: true
-                                        text: qsTr("备注：%1").arg(modelData.notes)
-                                        color: Design.Theme.surfaceMuted
-                                        font.pixelSize: Design.Theme.typeCaption
-                                        wrapMode: Text.WordWrap
-                                    }
-
-                                    Repeater {
-                                        model: modelData.appendSets
-                                        delegate: Label {
-                                            required property var modelData
-                                            Layout.fillWidth: true
-                                            text: qsTr("追加 %1 kg × %2 · 短休 %3 秒%4")
-                                                .arg(modelData.weightKg)
-                                                .arg(modelData.reps)
-                                                .arg(modelData.restSeconds)
-                                                .arg(modelData.toFailure ? qsTr(" · 力竭") : "")
-                                            color: Design.Theme.surfaceMuted
-                                            font.pixelSize: Design.Theme.typeCaption
-                                            elide: Text.ElideRight
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
+                spacing: Design.WorkoutTheme.space16
 
                 InlineFeedback {
                     visible: workoutController.exercises.length === 0
@@ -1554,232 +1387,122 @@ AppPage {
                     onActionTriggered: exercisePicker.openForExercise("")
                 }
 
-                Label {
-                    visible: workoutController.exercises.length > 1
-                    text: qsTr("动作列表")
-                    color: Design.Theme.textPrimary
-                    font.pixelSize: Design.Typography.exerciseTitle
-                    font.weight: Font.DemiBold
-                }
+                // Keep one complete editor in the visual focus.  Other exercises are
+                // intentionally represented by a single hand-off preview below instead
+                // of a second set table.
+                ExerciseCard {
+                    id: currentExerciseCard
+                    objectName: page.currentExerciseIndex >= 0
+                               ? "trainingExerciseRow_" + page.currentExerciseIndex : ""
+                    visible: page.currentExercise !== null
+                    Layout.fillWidth: true
+                    property var modelData: page.currentExercise
+                    property int index: page.currentExerciseIndex
+                    readonly property bool selected: true
+                    readonly property var exerciseDetail: page.currentExerciseDetail
+                    readonly property var exerciseMedia: page.currentExerciseMedia
 
-                Repeater {
-                    model: workoutController.exercises
-                    delegate: Rectangle {
-                        id: exerciseRow
-                        objectName: "trainingExerciseRow_" + index
-                        required property var modelData
-                        required property int index
-                        property int exerciseIndex: index
-
-                        visible: workoutController.exercises.length > 1
-                        Layout.fillWidth: true
-                        implicitHeight: Math.max(
-                                            64,
-                                            trainingExerciseRowLayout.implicitHeight
-                                            + Design.Theme.space8)
-                        radius: Design.Theme.radiusSmall
-                        color: page.selectedExerciseId === modelData.id
-                               ? Design.Theme.field : "transparent"
-                        border.width: activeFocus ? 1 : 0
-                        border.color: Design.Theme.accent
-                        activeFocusOnTab: true
-                        Accessible.role: Accessible.Button
-                        Accessible.name: qsTr("%1，已完成 %2 / %3 组")
-                                         .arg(modelData.name)
-                                         .arg(page.completedSetCount(modelData))
-                                         .arg(modelData.sets.length)
-                        Accessible.description: page.selectedExerciseId === modelData.id
-                                                ? qsTr("当前动作") : qsTr("双击切换到该动作")
-                        Accessible.selected: page.selectedExerciseId === modelData.id
-                        Accessible.onPressAction: page.selectExercise(modelData.id)
-
-                        Rectangle {
-                            anchors.left: parent.left
-                            anchors.top: parent.top
-                            anchors.bottom: parent.bottom
-                            width: page.selectedExerciseId === modelData.id ? 3 : 0
-                            radius: 2
-                            color: Design.Theme.accent
-                        }
-                        RowLayout {
-                            id: trainingExerciseRowLayout
-                            anchors.left: parent.left
-                            anchors.right: parent.right
-                            anchors.verticalCenter: parent.verticalCenter
-                            anchors.leftMargin: Design.Theme.space16
-                            anchors.rightMargin: Design.Theme.space4
-                            spacing: Design.Theme.space8
-
-                            ColumnLayout {
-                                Layout.fillWidth: true
-                                spacing: 0
-                                Button {
-                                    id: trainingExercisePreview
-                                    objectName: "trainingExercisePreviewButton_" + exerciseRow.index
-                                    Layout.fillWidth: true
-                                    implicitHeight: Math.max(
-                                                        Design.Theme.touchTarget,
-                                                        trainingExerciseName.implicitHeight
-                                                        + Design.Theme.space8)
-                                    flat: true
-                                    padding: 0
-                                    text: modelData.name
-                                    Accessible.name: qsTr("查看%1动作做法").arg(modelData.name)
-                                    Accessible.description: qsTr("查看动作做法")
-                                    onClicked: sharedExerciseDetail.openExercise(
-                                                   exerciseModel.exerciseById(modelData.exerciseId))
-                                    contentItem: Label {
-                                        id: trainingExerciseName
-                                        text: trainingExercisePreview.text
-                                        color: Design.Theme.textPrimary
-                                        font.pixelSize: Design.Typography.body
-                                        font.weight: Font.DemiBold
-                                        wrapMode: Text.WordWrap
-                                    }
-                                    background: Rectangle {
-                                        color: "transparent"
-                                        radius: Design.Theme.radiusSmall
-                                        border.width: trainingExercisePreview.activeFocus ? 2 : 0
-                                        border.color: Design.Theme.accent
-                                    }
-                                }
-                                Label {
-                                    text: qsTr("%1 / %2 组")
+                    active: true
+                    Accessible.role: Accessible.Button
+                    Accessible.name: modelData
+                                      ? qsTr("%1，已完成 %2 / %3 组")
+                                        .arg(modelData.name)
                                         .arg(page.completedSetCount(modelData))
                                         .arg(modelData.sets.length)
-                                    color: page.completedSetCount(modelData) === modelData.sets.length
-                                           ? Design.Theme.success : Design.Theme.surfaceMuted
-                                    font.pixelSize: Design.Typography.caption
-                                }
-                            }
-                            IconButton {
-                                iconName: "more"
-                                accessibleName: qsTr("%1更多操作").arg(modelData.name)
-                                onClicked: {
-                                    page.selectExercise(modelData.id)
-                                    exerciseActions.targetExerciseId = modelData.id
-                                    exerciseActions.open()
-                                }
-                            }
-                        }
+                                      : ""
 
-                        TapHandler {
-                            acceptedButtons: Qt.LeftButton
-                            onTapped: page.selectExercise(exerciseRow.modelData.id)
-                        }
-                        Keys.onPressed: event => {
-                            if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter
-                                    || event.key === Qt.Key_Space) {
-                                page.selectExercise(exerciseRow.modelData.id)
-                                event.accepted = true
-                            }
-                        }
-                    }
-                }
-
-                AppButton {
-                    Layout.fillWidth: true
-                    variant: "secondary"
-                    flatSecondary: true
-                    cornerRadius: 14
-                    text: qsTr("添加动作")
-                    onClicked: exercisePicker.openForExercise("")
-                }
-
-                AppButton {
-                    Layout.fillWidth: true
-                    cornerRadius: 14
-                    primaryColor: Design.Theme.accent
-                    primaryPressedColor: Design.Theme.accentPressed
-                    primaryTextColor: Design.Theme.accentForeground
-                    text: qsTr("完成本次训练")
-                    enabled: workoutController.exercises.length > 0
-                    onClicked: {
-                        if (page.allExercisesComplete)
-                            workoutController.finishWorkout()
-                        else
-                            finishWorkoutConfirm.open()
-                    }
-                }
-            }
-
-            Item { Layout.preferredHeight: Design.Theme.space8 }
-        }
-    }
-
-    footer: Item {
-        id: inputFooterHost
-        visible: workoutController.active
-        readonly property real panelHeight: visible
-                ? Math.min(inputFooterColumn.implicitHeight + Design.Theme.space16,
-                           Math.max(0, page.height - page.inputMethodOverlap))
-                : 0
-        implicitHeight: visible
-                        ? panelHeight + page.inputMethodOverlap
-                        : 0
-
-        Rectangle {
-            id: inputFooterPanel
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.top: parent.top
-            height: inputFooterHost.panelHeight
-            color: Design.Theme.canvas
-            border.width: 0
-
-            Rectangle {
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.top: parent.top
-                height: 1
-                color: Design.Theme.divider
-            }
-
-            ScrollView {
-                id: inputFooterScroll
-                anchors.fill: parent
-                anchors.margins: Design.Theme.space8
-                clip: true
-                contentWidth: availableWidth
-                ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
-
-                ColumnLayout {
-                    id: inputFooterColumn
-                    width: inputFooterScroll.availableWidth
-                    spacing: Design.Theme.space8
-
-                    TrainingRestTimer {
-                        id: trainingRestTimer
+                    ExerciseHeader {
                         Layout.fillWidth: true
+                        exerciseName: currentExerciseCard.modelData
+                                      ? currentExerciseCard.modelData.name : ""
+                        imageSource: currentExerciseCard.exerciseMedia.url || ""
+                        setCount: currentExerciseCard.modelData
+                                  ? currentExerciseCard.modelData.sets.length : 0
+                        repsText: currentExerciseCard.modelData
+                                  && currentExerciseCard.modelData.recommendedReps
+                                  ? qsTr("%1次").arg(
+                                        currentExerciseCard.modelData.recommendedReps)
+                                  : qsTr("自定次数")
+                        restSeconds: currentExerciseCard.modelData
+                                     ? currentExerciseCard.modelData.restSeconds : 0
+                        current: true
+                        previewObjectName: "currentExercisePreviewButton"
+                        onPreviewRequested: sharedExerciseDetail.openExercise(
+                                                currentExerciseCard.exerciseDetail)
+                        onOptionsRequested: {
+                            if (!currentExerciseCard.modelData)
+                                return
+                            exerciseActions.targetExerciseId = currentExerciseCard.modelData.id
+                            exerciseActions.open()
+                        }
+                    }
+
+                    Label {
+                        visible: currentExerciseCard.modelData
+                                 && String(currentExerciseCard.modelData.notes || "").length > 0
+                        Layout.fillWidth: true
+                        Layout.topMargin: 2
+                        text: currentExerciseCard.modelData
+                              ? currentExerciseCard.modelData.notes || "" : ""
+                        color: Design.WorkoutTheme.textSecondary
+                        font.pixelSize: Design.WorkoutTheme.typeBody
+                        wrapMode: Text.WordWrap
+                        maximumLineCount: 2
+                        elide: Text.ElideRight
+                    }
+
+                    RestTimerRow {
+                        visible: currentExerciseCard.modelData !== null
+                        Layout.fillWidth: true
+                        Layout.topMargin: currentExerciseCard.modelData
+                                          && String(currentExerciseCard.modelData.notes || "").length > 0
+                                          ? 6 : 4
                         timerState: restTimer.state
                         remainingSeconds: restTimer.remainingSeconds
-                        backgroundAlertState: restTimer.backgroundAlertState
-                        onStartRequested: seconds => restTimer.start(seconds)
+                        defaultSeconds: currentExerciseCard.modelData
+                                        ? currentExerciseCard.modelData.restSeconds : 0
+                        onConfigureRequested: trainingRestTimer.open()
                         onPauseRequested: restTimer.pause()
                         onResumeRequested: restTimer.resume()
                         onStopRequested: restTimer.reset()
-                        onPermissionRequested: restTimer.requestBackgroundAlertPermission()
-                        onSettingsRequested: restTimer.openBackgroundAlertSettings()
+                    }
+
+                    Rectangle {
+                        visible: currentExerciseCard.modelData !== null
+                        Layout.fillWidth: true
+                        Layout.topMargin: 4
+                        implicitHeight: 1
+                        color: Design.WorkoutTheme.divider
                     }
 
                     CurrentSetInputPanel {
-                        id: currentSetInput
+                        id: cardSetInput
+                        visible: currentExerciseCard.modelData !== null
                         Layout.fillWidth: true
-                        exercise: page.currentExercise
+                        exercise: currentExerciseCard.modelData
                         setData: page.currentSet
-                        exerciseIndex: page.currentExerciseIndex
+                        exerciseIndex: currentExerciseCard.index
                         setIndex: page.currentSetIndex
                         allExercisesComplete: page.allExercisesComplete
                         exerciseCount: workoutController.exercises.length
                         submitting: page.submittingSet
                         viewportWidth: page.width
-                        onTargetRepsRequested: (exerciseId, setData) =>
-                                                   targetRepsDialog.openForSet(exerciseId, setData)
-                        onTimerRequested: trainingRestTimer.open()
+                        onEditSetRequested: setData => editSetDialog.openForSet(
+                                                    currentExerciseCard.modelData.id,
+                                                    setData,
+                                                    currentExerciseCard.modelData.loadMode)
+                        onWeightAdjusted: (setIndex, weightKg) => {
+                            if (!workoutController.setSetWeight(
+                                        currentExerciseCard.index, setIndex, weightKg)) {
+                                showError(workoutController.errorMessage.length > 0
+                                          ? workoutController.errorMessage
+                                          : qsTr("重量更新失败，请重试。"))
+                            }
+                        }
                         onCompleteRequested: (weightKg, reps, toFailure, loadType) => {
                             page.submittingSet = true
                             const success = workoutController.completeSet(
-                                              page.currentExerciseIndex,
+                                              currentExerciseCard.index,
                                               page.currentSetIndex,
                                               weightKg,
                                               reps,
@@ -1788,15 +1511,77 @@ AppPage {
                             if (!success)
                                 page.submittingSet = false
                         }
-                        onAdvanceRequested: {
-                            const nextId = page.nextIncompleteExerciseId(page.currentExerciseIndex)
-                            if (nextId.length > 0)
-                                page.selectExercise(nextId)
+                    }
+
+                    AddSetButton {
+                        visible: currentExerciseCard.modelData !== null
+                        Layout.fillWidth: true
+                        Layout.topMargin: 4
+                        onClicked: {
+                            const defaults = cardSetInput.firstSetDefaults()
+                            if (!workoutController.addSetFromFirstSet(
+                                        currentExerciseCard.index,
+                                        defaults.weightKg,
+                                        defaults.reps)) {
+                                showError(workoutController.errorMessage.length > 0
+                                          ? workoutController.errorMessage
+                                          : qsTr("添加训练组失败，请重试。"))
+                            }
                         }
-                        onFinishRequested: workoutController.finishWorkout()
                     }
                 }
+
+                NextExercisePreview {
+                    id: nextExercisePreview
+                    objectName: page.nextPreviewIndex >= 0
+                               ? "trainingExerciseRow_" + page.nextPreviewIndex : ""
+                    visible: page.nextPreviewExercise !== null
+                    Layout.fillWidth: true
+                    exerciseName: page.nextPreviewExercise
+                                  ? page.nextPreviewExercise.name : ""
+                    imageSource: page.nextPreviewMedia.url || ""
+                    setCount: page.nextPreviewExercise
+                              ? page.nextPreviewExercise.sets.length : 0
+                    repsText: page.nextPreviewExercise
+                              && page.nextPreviewExercise.recommendedReps
+                              ? qsTr("%1次").arg(page.nextPreviewExercise.recommendedReps)
+                              : qsTr("自定次数")
+                    restSeconds: page.nextPreviewExercise
+                                 ? page.nextPreviewExercise.restSeconds : 0
+                    completedSets: page.nextPreviewExercise
+                                   ? page.completedSetCount(page.nextPreviewExercise) : 0
+                    previewObjectName: page.nextPreviewIndex >= 0
+                                       ? "trainingExercisePreviewButton_"
+                                         + page.nextPreviewIndex : ""
+                    onPreviewRequested: {
+                        if (page.nextPreviewId.length > 0)
+                            page.selectExercise(page.nextPreviewId)
+                    }
+                }
+
+                AddSetButton {
+                    Layout.fillWidth: true
+                    text: qsTr("+ 添加动作")
+                    onClicked: exercisePicker.openForExercise("")
+                }
             }
+
+            Item { Layout.preferredHeight: Design.Theme.space8 }
         }
+    }
+
+    TrainingRestTimer {
+        id: trainingRestTimer
+        x: -10000
+        y: -10000
+        timerState: restTimer.state
+        remainingSeconds: restTimer.remainingSeconds
+        backgroundAlertState: restTimer.backgroundAlertState
+        onStartRequested: seconds => restTimer.start(seconds)
+        onPauseRequested: restTimer.pause()
+        onResumeRequested: restTimer.resume()
+        onStopRequested: restTimer.reset()
+        onPermissionRequested: restTimer.requestBackgroundAlertPermission()
+        onSettingsRequested: restTimer.openBackgroundAlertSettings()
     }
 }

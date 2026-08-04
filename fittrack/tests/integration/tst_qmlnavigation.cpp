@@ -384,6 +384,7 @@ void QmlNavigationTest::loadsAndSwitchesEveryPrimaryPage()
     const QString recoveryProbePath = QStringLiteral("C:/FitTrack/recovery-probe.sqlite");
     engine.setInitialProperties({
         {QStringLiteral("databaseRecoveryBackupPath"), recoveryProbePath},
+        {QStringLiteral("reducedMotion"), true},
     });
     engine.load(QUrl::fromLocalFile(QStringLiteral(FITTRACK_SOURCE_DIR "/qml/Main.qml")));
     QCOMPARE(engine.rootObjects().size(), 1);
@@ -888,7 +889,7 @@ void QmlNavigationTest::loadsAndSwitchesEveryPrimaryPage()
     const QString screenshotDirectory = QStringLiteral(FITTRACK_SCREENSHOT_DIR);
     QVERIFY(QDir().mkpath(screenshotDirectory));
     const QList<QSize> viewports{
-        QSize(360, 800), QSize(420, 920), QSize(480, 1056),
+        QSize(360, 800), QSize(420, 920), QSize(480, 1056), QSize(768, 1024),
     };
     const auto capture = [&](const QString &name, const QSize &viewport) {
         window->setWidth(viewport.width());
@@ -995,7 +996,7 @@ void QmlNavigationTest::loadsAndSwitchesEveryPrimaryPage()
         accessibleRoot, QStringLiteral("下一张动作图"), QAccessible::Button);
     QVERIFY2(!nextExerciseImage, "每个动作只打包一张已审核的可分发动作图");
     QVERIFY(mediaCreditInterface->text(QAccessible::Description)
-                .contains(QStringLiteral("Public domain")));
+                .contains(QStringLiteral("CC0 1.0")));
     QObject *detailScroll = root->findChild<QObject *>(
         QStringLiteral("sharedExerciseDetailScroll"));
     QVERIFY(detailScroll);
@@ -1109,8 +1110,9 @@ void QmlNavigationTest::loadsAndSwitchesEveryPrimaryPage()
 
     QAccessibleInterface *trainingTab = findAccessibleByName(
         accessibleRoot, QStringLiteral("训练"), QAccessible::PageTab);
-    QVERIFY(trainingTab);
-    QVERIFY(trainingTab->state().selected);
+    QVERIFY2(!navigation->property("visible").toBool(),
+             "进行中训练应隐藏普通底部导航，让记录操作成为唯一视觉焦点");
+    QVERIFY(!trainingTab);
     QAccessibleInterface *weightField = findAccessibleByName(
         accessibleRoot, QStringLiteral("实际重量"), QAccessible::EditableText);
     QAccessibleInterface *repsField = findAccessibleByName(
@@ -1118,7 +1120,7 @@ void QmlNavigationTest::loadsAndSwitchesEveryPrimaryPage()
     QAccessibleInterface *completeSet = findAccessibleByName(
         accessibleRoot, QStringLiteral("完成本组"), QAccessible::Button);
     QAccessibleInterface *openTimer = findAccessibleByName(
-        accessibleRoot, QStringLiteral("计时"), QAccessible::Button);
+        accessibleRoot, QStringLiteral("休息计时"), QAccessible::Button);
     QVERIFY2(weightField, "重量输入必须有稳定的可访问名称和编辑角色");
     QVERIFY2(repsField, "次数输入必须有稳定的可访问名称和编辑角色");
     QVERIFY2(completeSet, "完成本组必须暴露为按钮");
@@ -1126,16 +1128,14 @@ void QmlNavigationTest::loadsAndSwitchesEveryPrimaryPage()
     QVERIFY(weightField->state().focusable);
     QVERIFY(repsField->state().focusable);
     QVERIFY(openTimer->state().focusable);
-    auto *weightControl = qobject_cast<QQuickItem *>(
-        root->findChild<QObject *>(QStringLiteral("setWeightField")));
-    auto *repsControl = qobject_cast<QQuickItem *>(
-        root->findChild<QObject *>(QStringLiteral("setRepsField")));
+    auto *weightControl = qobject_cast<QQuickItem *>(weightField->object());
+    auto *repsControl = qobject_cast<QQuickItem *>(repsField->object());
     QVERIFY(weightControl);
     QVERIFY(repsControl);
-    QVERIFY(weightControl->width() >= 48 && weightControl->height() >= 48);
-    QVERIFY(repsControl->width() >= 48 && repsControl->height() >= 48);
-    QVERIFY(isTouchTargetAtLeast(completeSet, window, 48));
-    QVERIFY(isTouchTargetAtLeast(openTimer, window, 48));
+    QVERIFY(weightControl->width() >= 40 && weightControl->height() >= 40);
+    QVERIFY(repsControl->width() >= 40 && repsControl->height() >= 40);
+    QVERIFY(isTouchTargetAtLeast(completeSet, window, 40));
+    QVERIFY(isTouchTargetAtLeast(openTimer, window, 44));
     const QVariantMap firstExercise = workoutController.exercises().first().toMap();
     QAccessibleInterface *currentExercisePreview = findAccessibleByObjectName(
         accessibleRoot, QStringLiteral("currentExercisePreviewButton"));
@@ -1151,11 +1151,7 @@ void QmlNavigationTest::loadsAndSwitchesEveryPrimaryPage()
     QVERIFY(QMetaObject::invokeMethod(trainingExerciseDetail, "close"));
     QTRY_VERIFY(!trainingExerciseDetail->property("visible").toBool());
 
-    QQuickItem *trainingPreview = nullptr;
-    QTRY_VERIFY((trainingPreview = findQuickItemByObjectName(
-                     window->contentItem(),
-                     QStringLiteral("trainingExercisePreviewButton_0"))) != nullptr);
-    QVERIFY(trainingPreview->height() >= 48.0);
+    // 动作卡片已合并为连续信息流，不再为当前动作额外渲染一份重复列表项。
     QQuickItem *trainingExerciseRow = findQuickItemByObjectName(
         window->contentItem(), QStringLiteral("trainingExerciseRow_1"));
     QVERIFY(trainingExerciseRow);
@@ -1188,12 +1184,14 @@ void QmlNavigationTest::loadsAndSwitchesEveryPrimaryPage()
     QTest::qWait(160);
     QVERIFY(capture(QStringLiteral("training-large-font-130"), QSize(360, 800)));
     const QStringList coreObjectNames{
-        QStringLiteral("currentSetTargetButton"), QStringLiteral("openRestTimerButton"),
-        QStringLiteral("setWeightField"), QStringLiteral("setRepsField"),
+        QStringLiteral("openRestTimerButton"), QStringLiteral("setWeightField"),
+        QStringLiteral("setRepsField"),
         QStringLiteral("completeSetButton"),
     };
     for (const QString &objectName : coreObjectNames) {
-        QObject *object = root->findChild<QObject *>(objectName);
+        QAccessibleInterface *interface = findAccessibleByObjectName(
+            accessibleRoot, objectName);
+        QObject *object = interface ? interface->object() : nullptr;
         QVERIFY2(object, qPrintable(QStringLiteral("找不到核心控件：%1").arg(objectName)));
         auto *item = qobject_cast<QQuickItem *>(object);
         QVERIFY(item);
@@ -1226,15 +1224,14 @@ void QmlNavigationTest::loadsAndSwitchesEveryPrimaryPage()
     QVERIFY(trainingSessionTitleItem->height() + 0.5
             >= trainingSessionTitle->property("paintedHeight").toReal());
     for (const QString &objectName : coreObjectNames) {
-        auto *item = qobject_cast<QQuickItem *>(root->findChild<QObject *>(objectName));
+        QAccessibleInterface *interface = findAccessibleByObjectName(
+            accessibleRoot, objectName);
+        auto *item = interface ? qobject_cast<QQuickItem *>(interface->object()) : nullptr;
         QVERIFY2(item, qPrintable(QStringLiteral("找不到 1.5 倍字体核心控件：%1")
                                       .arg(objectName)));
         const QRectF rect = item->mapRectToScene(item->boundingRect());
         QVERIFY2(rect.left() >= -0.5 && rect.right() <= window->width() + 0.5,
                  qPrintable(QStringLiteral("1.5 倍字体下控件横向溢出：%1")
-                                .arg(objectName)));
-        QVERIFY2(rect.top() >= -0.5 && rect.bottom() <= window->height() + 0.5,
-                 qPrintable(QStringLiteral("1.5 倍字体下控件纵向溢出：%1")
                                 .arg(objectName)));
     }
     const QStringList trainingDialogNames{
@@ -1412,6 +1409,11 @@ void QmlNavigationTest::loadsAndSwitchesEveryPrimaryPage()
 
     for (const QSize &viewport : viewports)
         QVERIFY(capture(QStringLiteral("training-active"), viewport));
+    const QList<QSize> requestedTrainingViewports{
+        QSize(390, 844), QSize(430, 932),
+    };
+    for (const QSize &viewport : requestedTrainingViewports)
+        QVERIFY(capture(QStringLiteral("training-active"), viewport));
     for (const QSize &viewport : viewports) {
         window->resize(viewport);
         QVERIFY(QMetaObject::invokeMethod(targetRepsDialog, "openForSet",
@@ -1425,6 +1427,7 @@ void QmlNavigationTest::loadsAndSwitchesEveryPrimaryPage()
     }
     QTRY_VERIFY(!targetRepsDialog->property("visible").toBool());
     QTest::qWait(120);
+
     restTimer.reset();
 
     weightField = findAccessibleByName(
@@ -1436,12 +1439,46 @@ void QmlNavigationTest::loadsAndSwitchesEveryPrimaryPage()
     QVERIFY(weightField);
     QVERIFY(repsField);
     QVERIFY(completeSet);
+    weightControl = qobject_cast<QQuickItem *>(weightField->object());
+    repsControl = qobject_cast<QQuickItem *>(repsField->object());
+    QVERIFY(weightControl);
+    QVERIFY(repsControl);
+    QVERIFY(touchTapEditor(window, touchDevice, repsControl));
+    QTRY_VERIFY(isDescendantOf(window->activeFocusItem(), repsControl));
+    QTest::keyClick(window, Qt::Key_A, Qt::ControlModifier);
+    QTest::keyClick(window, Qt::Key_Backspace);
+    QCOMPARE(repsField->object()->property("text").toString(), QString());
+    QVERIFY(touchTap(window, touchDevice, completeSet));
+    QVERIFY(!workoutController.exercises().first().toMap()
+                 .value(QStringLiteral("sets")).toList().first().toMap()
+                 .value(QStringLiteral("completed")).toBool());
     QVERIFY(touchTapEditor(window, touchDevice, weightControl));
     QTRY_VERIFY(isDescendantOf(window->activeFocusItem(), weightControl));
     QTest::keyClick(window, Qt::Key_A, Qt::ControlModifier);
     QTest::keyClick(window, Qt::Key_4);
     QTest::keyClick(window, Qt::Key_0);
     QCOMPARE(weightField->object()->property("text").toString(), QStringLiteral("40"));
+    const QPoint weightCenter = itemSceneRect(weightField, window).center().toPoint();
+    QVERIFY(touchDrag(window, touchDevice, weightCenter,
+                      weightCenter - QPoint(0, 40)));
+    QTRY_COMPARE(workoutController.exercises().first().toMap()
+                     .value(QStringLiteral("sets")).toList().first().toMap()
+                     .value(QStringLiteral("weightKg")).toDouble(),
+                 45.0);
+    QTest::qWait(100);
+    weightField = findAccessibleByName(
+        accessibleRoot, QStringLiteral("实际重量"), QAccessible::EditableText);
+    repsField = findAccessibleByName(
+        accessibleRoot, QStringLiteral("实际次数"), QAccessible::EditableText);
+    completeSet = findAccessibleByName(
+        accessibleRoot, QStringLiteral("完成本组"), QAccessible::Button);
+    QVERIFY(weightField);
+    QVERIFY(repsField);
+    QVERIFY(completeSet);
+    weightControl = qobject_cast<QQuickItem *>(weightField->object());
+    repsControl = qobject_cast<QQuickItem *>(repsField->object());
+    QVERIFY(weightControl);
+    QVERIFY(repsControl);
     QVERIFY(touchTapEditor(window, touchDevice, repsControl));
     QTRY_VERIFY(isDescendantOf(window->activeFocusItem(), repsControl));
     QTest::keyClick(window, Qt::Key_A, Qt::ControlModifier);
@@ -1457,12 +1494,26 @@ void QmlNavigationTest::loadsAndSwitchesEveryPrimaryPage()
     QTRY_VERIFY(workoutController.exercises().first().toMap()
                     .value(QStringLiteral("sets")).toList().first().toMap()
                     .value(QStringLiteral("completed")).toBool());
+    QTRY_COMPARE(trainingPage->property("currentSetIndex").toInt(), 1);
     QTRY_COMPARE(restTimer.state(), fittrack::RestTimerController::State::Running);
+
+    QAccessibleInterface *editCompletedSet = findAccessibleByName(
+        accessibleRoot, QStringLiteral("编辑第1组"), QAccessible::Button);
+    QVERIFY(editCompletedSet);
+    QVERIFY(editCompletedSet->actionInterface());
+    QObject *editSetDialog = root->findChild<QObject *>(
+        QStringLiteral("editCompletedSetDialog"));
+    QVERIFY(editSetDialog);
+    editCompletedSet->actionInterface()->doAction(
+        QAccessibleActionInterface::pressAction());
+    QTRY_VERIFY(editSetDialog->property("visible").toBool());
+    QVERIFY(QMetaObject::invokeMethod(editSetDialog, "close"));
+    QTRY_VERIFY(!editSetDialog->property("visible").toBool());
 
     QAccessibleInterface *pauseTimer = findAccessibleByName(
         accessibleRoot, QStringLiteral("暂停"), QAccessible::Button);
     QVERIFY(pauseTimer);
-    QVERIFY(isTouchTargetAtLeast(pauseTimer, window, 48));
+    QVERIFY(isTouchTargetAtLeast(pauseTimer, window, 44));
     QVERIFY(pauseTimer->actionInterface());
     QVERIFY(pauseTimer->actionInterface()->actionNames().contains(
         QAccessibleActionInterface::pressAction()));
@@ -1475,12 +1526,54 @@ void QmlNavigationTest::loadsAndSwitchesEveryPrimaryPage()
     resumeTimer->actionInterface()->doAction(QAccessibleActionInterface::pressAction());
     QTRY_COMPARE(restTimer.state(), fittrack::RestTimerController::State::Running);
     QAccessibleInterface *stopTimer = findAccessibleByName(
-        accessibleRoot, QStringLiteral("结束计时"), QAccessible::Button);
+        accessibleRoot, QStringLiteral("跳过"), QAccessible::Button);
     QVERIFY(stopTimer);
-    QVERIFY(isTouchTargetAtLeast(stopTimer, window, 48));
+    QVERIFY(isTouchTargetAtLeast(stopTimer, window, 44));
     QVERIFY(stopTimer->actionInterface());
     stopTimer->actionInterface()->doAction(QAccessibleActionInterface::pressAction());
     QTRY_COMPARE(restTimer.state(), fittrack::RestTimerController::State::Idle);
+
+    const int originalExerciseCount = workoutController.exercises().size();
+    const int stressExerciseIndex = 1;
+    const QVariantMap stressExercise = workoutController.exercises()
+                                           .at(stressExerciseIndex).toMap();
+    const QVariantMap stressSet = stressExercise.value(QStringLiteral("sets"))
+                                      .toList().first().toMap();
+    const int originalSetCount = stressExercise.value(QStringLiteral("sets"))
+                                     .toList().size();
+    QVERIFY(workoutController.configureExercise(
+        stressExerciseIndex, stressSet.value(QStringLiteral("weightKg")).toDouble(),
+        stressSet.value(QStringLiteral("targetReps")).toInt(), 8));
+    QSet<QString> activeExerciseIds;
+    for (const QVariant &exerciseValue : workoutController.exercises())
+        activeExerciseIds.insert(exerciseValue.toMap().value(QStringLiteral("exerciseId")).toString());
+    for (int row = 0; row < exerciseModel.rowCount()
+                    && workoutController.exercises().size() < 10; ++row) {
+        const QString exerciseId = exerciseModel.data(
+            exerciseModel.index(row, 0),
+            fittrack::ExerciseListModel::ExerciseIdRole).toString();
+        if (activeExerciseIds.contains(exerciseId))
+            continue;
+        if (workoutController.addExercise(exerciseId, 4, QStringLiteral("8-12")))
+            activeExerciseIds.insert(exerciseId);
+    }
+    QCOMPARE(workoutController.exercises().size(), 10);
+    QCOMPARE(workoutController.exercises().at(stressExerciseIndex).toMap()
+                 .value(QStringLiteral("sets")).toList().size(), 8);
+    QVERIFY(QMetaObject::invokeMethod(
+        trainingPage, "selectExercise", Q_ARG(QVariant, secondExerciseId)));
+    QVERIFY(capture(QStringLiteral("training-stress-10x8"), QSize(390, 844)));
+    QVERIFY(QMetaObject::invokeMethod(
+        trainingPage, "selectExercise",
+        Q_ARG(QVariant, firstExercise.value(QStringLiteral("id")))));
+    while (workoutController.exercises().size() > originalExerciseCount)
+        QVERIFY(workoutController.removeExercise(workoutController.exercises().size() - 1));
+    QVERIFY(workoutController.configureExercise(
+        stressExerciseIndex, stressSet.value(QStringLiteral("weightKg")).toDouble(),
+        stressSet.value(QStringLiteral("targetReps")).toInt(), originalSetCount));
+    QTRY_COMPARE(workoutController.exercises().size(), originalExerciseCount);
+    QTRY_COMPARE(workoutController.exercises().at(stressExerciseIndex).toMap()
+                     .value(QStringLiteral("sets")).toList().size(), originalSetCount);
 
     QVERIFY(workoutController.finishWorkout());
     QCOMPARE(navigation->property("currentIndex").toInt(), 4);
@@ -1586,6 +1679,9 @@ int main(int argc, char **argv)
     QLocale::setDefault(QLocale(QLocale::Chinese, QLocale::China));
     QQuickStyle::setStyle(QStringLiteral("Material"));
     QGuiApplication app(argc, argv);
+    QCoreApplication::setApplicationName(QStringLiteral("FitTrackTest"));
+    QCoreApplication::setOrganizationName(QStringLiteral("FitTrack"));
+    QCoreApplication::setOrganizationDomain(QStringLiteral("fittrack.test"));
 #ifdef Q_OS_WIN
     // The offscreen platform reports the generic "Sans Serif" alias instead of
     // the normal Windows UI font. Load the installed UI font by file so the

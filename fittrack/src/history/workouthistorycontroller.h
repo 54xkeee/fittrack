@@ -26,7 +26,9 @@ public:
     Q_INVOKABLE void ensureLoaded();
     Q_INVOKABLE void reload();
     Q_INVOKABLE void loadMore();
+    Q_INVOKABLE QVariantMap calendarMonth(int year, int month);
     Q_INVOKABLE bool selectSession(const QString &sessionId);
+    Q_INVOKABLE void clearSelectedSession();
     Q_INVOKABLE bool updateCompletedSet(
         const QString &setId, double weightKg, int actualReps,
         bool toFailure = false, const QString &bodyweightLoadType = QStringLiteral("Bodyweight"));

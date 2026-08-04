@@ -53,6 +53,7 @@ private slots:
     void preparesWithoutWritingAndCommitsSnapshot();
     void keepsPreparationWhenCommitFails();
     void configuresParametersWithoutRemovingCompletedSets();
+    void addsSetFromFirstSetAndAdjustsWeight();
     void reordersPreparedExercisesByStableIds();
     void reordersActiveExercisesByStableIdsAndRollsBack();
 };
@@ -638,6 +639,66 @@ void WorkoutSessionControllerTest::configuresParametersWithoutRemovingCompletedS
         "SELECT rest_seconds FROM workout_exercise LIMIT 1")));
     QVERIFY(persisted.next());
     QCOMPARE(persisted.value(0).toInt(), 60);
+}
+
+void WorkoutSessionControllerTest::addsSetFromFirstSetAndAdjustsWeight()
+{
+    fittrack::DatabaseManager manager;
+    QString error;
+    QVERIFY2(manager.initialize(QStringLiteral(":memory:"), &error), qPrintable(error));
+    seedStartablePlan(manager.database());
+
+    fittrack::WorkoutSessionController controller(manager.database());
+    QVERIFY(controller.startPlanDay(QStringLiteral("day-a")));
+    QVERIFY(controller.configureExercise(0, 60.0, 10, 1));
+
+    QVERIFY(controller.addSetFromFirstSet(0));
+    QVariantList sets = controller.exercises().first().toMap()
+                            .value(QStringLiteral("sets")).toList();
+    QCOMPARE(sets.size(), 2);
+    QCOMPARE(sets.at(1).toMap().value(QStringLiteral("weightKg")).toDouble(), 60.0);
+    QCOMPARE(sets.at(1).toMap().value(QStringLiteral("targetReps")).toInt(), 10);
+    QVERIFY(!sets.at(1).toMap().value(QStringLiteral("completed")).toBool());
+
+    QVERIFY(controller.addSetFromFirstSet(0, 62.5, 9));
+    sets = controller.exercises().first().toMap().value(QStringLiteral("sets")).toList();
+    QCOMPARE(sets.at(2).toMap().value(QStringLiteral("weightKg")).toDouble(), 62.5);
+    QCOMPARE(sets.at(2).toMap().value(QStringLiteral("targetReps")).toInt(), 9);
+    QCOMPARE(sets.at(0).toMap().value(QStringLiteral("weightKg")).toDouble(), 60.0);
+
+    QVERIFY(controller.setSetWeight(0, 0, 65.0));
+    QVERIFY(controller.setTargetReps(0, 0, 8));
+    QVERIFY(controller.addSetFromFirstSet(0));
+    sets = controller.exercises().first().toMap().value(QStringLiteral("sets")).toList();
+    QCOMPARE(sets.at(3).toMap().value(QStringLiteral("weightKg")).toDouble(), 65.0);
+    QCOMPARE(sets.at(3).toMap().value(QStringLiteral("targetReps")).toInt(), 8);
+    QCOMPARE(sets.at(1).toMap().value(QStringLiteral("weightKg")).toDouble(), 60.0);
+
+    QVERIFY(controller.setSetWeight(0, 1, 70.0));
+    sets = controller.exercises().first().toMap().value(QStringLiteral("sets")).toList();
+    QCOMPARE(sets.at(0).toMap().value(QStringLiteral("weightKg")).toDouble(), 65.0);
+    QCOMPARE(sets.at(1).toMap().value(QStringLiteral("weightKg")).toDouble(), 70.0);
+
+    QVERIFY(controller.completeSet(0, 0, 67.5, 7));
+    QVERIFY(controller.setSetWeight(0, 0, 72.5));
+    sets = controller.exercises().first().toMap().value(QStringLiteral("sets")).toList();
+    QVERIFY(sets.at(0).toMap().value(QStringLiteral("completed")).toBool());
+    QCOMPARE(sets.at(0).toMap().value(QStringLiteral("weightKg")).toDouble(), 72.5);
+    QCOMPARE(sets.at(0).toMap().value(QStringLiteral("actualReps")).toInt(), 7);
+
+    QVERIFY(controller.addSetFromFirstSet(0));
+    sets = controller.exercises().first().toMap().value(QStringLiteral("sets")).toList();
+    QCOMPARE(sets.at(4).toMap().value(QStringLiteral("weightKg")).toDouble(), 72.5);
+    QCOMPARE(sets.at(4).toMap().value(QStringLiteral("targetReps")).toInt(), 7);
+    QVERIFY(!controller.setSetWeight(0, 1, -5.0));
+
+    fittrack::WorkoutSessionController restored(manager.database());
+    QVERIFY(restored.resumeUnfinished());
+    const QVariantList restoredSets = restored.exercises().first().toMap()
+                                          .value(QStringLiteral("sets")).toList();
+    QCOMPARE(restoredSets.size(), 5);
+    QCOMPARE(restoredSets.at(4).toMap().value(QStringLiteral("weightKg")).toDouble(), 72.5);
+    QCOMPARE(restoredSets.at(4).toMap().value(QStringLiteral("targetReps")).toInt(), 7);
 }
 
 void WorkoutSessionControllerTest::reordersPreparedExercisesByStableIds()

@@ -45,10 +45,10 @@
                       {
                           "type":  "localImage",
                           "localPath":  "qrc:/images/exercises/shareable/single-arm-cable-pulldown.jpg",
-                          "url":  "https://www.flickr.com/photos/personaltrainertoronto/30011004318/",
-                          "title":  "Single Arm Pulldown",
-                          "source":  "Eric Astrauskas / Flickr",
-                          "license":  "CC BY 2.0"
+                          "url":  "https://creativecommons.org/publicdomain/zero/1.0/",
+                          "title":  "单手钢线下拉 · FitTrack 生成动作示意图",
+                          "source":  "FitTrack 项目生成（OpenAI image generation）",
+                          "license":  "CC0 1.0"
                       }
                   ],
         "sources":  [
@@ -97,7 +97,7 @@
                         "单臂器械划船",
                         "单手坐姿划船机",
                         "单手器械划船",
-                        "杠杆式高位划船"
+                        "杠杆式等距划船"
                     ],
         "bodyPart":  "背部",
         "movement":  "水平拉",
@@ -138,8 +138,8 @@
                           "type":  "localImage",
                           "localPath":  "qrc:/images/exercises/shareable/single-arm-machine-row.jpg",
                           "url":  "https://creativecommons.org/publicdomain/zero/1.0/",
-                          "title":  "单手器械划船原创动作示意图",
-                          "source":  "FitTrack 项目原创",
+                          "title":  "单边器械划船 · FitTrack 生成动作示意图",
+                          "source":  "FitTrack 项目生成（OpenAI image generation）",
                           "license":  "CC0 1.0"
                       }
                   ],
@@ -150,17 +150,17 @@
                             "type":  "exerciseGuide"
                         },
                         {
-                            "title":  "MuscleDB：杠杆式高位划船",
-                            "url":  "https://www.muscledb.cn/exercises/417",
+                            "title":  "MuscleDB：杠杆式等距划船",
+                            "url":  "https://www.muscledb.cn/exercises/419",
                             "type":  "muscleDbLocalExport",
-                            "muscleDbId":  417
+                            "muscleDbId":  419
                         }
                     ],
         "techniquePoints":  [
-                                "单手支撑稳定躯干，另一侧手臂自然下垂",
-                                "手肘贴紧身体，向后上方拉起",
+                                "胸口贴稳支撑垫，非工作手扶住中部稳定把手",
+                                "工作侧手肘向后拉，将独立把手带向下胸或肋缘",
                                 "顶峰时挤压背阔肌，感受单侧收缩",
-                                "下放时充分拉伸背阔肌"
+                                "控制独立机械臂前伸，躯干不要旋转或离开支撑垫"
                             ],
         "commonMistakes":  [
                                "身体旋转借力",
@@ -223,10 +223,10 @@
                       {
                           "type":  "localImage",
                           "localPath":  "qrc:/images/exercises/shareable/neutral-grip-lat-pulldown.jpg",
-                          "url":  "https://commons.wikimedia.org/wiki/File:V_bar_pull_down_1.svg",
-                          "title":  "V-bar pull-down illustration",
-                          "source":  "Everkinetic / Wikimedia Commons",
-                          "license":  "CC BY-SA 3.0"
+                          "url":  "https://github.com/yuhonas/free-exercise-db/tree/main/exercises/V-Bar_Pulldown",
+                          "title":  "中距对握高位下拉 · Free Exercise DB 实拍",
+                          "source":  "Free Exercise DB（yuhonas/free-exercise-db；FitTrack 裁切并重编码）",
+                          "license":  "Unlicense"
                       }
                   ],
         "sources":  [
@@ -316,8 +316,8 @@
                           "type":  "localImage",
                           "localPath":  "qrc:/images/exercises/shareable/wide-elbow-seated-row.jpg",
                           "url":  "https://creativecommons.org/publicdomain/zero/1.0/",
-                          "title":  "坐姿开肘划船原创动作示意图",
-                          "source":  "FitTrack 项目原创",
+                          "title":  "低位滑轮划船至颈部 · FitTrack 生成动作示意图",
+                          "source":  "FitTrack 项目生成（OpenAI image generation）",
                           "license":  "CC0 1.0"
                       }
                   ],
@@ -400,10 +400,10 @@
                       {
                           "type":  "localImage",
                           "localPath":  "qrc:/images/exercises/shareable/cable-rope-curl.jpg",
-                          "url":  "https://commons.wikimedia.org/wiki/File:Hammer_curls_with_rope_and_cable_1.svg",
-                          "title":  "Hammer curls with rope and cable illustration",
-                          "source":  "Everkinetic / Wikimedia Commons",
-                          "license":  "CC BY-SA 3.0"
+                          "url":  "https://creativecommons.org/publicdomain/zero/1.0/",
+                          "title":  "钢线弯举（三分化） · FitTrack 生成动作示意图",
+                          "source":  "FitTrack 项目生成（OpenAI image generation）",
+                          "license":  "CC0 1.0"
                       }
                   ],
         "sources":  [
@@ -418,10 +418,10 @@
                             "type":  "exerciseGuide"
                         },
                         {
-                            "title":  "MuscleDB：站姿绳索二头肌弯举",
-                            "url":  "https://www.muscledb.cn/exercises/746",
+                            "title":  "MuscleDB：绳索锤式弯举",
+                            "url":  "https://www.muscledb.cn/exercises/114",
                             "type":  "muscleDbLocalExport",
-                            "muscleDbId":  746
+                            "muscleDbId":  114
                         }
                     ],
         "techniquePoints":  [
@@ -492,8 +492,8 @@
                           "type":  "localImage",
                           "localPath":  "qrc:/images/exercises/shareable/seal-row.jpg",
                           "url":  "https://creativecommons.org/publicdomain/zero/1.0/",
-                          "title":  "海豹划船原创动作示意图",
-                          "source":  "FitTrack 项目原创",
+                          "title":  "海豹划船 · FitTrack 生成动作示意图",
+                          "source":  "FitTrack 项目生成（OpenAI image generation）",
                           "license":  "CC0 1.0"
                       }
                   ],
@@ -509,10 +509,10 @@
                             "type":  "article"
                         },
                         {
-                            "title":  "MuscleDB：卧姿T杠划船",
-                            "url":  "https://www.muscledb.cn/exercises/454",
+                            "title":  "MuscleDB：仰卧弯杆杠铃划船",
+                            "url":  "https://www.muscledb.cn/exercises/437",
                             "type":  "muscleDbLocalExport",
-                            "muscleDbId":  454
+                            "muscleDbId":  437
                         }
                     ],
         "collections":  [
@@ -577,10 +577,10 @@
                       {
                           "type":  "localImage",
                           "localPath":  "qrc:/images/exercises/shareable/bent-over-barbell-row.jpg",
-                          "url":  "https://commons.wikimedia.org/wiki/File:Barbell_row.jpg",
-                          "title":  "Barbell rowing",
-                          "source":  "embhoo / Wikimedia Commons",
-                          "license":  "CC BY 2.0"
+                          "url":  "https://creativecommons.org/publicdomain/zero/1.0/",
+                          "title":  "俯身杠铃划船 · FitTrack 生成动作示意图",
+                          "source":  "FitTrack 项目生成（OpenAI image generation）",
+                          "license":  "CC0 1.0"
                       }
                   ],
         "sources":  [
@@ -662,10 +662,10 @@
                       {
                           "type":  "localImage",
                           "localPath":  "qrc:/images/exercises/shareable/pull-up.jpg",
-                          "url":  "https://commons.wikimedia.org/wiki/File:Pull-ups_exercise_from_back.jpg",
-                          "title":  "Pull-ups exercise from the back",
-                          "source":  "PTPioneer / Wikimedia Commons",
-                          "license":  "CC BY 2.0"
+                          "url":  "https://creativecommons.org/publicdomain/zero/1.0/",
+                          "title":  "引体向上 · FitTrack 生成动作示意图",
+                          "source":  "FitTrack 项目生成（OpenAI image generation）",
+                          "license":  "CC0 1.0"
                       }
                   ],
         "sources":  [
@@ -747,10 +747,10 @@
                       {
                           "type":  "localImage",
                           "localPath":  "qrc:/images/exercises/shareable/lat-pulldown.jpg",
-                          "url":  "https://commons.wikimedia.org/wiki/File:Girl_doing_lat_pulldown_exercise.jpg",
-                          "title":  "Girl doing lat pulldown exercise",
-                          "source":  "Tyler Read / PTPioneer / Wikimedia Commons",
-                          "license":  "CC BY 2.0"
+                          "url":  "https://creativecommons.org/publicdomain/zero/1.0/",
+                          "title":  "开肘下拉 · FitTrack 生成动作示意图",
+                          "source":  "FitTrack 项目生成（OpenAI image generation）",
+                          "license":  "CC0 1.0"
                       }
                   ],
         "sources":  [
@@ -839,8 +839,8 @@
                           "type":  "localImage",
                           "localPath":  "qrc:/images/exercises/shareable/hammer-strength-lat-pulldown.jpg",
                           "url":  "https://creativecommons.org/publicdomain/zero/1.0/",
-                          "title":  "悍马高位下拉原创动作示意图",
-                          "source":  "FitTrack 项目原创",
+                          "title":  "悍马高位下拉 · FitTrack 生成动作示意图",
+                          "source":  "FitTrack 项目生成（OpenAI image generation）",
                           "license":  "CC0 1.0"
                       }
                   ],
@@ -854,12 +854,6 @@
                             "title":  "ACE: Evidence-based Approach to Resistance Training for the Back",
                             "url":  "https://www.acefitness.org/resources/pros/expert-articles/8944/a-back-to-school-program-an-evidence-based-approach-to-training-the-back/",
                             "type":  "article"
-                        },
-                        {
-                            "title":  "MuscleDB：全幅度背阔肌下拉",
-                            "url":  "https://www.muscledb.cn/exercises/298",
-                            "type":  "muscleDbLocalExport",
-                            "muscleDbId":  298
                         }
                     ],
         "collections":  [
@@ -925,10 +919,10 @@
                       {
                           "type":  "localImage",
                           "localPath":  "qrc:/images/exercises/shareable/seated-cable-row.jpg",
-                          "url":  "https://commons.wikimedia.org/wiki/File:Cable-seated-rows-1.png",
-                          "title":  "Cable seated row",
-                          "source":  "Everkinetic / Wikimedia Commons",
-                          "license":  "CC BY-SA 3.0"
+                          "url":  "https://creativecommons.org/publicdomain/zero/1.0/",
+                          "title":  "坐姿绳索划船 · FitTrack 生成动作示意图",
+                          "source":  "FitTrack 项目生成（OpenAI image generation）",
+                          "license":  "CC0 1.0"
                       }
                   ],
         "sources":  [
@@ -1015,10 +1009,10 @@
                       {
                           "type":  "localImage",
                           "localPath":  "qrc:/images/exercises/shareable/chest-supported-machine-row.jpg",
-                          "url":  "https://wger.de/api/v2/exerciseimage/598/",
-                          "title":  "Chest-supported machine row exercise image",
-                          "source":  "barry / wger",
-                          "license":  "CC BY-SA 4.0"
+                          "url":  "https://creativecommons.org/publicdomain/zero/1.0/",
+                          "title":  "杠杆式等距划船 · FitTrack 生成动作示意图",
+                          "source":  "FitTrack 项目生成（OpenAI image generation）",
+                          "license":  "CC0 1.0"
                       }
                   ],
         "sources":  [
@@ -1055,12 +1049,12 @@
     },
     {
         "id":  "t-bar-row",
-        "nameZh":  "T杆划船",
-        "nameEn":  "T-Bar Row with Handle",
+        "nameZh":  "胸托T杠划船",
+        "nameEn":  "Chest-Supported T-Bar Row",
         "aliases":  [
-                        "T杆划船",
-                        "地雷架划船",
-                        "T杠划船"
+                        "卧姿T杠划船",
+                        "器械T杠划船",
+                        "T杆划船"
                     ],
         "bodyPart":  "背部",
         "movement":  "水平拉",
@@ -1073,23 +1067,20 @@
         "secondaryMuscles":  [
                                  "后三角肌",
                                  "肱二头肌",
-                                 "肱肌",
-                                 "竖脊肌",
-                                 "臀大肌",
-                                 "腘绳肌"
+                                 "肱肌"
                              ],
-        "introduction":  "使用T杠器械或固定一端的杠铃完成划船，负重路径相对稳定，适合背部较重的水平拉训练。无胸托版本仍需要髋铰链和躯干稳定能力，不能把它当作完全由器械支撑的动作。",
+        "introduction":  "俯卧在斜置胸托上使用固定杠杆完成划船，胸托减少腰背维持躯干角度的负担，让训练更集中于中背部与背阔肌。它与无胸托地雷杆T杠划船是不同变式。",
         "steps":  [
-                      "把一根杆子放在地雷里或角落里，防止它移动。将适当的重量放在你的头上。",
-                      "站在吧台上方，将双D排手柄放在衣领旁边的吧台周围。用你的臀部和腿，站起来。",
-                      "采取宽站姿，臀部向后，胸部向上。你的手臂应该伸展。这将是你的起始位置。",
-                      "通过收缩肩胛骨和弯曲肘部将重量拉到上腹部。在运动过程中不要猛拉重物或作弊。",
-                      "短暂停顿后，返回起始位置。"
+                      "按器械说明装片并调整脚踏或胸托高度，让上胸稳定贴住垫面。",
+                      "踩稳踏板，俯卧贴住胸托，握住手柄并将固定杠杆从支架抬起。",
+                      "保持胸部接触垫面，先让肩胛骨向后移动，再弯曲肘部把手柄拉向躯干。",
+                      "在顶部短暂停顿并收紧背部，不耸肩，也不抬起胸部借力。",
+                      "缓慢伸直手臂回到起始位，在肩部可控的范围内完成下一次。"
                   ],
         "cautions":  [
-                         "不要通过反复起身、耸肩或腰背甩动来带起重量。",
-                         "杠铃地雷架版本必须确认固定端和装片卡扣稳定。",
-                         "下背部先于背部疲劳时，应减轻重量或改用胸托划船。"
+                         "胸托应接触上胸而不是压住喉部，开始前确认脚踏和装片卡扣稳定。",
+                         "不要抬起胸部、耸肩或用腰背甩动来带起重量。",
+                         "肩部前侧不适时缩短下放范围并减轻重量。"
                      ],
         "recommendedSets":  3,
         "recommendedReps":  "6-12",
@@ -1103,10 +1094,10 @@
                       {
                           "type":  "localImage",
                           "localPath":  "qrc:/images/exercises/shareable/t-bar-row.jpg",
-                          "url":  "https://commons.wikimedia.org/wiki/File:T-bar-row-1.png",
-                          "title":  "T 杠划船起始位置示意图",
-                          "source":  "Everkinetic / Wikimedia Commons",
-                          "license":  "CC BY-SA 3.0"
+                          "url":  "https://github.com/yuhonas/free-exercise-db/tree/main/exercises/Lying_T-Bar_Row",
+                          "title":  "胸托T杠划船 · Free Exercise DB 实拍",
+                          "source":  "Free Exercise DB（yuhonas/free-exercise-db；FitTrack 裁切并重编码）",
+                          "license":  "Unlicense"
                       }
                   ],
         "sources":  [
@@ -1121,10 +1112,10 @@
                             "type":  "article"
                         },
                         {
-                            "title":  "MuscleDB：T杆划船",
-                            "url":  "https://www.muscledb.cn/exercises/812",
+                            "title":  "MuscleDB：卧姿T杠划船",
+                            "url":  "https://www.muscledb.cn/exercises/454",
                             "type":  "muscleDbLocalExport",
-                            "muscleDbId":  812
+                            "muscleDbId":  454
                         }
                     ],
         "collections":  [
@@ -1137,9 +1128,9 @@
 
                            ],
         "equipment":  [
-                          "杠铃"
+                          "固定器械"
                       ],
-        "difficulty":  "初级"
+        "difficulty":  "中级"
     },
     {
         "id":  "straight-arm-cable-pulldown",
@@ -1186,10 +1177,10 @@
                       {
                           "type":  "localImage",
                           "localPath":  "qrc:/images/exercises/shareable/straight-arm-cable-pulldown.jpg",
-                          "url":  "https://commons.wikimedia.org/wiki/File:Straight_arm_push_down_1.svg",
-                          "title":  "Straight-arm cable push-down illustration",
-                          "source":  "Everkinetic / Wikimedia Commons",
-                          "license":  "CC BY-SA 3.0"
+                          "url":  "https://github.com/yuhonas/free-exercise-db/tree/main/exercises/Straight-Arm_Pulldown",
+                          "title":  "直臂绳索下压 · Free Exercise DB 实拍",
+                          "source":  "Free Exercise DB（yuhonas/free-exercise-db；FitTrack 裁切并重编码）",
+                          "license":  "Unlicense"
                       }
                   ],
         "sources":  [
@@ -1268,10 +1259,10 @@
                       {
                           "type":  "localImage",
                           "localPath":  "qrc:/images/exercises/shareable/face-pull.jpg",
-                          "url":  "https://www.flickr.com/photos/personaltrainertoronto/30010762508/",
-                          "title":  "Cable Face-Pull",
-                          "source":  "Eric Astrauskas / Flickr",
-                          "license":  "CC BY 2.0"
+                          "url":  "https://creativecommons.org/publicdomain/zero/1.0/",
+                          "title":  "面部拉力 · FitTrack 生成动作示意图",
+                          "source":  "FitTrack 项目生成（OpenAI image generation）",
+                          "license":  "CC0 1.0"
                       }
                   ],
         "sources":  [
@@ -1353,10 +1344,10 @@
                       {
                           "type":  "localImage",
                           "localPath":  "qrc:/images/exercises/shareable/bent-over-dumbbell-rear-delt-fly.jpg",
-                          "url":  "https://www.flickr.com/photos/lesmemorables/23106813816/",
-                          "title":  "Reverse flys!",
-                          "source":  "J@YGS / Flickr",
-                          "license":  "CC BY-SA 2.0"
+                          "url":  "https://creativecommons.org/publicdomain/zero/1.0/",
+                          "title":  "肩后束训练（焚诀补充） · FitTrack 生成动作示意图",
+                          "source":  "FitTrack 项目生成（OpenAI image generation）",
+                          "license":  "CC0 1.0"
                       }
                   ],
         "sources":  [
@@ -1439,10 +1430,10 @@
                       {
                           "type":  "localImage",
                           "localPath":  "qrc:/images/exercises/shareable/preacher-curl.jpg",
-                          "url":  "https://commons.wikimedia.org/wiki/File:Preacher-curl-1.gif",
-                          "title":  "Preacher curl illustration",
-                          "source":  "Everkinetic / Wikimedia Commons",
-                          "license":  "CC BY-SA 3.0"
+                          "url":  "https://creativecommons.org/publicdomain/zero/1.0/",
+                          "title":  "牧师凳弯举 · FitTrack 生成动作示意图",
+                          "source":  "FitTrack 项目生成（OpenAI image generation）",
+                          "license":  "CC0 1.0"
                       }
                   ],
         "sources":  [
@@ -1521,10 +1512,10 @@
                       {
                           "type":  "localImage",
                           "localPath":  "qrc:/images/exercises/shareable/hammer-curl.jpg",
-                          "url":  "https://commons.wikimedia.org/wiki/File:Bicep_hammer_curl_with_dumbbell_1.svg",
-                          "title":  "Bicep hammer curl with dumbbell illustration",
-                          "source":  "Everkinetic / Wikimedia Commons",
-                          "license":  "CC BY-SA 3.0"
+                          "url":  "https://creativecommons.org/publicdomain/zero/1.0/",
+                          "title":  "锤式弯举 · FitTrack 生成动作示意图",
+                          "source":  "FitTrack 项目生成（OpenAI image generation）",
+                          "license":  "CC0 1.0"
                       }
                   ],
         "sources":  [
@@ -1566,14 +1557,13 @@
     },
     {
         "id":  "underhand-wide-lat-pulldown",
-        "nameZh":  "反手宽距高位下拉",
-        "nameEn":  "Lat Pulldown",
+        "nameZh":  "反手中窄距高位下拉",
+        "nameEn":  "Close-Grip Supinated Lat Pulldown",
         "aliases":  [
-                        "宽握下拉",
-                        "钢线高位下拉",
-                        "高位下拉",
-                        "开肘下拉",
-                        "反握绳索下拉"
+                        "反手高位下拉",
+                        "窄距反手下拉",
+                        "反握绳索下拉",
+                        "旋后握下拉"
                     ],
         "bodyPart":  "背部",
         "movement":  "垂直拉",
@@ -1588,7 +1578,7 @@
                                  "菱形肌",
                                  "下斜方肌"
                              ],
-        "introduction":  "可调重量的垂直拉动作，是学习背部发力和建立引体向上基础力量的常用选择。标准版本将横杆拉向身体前侧。",
+        "introduction":  "使用约肩宽或略窄的反握完成高位下拉。中窄距反握让肘部更容易沿躯干两侧下行，同时会增加肱二头肌参与；它不是反手宽距或开肘下拉。",
         "steps":  [
                       "坐在下拉式机器上，顶部滑轮上连接着一根宽杆。调整机器的护膝以适应您的身高。这些垫子可以防止你的身体被附着在杆上的阻力抬起。",
                       "握住下拉杆，手掌朝向躯干（仰卧抓握）。确保双手放得比肩宽更近。",
@@ -1615,10 +1605,10 @@
                       {
                           "type":  "localImage",
                           "localPath":  "qrc:/images/exercises/shareable/underhand-wide-lat-pulldown.jpg",
-                          "url":  "https://creativecommons.org/publicdomain/zero/1.0/",
-                          "title":  "反手宽距高位下拉原创动作示意图",
-                          "source":  "FitTrack 项目原创",
-                          "license":  "CC0 1.0"
+                          "url":  "https://github.com/yuhonas/free-exercise-db/tree/main/exercises/Underhand_Cable_Pulldowns",
+                          "title":  "反手中窄距高位下拉 · Free Exercise DB 实拍",
+                          "source":  "Free Exercise DB（yuhonas/free-exercise-db；FitTrack 裁切并重编码）",
+                          "license":  "Unlicense"
                       }
                   ],
         "sources":  [
@@ -1640,11 +1630,11 @@
                         }
                     ],
         "techniquePoints":  [
-                                "反手宽握，上肢微微后仰（不是顶腰，是在上肢水平位置上后仰）",
+                                "反手中窄握，上肢可以轻微后倾，但不要顶腰或依靠摆动完成动作",
                                 "深吸一口气，背阔肌预先发力，身体微微前倾",
-                                "往锁骨位置拉（不是胸骨位置），拉至胸骨中段",
+                                "将横杆拉向上胸或锁骨下方，不要追求拉到腹部",
                                 "以肘驱动，手肘向后\"带\"，不是用手拉",
-                                "拉向身体斜下方，低头颈部后伸，做肩伸"
+                                "颈部保持自然，让肘部沿躯干两侧向下、向后移动"
                             ],
         "commonMistakes":  [
                                "后仰时顶腰，腰椎代偿",
@@ -1711,8 +1701,8 @@
                           "type":  "localImage",
                           "localPath":  "qrc:/images/exercises/shareable/close-grip-seated-cable-row.jpg",
                           "url":  "https://creativecommons.org/publicdomain/zero/1.0/",
-                          "title":  "窄距坐姿划船原创动作示意图",
-                          "source":  "FitTrack 项目原创",
+                          "title":  "窄距坐姿划船 · FitTrack 生成动作示意图",
+                          "source":  "FitTrack 项目生成（OpenAI image generation）",
                           "license":  "CC0 1.0"
                       }
                   ],
@@ -1806,8 +1796,8 @@
                           "type":  "localImage",
                           "localPath":  "qrc:/images/exercises/shareable/seated-cable-rope-curl.jpg",
                           "url":  "https://creativecommons.org/publicdomain/zero/1.0/",
-                          "title":  "坐姿绳索弯举原创动作示意图",
-                          "source":  "FitTrack 项目原创",
+                          "title":  "坐姿绳索弯举 · FitTrack 生成动作示意图",
+                          "source":  "FitTrack 项目生成（OpenAI image generation）",
                           "license":  "CC0 1.0"
                       }
                   ],
@@ -1823,9 +1813,9 @@
                             "type":  "exerciseGuide"
                         },
                         {
-                            "title":  "MuscleDB：绳索锤式弯举",
+                            "title":  "MuscleDB：绳索锤式弯举（站姿变式参考）",
                             "url":  "https://www.muscledb.cn/exercises/114",
-                            "type":  "muscleDbLocalExport",
+                            "type":  "relatedExerciseVariant",
                             "muscleDbId":  114
                         }
                     ],

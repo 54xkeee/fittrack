@@ -42,10 +42,10 @@
                       {
                           "type":  "localImage",
                           "localPath":  "qrc:/images/exercises/shareable/barbell-bench-press.jpg",
-                          "url":  "https://commons.wikimedia.org/wiki/File:Bench_press.png",
-                          "title":  "美军士兵进行杠铃卧推",
-                          "source":  "Wikimedia Commons / U.S. Army",
-                          "license":  "Public domain (U.S. federal government work)"
+                          "url":  "https://creativecommons.org/publicdomain/zero/1.0/",
+                          "title":  "杠铃卧推 · FitTrack 生成动作示意图",
+                          "source":  "FitTrack 项目生成（OpenAI image generation）",
+                          "license":  "CC0 1.0"
                       }
                   ],
         "sources":  [
@@ -134,10 +134,10 @@
                       {
                           "type":  "localImage",
                           "localPath":  "qrc:/images/exercises/shareable/incline-dumbbell-bench-press.jpg",
-                          "url":  "https://commons.wikimedia.org/wiki/File:Dumbbell-incline-bench-press-1.png",
-                          "title":  "上斜哑铃卧推起始位置示意图",
-                          "source":  "Everkinetic / Wikimedia Commons",
-                          "license":  "CC BY-SA 3.0"
+                          "url":  "https://creativecommons.org/publicdomain/zero/1.0/",
+                          "title":  "哑铃上斜卧推 · FitTrack 生成动作示意图",
+                          "source":  "FitTrack 项目生成（OpenAI image generation）",
+                          "license":  "CC0 1.0"
                       }
                   ],
         "sources":  [
@@ -222,8 +222,8 @@
                           "type":  "localImage",
                           "localPath":  "qrc:/images/exercises/shareable/hammer-strength-chest-press.jpg",
                           "url":  "https://creativecommons.org/publicdomain/zero/1.0/",
-                          "title":  "悍马推胸原创动作示意图",
-                          "source":  "FitTrack 项目原创",
+                          "title":  "杠杆式胸部推举 · FitTrack 生成动作示意图",
+                          "source":  "FitTrack 项目生成（OpenAI image generation）",
                           "license":  "CC0 1.0"
                       }
                   ],
@@ -303,10 +303,10 @@
                       {
                           "type":  "localImage",
                           "localPath":  "qrc:/images/exercises/shareable/pec-deck-fly.jpg",
-                          "url":  "https://commons.wikimedia.org/wiki/File:Butterfly_machine_1.svg",
-                          "title":  "Butterfly machine illustration",
-                          "source":  "Everkinetic / Wikimedia Commons",
-                          "license":  "CC BY-SA 3.0"
+                          "url":  "https://creativecommons.org/publicdomain/zero/1.0/",
+                          "title":  "飞鸟夹胸（激活） · FitTrack 生成动作示意图",
+                          "source":  "FitTrack 项目生成（OpenAI image generation）",
+                          "license":  "CC0 1.0"
                       }
                   ],
         "sources":  [
@@ -390,10 +390,10 @@
                       {
                           "type":  "localImage",
                           "localPath":  "qrc:/images/exercises/shareable/flat-dumbbell-fly.jpg",
-                          "url":  "https://commons.wikimedia.org/wiki/File:Dumbbell_flys_2.svg",
-                          "title":  "哑铃飞鸟动作示意图",
-                          "source":  "Everkinetic / Wikimedia Commons",
-                          "license":  "CC BY-SA 3.0"
+                          "url":  "https://creativecommons.org/publicdomain/zero/1.0/",
+                          "title":  "哑铃飞鸟 · FitTrack 生成动作示意图",
+                          "source":  "FitTrack 项目生成（OpenAI image generation）",
+                          "license":  "CC0 1.0"
                       }
                   ],
         "sources":  [
@@ -474,10 +474,10 @@
                       {
                           "type":  "localImage",
                           "localPath":  "qrc:/images/exercises/shareable/seated-shoulder-press.jpg",
-                          "url":  "https://commons.wikimedia.org/wiki/File:Dumbbell_shoulder_press_2.svg",
-                          "title":  "哑铃推肩动作示意图",
-                          "source":  "Everkinetic / Wikimedia Commons",
-                          "license":  "CC BY-SA 3.0"
+                          "url":  "https://creativecommons.org/publicdomain/zero/1.0/",
+                          "title":  "坐姿推举 · FitTrack 生成动作示意图",
+                          "source":  "FitTrack 项目生成（OpenAI image generation）",
+                          "license":  "CC0 1.0"
                       }
                   ],
         "sources":  [
@@ -562,10 +562,10 @@
                       {
                           "type":  "localImage",
                           "localPath":  "qrc:/images/exercises/shareable/dumbbell-lateral-raise.jpg",
-                          "url":  "https://commons.wikimedia.org/wiki/File:DumbbellLateralRaise.JPG",
-                          "title":  "哑铃侧平举",
-                          "source":  "GeorgeStepanek / Wikimedia Commons",
-                          "license":  "CC BY-SA 3.0"
+                          "url":  "https://creativecommons.org/publicdomain/zero/1.0/",
+                          "title":  "哑铃侧平举 · FitTrack 生成动作示意图",
+                          "source":  "FitTrack 项目生成（OpenAI image generation）",
+                          "license":  "CC0 1.0"
                       }
                   ],
         "sources":  [
@@ -575,10 +575,10 @@
                             "type":  "exerciseGuide"
                         },
                         {
-                            "title":  "MuscleDB：哑铃侧平举",
-                            "url":  "https://www.muscledb.cn/exercises/239",
+                            "title":  "MuscleDB：侧平举",
+                            "url":  "https://www.muscledb.cn/exercises/665",
                             "type":  "muscleDbLocalExport",
-                            "muscleDbId":  239
+                            "muscleDbId":  665
                         }
                     ],
         "techniquePoints":  [
@@ -646,10 +646,10 @@
                       {
                           "type":  "localImage",
                           "localPath":  "qrc:/images/exercises/shareable/dumbbell-front-raise.jpg",
-                          "url":  "https://commons.wikimedia.org/wiki/File:Dumbbell-front-raises-1.png",
-                          "title":  "哑铃前平举动作示意图",
-                          "source":  "Everkinetic / Wikimedia Commons",
-                          "license":  "CC BY-SA 3.0"
+                          "url":  "https://creativecommons.org/publicdomain/zero/1.0/",
+                          "title":  "哑铃前平举 · FitTrack 生成动作示意图",
+                          "source":  "FitTrack 项目生成（OpenAI image generation）",
+                          "license":  "CC0 1.0"
                       }
                   ],
         "sources":  [
@@ -734,10 +734,10 @@
                       {
                           "type":  "localImage",
                           "localPath":  "qrc:/images/exercises/shareable/parallel-bar-dip.jpg",
-                          "url":  "https://commons.wikimedia.org/wiki/File:Dipexercise.svg",
-                          "title":  "双杠臂屈伸动作示意图",
-                          "source":  "Bitethesilverbullet / Wikimedia Commons",
-                          "license":  "CC BY-SA 4.0"
+                          "url":  "https://creativecommons.org/publicdomain/zero/1.0/",
+                          "title":  "双杠臂屈伸 · FitTrack 生成动作示意图",
+                          "source":  "FitTrack 项目生成（OpenAI image generation）",
+                          "license":  "CC0 1.0"
                       }
                   ],
         "sources":  [
@@ -822,10 +822,10 @@
                       {
                           "type":  "localImage",
                           "localPath":  "qrc:/images/exercises/shareable/lying-barbell-triceps-extension.jpg",
-                          "url":  "https://commons.wikimedia.org/wiki/File:Lying-triceps-extension-1.gif",
-                          "title":  "仰卧杠铃臂屈伸动作示意图",
-                          "source":  "Everkinetic / Wikimedia Commons",
-                          "license":  "CC BY-SA 3.0"
+                          "url":  "https://creativecommons.org/publicdomain/zero/1.0/",
+                          "title":  "仰卧屈伸（三头） · FitTrack 生成动作示意图",
+                          "source":  "FitTrack 项目生成（OpenAI image generation）",
+                          "license":  "CC0 1.0"
                       }
                   ],
         "sources":  [
@@ -909,8 +909,8 @@
                           "type":  "localImage",
                           "localPath":  "qrc:/images/exercises/shareable/y-raise.jpg",
                           "url":  "https://creativecommons.org/publicdomain/zero/1.0/",
-                          "title":  "Y 字侧平举原创动作示意图",
-                          "source":  "FitTrack 项目原创",
+                          "title":  "Y字侧平举 · FitTrack 生成动作示意图",
+                          "source":  "FitTrack 项目生成（OpenAI image generation）",
                           "license":  "CC0 1.0"
                       }
                   ],
@@ -926,9 +926,9 @@
                             "type":  "researchSummary"
                         },
                         {
-                            "title":  "MuscleDB：哑铃肩部提升",
+                            "title":  "MuscleDB：哑铃肩部提升（站姿肩胛面举变式参考）",
                             "url":  "https://www.muscledb.cn/exercises/241",
-                            "type":  "muscleDbLocalExport",
+                            "type":  "relatedExerciseVariant",
                             "muscleDbId":  241
                         }
                     ],
@@ -997,10 +997,10 @@
                       {
                           "type":  "localImage",
                           "localPath":  "qrc:/images/exercises/shareable/incline-barbell-bench-press.jpg",
-                          "url":  "https://commons.wikimedia.org/wiki/File:Incline-bench-press-1.png",
-                          "title":  "上斜杠铃卧推起始位置示意图",
-                          "source":  "Everkinetic / Wikimedia Commons",
-                          "license":  "CC BY-SA 3.0"
+                          "url":  "https://creativecommons.org/publicdomain/zero/1.0/",
+                          "title":  "杠铃上斜卧推-中握距 · FitTrack 生成动作示意图",
+                          "source":  "FitTrack 项目生成（OpenAI image generation）",
+                          "license":  "CC0 1.0"
                       }
                   ],
         "sources":  [
@@ -1080,10 +1080,10 @@
                       {
                           "type":  "localImage",
                           "localPath":  "qrc:/images/exercises/shareable/cable-lateral-raise.jpg",
-                          "url":  "https://wger.de/api/v2/exerciseimage/577/",
-                          "title":  "Standing cable lateral raise exercise image",
-                          "source":  "Rottekongen / wger",
-                          "license":  "CC BY-SA 4.0"
+                          "url":  "https://creativecommons.org/publicdomain/zero/1.0/",
+                          "title":  "站姿低位滑轮三角肌侧平举 · FitTrack 生成动作示意图",
+                          "source":  "FitTrack 项目生成（OpenAI image generation）",
+                          "license":  "CC0 1.0"
                       }
                   ],
         "sources":  [
@@ -1165,8 +1165,8 @@
                           "type":  "localImage",
                           "localPath":  "qrc:/images/exercises/shareable/reverse-pec-deck-fly.jpg",
                           "url":  "https://creativecommons.org/publicdomain/zero/1.0/",
-                          "title":  "反向器械飞鸟原创动作示意图",
-                          "source":  "FitTrack 项目原创",
+                          "title":  "反向器械飞鸟 · FitTrack 生成动作示意图",
+                          "source":  "FitTrack 项目生成（OpenAI image generation）",
                           "license":  "CC0 1.0"
                       }
                   ],
@@ -1247,10 +1247,10 @@
                       {
                           "type":  "localImage",
                           "localPath":  "qrc:/images/exercises/shareable/cable-triceps-pushdown.jpg",
-                          "url":  "https://commons.wikimedia.org/wiki/File:Triceps_pushdown_with_rope_and_cable_1.svg",
-                          "title":  "Triceps pushdown with rope and cable illustration",
-                          "source":  "Everkinetic / Wikimedia Commons",
-                          "license":  "CC BY-SA 3.0"
+                          "url":  "https://creativecommons.org/publicdomain/zero/1.0/",
+                          "title":  "绳索三头肌下压 · FitTrack 生成动作示意图",
+                          "source":  "FitTrack 项目生成（OpenAI image generation）",
+                          "license":  "CC0 1.0"
                       }
                   ],
         "sources":  [
@@ -1330,10 +1330,10 @@
                       {
                           "type":  "localImage",
                           "localPath":  "qrc:/images/exercises/shareable/overhead-cable-triceps-extension.jpg",
-                          "url":  "https://www.flickr.com/photos/personaltrainertoronto/28957105537/",
-                          "title":  "Cable Overhead Tricep Extensions",
-                          "source":  "Eric Astrauskas / Flickr",
-                          "license":  "CC BY 2.0"
+                          "url":  "https://creativecommons.org/publicdomain/zero/1.0/",
+                          "title":  "绳索头顶三头肌伸展 · FitTrack 生成动作示意图",
+                          "source":  "FitTrack 项目生成（OpenAI image generation）",
+                          "license":  "CC0 1.0"
                       }
                   ],
         "sources":  [
@@ -1412,10 +1412,10 @@
                       {
                           "type":  "localImage",
                           "localPath":  "qrc:/images/exercises/shareable/push-up.jpg",
-                          "url":  "https://commons.wikimedia.org/wiki/File:Push-ups-2.png",
-                          "title":  "标准俯卧撑动作示意图",
-                          "source":  "Everkinetic / Wikimedia Commons",
-                          "license":  "CC BY-SA 3.0"
+                          "url":  "https://creativecommons.org/publicdomain/zero/1.0/",
+                          "title":  "俯卧撑 · FitTrack 生成动作示意图",
+                          "source":  "FitTrack 项目生成（OpenAI image generation）",
+                          "license":  "CC0 1.0"
                       }
                   ],
         "sources":  [
@@ -1499,8 +1499,8 @@
                           "type":  "localImage",
                           "localPath":  "qrc:/images/exercises/shareable/straight-bar-triceps-pushdown.jpg",
                           "url":  "https://creativecommons.org/publicdomain/zero/1.0/",
-                          "title":  "直杆三头下压原创动作示意图",
-                          "source":  "FitTrack 项目原创",
+                          "title":  "直臂下压 · FitTrack 生成动作示意图",
+                          "source":  "FitTrack 项目生成（OpenAI image generation）",
                           "license":  "CC0 1.0"
                       }
                   ],
@@ -1546,7 +1546,7 @@
     {
         "id":  "single-arm-cable-triceps-extension",
         "nameZh":  "单手绳索臂屈伸",
-        "nameEn":  "Triceps Pushdown - Rope Attachment",
+        "nameEn":  "Cable One Arm Tricep Extension",
         "aliases":  [
                         "钢线下压",
                         "绳索下压",
@@ -1593,8 +1593,8 @@
                           "type":  "localImage",
                           "localPath":  "qrc:/images/exercises/shareable/single-arm-cable-triceps-extension.jpg",
                           "url":  "https://creativecommons.org/publicdomain/zero/1.0/",
-                          "title":  "单手绳索臂屈伸原创动作示意图",
-                          "source":  "FitTrack 项目原创",
+                          "title":  "单手绳索臂屈伸 · FitTrack 生成动作示意图",
+                          "source":  "FitTrack 项目生成（OpenAI image generation）",
                           "license":  "CC0 1.0"
                       }
                   ],
@@ -1685,8 +1685,8 @@
                           "type":  "localImage",
                           "localPath":  "qrc:/images/exercises/shareable/single-arm-overhead-cable-triceps-extension.jpg",
                           "url":  "https://creativecommons.org/publicdomain/zero/1.0/",
-                          "title":  "单手颈后臂屈伸原创动作示意图",
-                          "source":  "FitTrack 项目原创",
+                          "title":  "单手颈后臂屈伸 · FitTrack 生成动作示意图",
+                          "source":  "FitTrack 项目生成（OpenAI image generation）",
                           "license":  "CC0 1.0"
                       }
                   ],

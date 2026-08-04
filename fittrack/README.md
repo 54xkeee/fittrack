@@ -17,7 +17,7 @@ FitTrack 是一个面向 Android 的个人健身训练记录与分析应用，�
 - 场馆管理支持健身房与具体器械的新增、重命名和删除；被历史记录引用的条目会归档而不是破坏历史数据。
 - 数据管理支持 JSON 完整备份/事务恢复和 SQLite 快照导出；Android 支持通过系统文档选择器的 `content://` URI 导入导出。JSON 包含计划有氧与训练快照，仍兼容缺少这两张表的旧版备份；恢复会限制 64MB 输入、进行外键完整性检查，并刷新所有内存状态。
 - 启动时会先拒绝高于当前版本的数据库，再执行 SQLite 快速完整性检查。检测到损坏时，主库及 `-journal`/`-wal`/`-shm` 会先复制到唯一的 `.corrupt-*` 备份，再创建空白数据库；恢复中途被系统终止时，下次启动会从 pending 标记继续，成功后提示备份路径和 JSON 恢复入口。
-- 动作库提供 58 个目标动作的简介、主要/次要肌群、步骤、注意事项和训练参数；其中 29 个核心动作额外提供发力要点和常见错误，其余为标准资料。每项展示 1 张经过动作对应性审核的本地图片，并在详情中显示素材标题、来源和许可证；42 张来自开放许可或公共领域，16 张为 FitTrack 原创 CC0。内置动作可收藏和恢复默认，用户可创建、编辑及删除自定义动作；应用不提供教学视频或媒体外链入口。
+- 动作库提供 58 个目标动作的简介、主要/次要肌群、步骤、注意事项和训练参数；其中 29 个核心动作额外提供发力要点和常见错误，其余为标准资料。每项展示 1 张经过动作要领与器械结构审核的本地图，并在详情中显示素材标题、来源和许可证；51 张项目制作图按 CC0 1.0 提供，7 张 Free Exercise DB 实拍按 Unlicense 分发。内置动作可收藏和恢复默认，用户可创建、编辑及删除自定义动作；应用不提供教学视频或媒体外链入口。
 - 底部导航固定为首页、计划、训练、动作和分析五个入口；历史、有氧和管理合并在分析入口内。
 - Graphite & Lime 设计系统已经提取为语义主题与通用组件，统一线性图标由 `AppIcon` 使用 `PathSvg` 绘制，不再依赖 Unicode 字符图标。底部导航、首页、训练、计划、动作库、趋势、历史、有氧和管理页面均已纳入移动单列体系；准备页与训练页长标题可响应换行，计划/训练动作预览保持至少 48 logical px，训练动作卡提供可见键盘焦点。
 - 应用不再内置字体，直接继承 Android、Windows 等平台的系统字体；Android 字体缩放会统一映射到设计令牌，自动化覆盖 1.0、1.3、1.5 和 2.0 倍字体。2026-07-14 的 Qt 6.11.1 干净构建已通过 15/15，随后聚焦 `qmlnavigation` 再次通过。
@@ -69,7 +69,7 @@ powershell -ExecutionPolicy Bypass -File C:\FitTrackDev\fittrack\scripts\build-a
 - 内置动作 JSON 位于 `resources/data/exercises-*.json`。
 - 谭成义三分化模板位于 `resources/data/tan-three-day-split.json`。
 - 内置动作会在应用启动时事务化导入 SQLite。
-- 可分发动作图片位于 `resources/images/exercises/shareable/`，58 个动作各 1 张，统一为 900×600 JPEG。
+- 可分发动作图片位于 `resources/images/exercises/shareable/`，58 个动作各 1 张，统一为 1200×800 JPEG。
 - 机器可读的媒体标题、来源页面、作者/来源、许可证和应用内路径位于 `resources/data/exercise-media-shareable.json`，并同步进入对应动作 JSON 的 `media` 字段。
 - MuscleDB 只保留为动作文字映射参考；其图片目录和旧动作图片不会被 CMake 打包进 APK。应用也不再打包 Inter 字体。
 - 数据映射见 [`../docs/fittrack-exercise-mapping.md`](../docs/fittrack-exercise-mapping.md)，媒体用途限制见 [`../docs/fittrack-media-credits.md`](../docs/fittrack-media-credits.md)。

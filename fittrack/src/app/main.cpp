@@ -1,4 +1,7 @@
 #include "analytics/analyticsdashboardcontroller.h"
+#ifdef FITTRACK_REACT_ANDROID_WEBVIEW
+#include "app/androidreactbridge.h"
+#endif
 #include "backup/backupservice.h"
 #include "cardio/cardiocontroller.h"
 #include "exercises/exerciselistmodel.h"
@@ -147,6 +150,9 @@ int main(int argc, char *argv[])
     fittrack::TimerAlertPlayer timerAlert;
 #endif
     fittrack::WorkoutSessionController workoutController(databaseManager.database());
+#ifdef FITTRACK_REACT_ANDROID_WEBVIEW
+    fittrack::AndroidReactBridge androidReactBridge(&workoutController, &restTimer, &app);
+#endif
     fittrack::WorkoutHistoryController workoutHistory(databaseManager.database());
     fittrack::AnalyticsDashboardController analyticsDashboard(databaseManager.database());
     fittrack::PlanManagementController planManagement(databaseManager.database());
@@ -164,6 +170,11 @@ int main(int argc, char *argv[])
     engine.rootContext()->setContextProperty(QStringLiteral("cardioController"), &cardioController);
     engine.rootContext()->setContextProperty(QStringLiteral("gymManagement"), &gymManagement);
     engine.rootContext()->setContextProperty(QStringLiteral("backupService"), &backupService);
+#ifdef FITTRACK_REACT_WEBENGINE
+    engine.rootContext()->setContextProperty(QStringLiteral("reactTrainingEnabled"), true);
+#else
+    engine.rootContext()->setContextProperty(QStringLiteral("reactTrainingEnabled"), false);
+#endif
     engine.setInitialProperties({
         {QStringLiteral("databaseRecoveryBackupPath"), recoveredDatabasePath},
     });

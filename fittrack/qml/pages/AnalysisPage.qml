@@ -67,7 +67,7 @@ AppPage {
 
         contentItem: Label {
             text: segment.text
-            color: segment.selected ? Design.Theme.primaryForeground : Design.Theme.surfaceMuted
+            color: segment.selected ? Design.Theme.primary : Design.Theme.textSecondary
             font: segment.font
             horizontalAlignment: Text.AlignHCenter
             verticalAlignment: Text.AlignVCenter
@@ -77,10 +77,11 @@ AppPage {
         background: Rectangle {
             radius: Design.Theme.radiusSmall
             color: segment.selected
-                   ? Design.Theme.primary
+                   ? Design.Theme.primarySoft
                    : (segment.down ? Design.Theme.surfacePressed : "transparent")
-            border.width: segment.selected ? 0 : 1
-            border.color: Design.Theme.outline
+            border.width: segment.activeFocus || !segment.selected ? 1 : 0
+            border.color: segment.activeFocus ? Design.Theme.primary
+                                              : Design.Theme.borderDefault
         }
     }
 
@@ -112,7 +113,8 @@ AppPage {
                 text: tile.value
                 color: Design.Theme.surfaceText
                 font.pixelSize: Design.Theme.typeTitle
-                font.weight: Font.Bold
+                font.weight: Font.DemiBold
+                font.features: ({ "tnum": 1 })
                 elide: Text.ElideRight
             }
             Label {
@@ -165,45 +167,12 @@ AppPage {
                 }
             }
 
-            AppCard {
+            AppEmptyState {
                 visible: !page.hasAnyData
                 Layout.fillWidth: true
-                padding: Design.Theme.space24
-
-                ColumnLayout {
-                    anchors.fill: parent
-                    spacing: Design.Theme.space8
-
-                    Rectangle {
-                        Layout.alignment: Qt.AlignHCenter
-                        Layout.preferredWidth: 52
-                        Layout.preferredHeight: 52
-                        radius: 26
-                        color: Design.Theme.primaryContainer
-
-                        AppIcon {
-                            anchors.centerIn: parent
-                            name: "analysis"
-                            color: Design.Theme.primary
-                        }
-                    }
-                    Label {
-                        Layout.fillWidth: true
-                        text: qsTr("还没有可分析的数据")
-                        color: Design.Theme.surfaceText
-                        font.pixelSize: Design.Theme.typeBody
-                        font.weight: Font.DemiBold
-                        horizontalAlignment: Text.AlignHCenter
-                    }
-                    Label {
-                        Layout.fillWidth: true
-                        text: qsTr("完成一次力量训练或有氧记录后，这里会显示真实趋势。")
-                        color: Design.Theme.surfaceMuted
-                        font.pixelSize: Design.Theme.typeLabel
-                        wrapMode: Text.WordWrap
-                        horizontalAlignment: Text.AlignHCenter
-                    }
-                }
+                iconName: "analysis"
+                title: qsTr("还没有可分析的数据")
+                message: qsTr("完成一次力量训练或有氧记录后，这里会显示真实趋势。")
             }
 
             GridLayout {
@@ -375,7 +344,7 @@ AppPage {
                     }
                 }
 
-                ComboBox {
+                AppComboBox {
                     Layout.fillWidth: true
                     implicitHeight: Design.Theme.controlHeight
                     model: analyticsDashboard.exercises
@@ -391,7 +360,7 @@ AppPage {
                     Layout.fillWidth: true
                     spacing: Design.Theme.space8
 
-                    ComboBox {
+                    AppComboBox {
                         Layout.fillWidth: true
                         implicitHeight: Design.Theme.controlHeight
                         model: page.withAll(analyticsDashboard.gyms, qsTr("全部健身房"))
@@ -403,7 +372,7 @@ AppPage {
                         Accessible.name: qsTr("筛选健身房")
                         onActivated: analyticsDashboard.setGymFilter(model[currentIndex].id)
                     }
-                    ComboBox {
+                    AppComboBox {
                         Layout.fillWidth: true
                         implicitHeight: Design.Theme.controlHeight
                         model: page.withAll(analyticsDashboard.equipment, qsTr("全部器械"))

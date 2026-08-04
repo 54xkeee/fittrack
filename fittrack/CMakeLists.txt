@@ -7,11 +7,25 @@ if(ANDROID AND NOT DEFINED BUILD_TESTING)
 endif()
 include(CTest)
 
+option(FITTRACK_ENABLE_REACT_WEBENGINE
+    "Render the active workout with the bundled React UI in Qt WebEngine"
+    OFF)
+option(FITTRACK_ENABLE_REACT_ANDROID_WEBVIEW
+    "Render the active workout with the bundled React UI in Android WebView"
+    ${ANDROID})
+if(FITTRACK_ENABLE_REACT_WEBENGINE AND ANDROID)
+    message(FATAL_ERROR
+        "Qt WebEngine is desktop-only. Keep this option OFF for Android and use the native Android WebView integration path.")
+endif()
+
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_AUTOMOC ON)
 
 set(FITTRACK_QT_COMPONENTS Core Gui Qml Quick QuickControls2 Sql)
+if(FITTRACK_ENABLE_REACT_WEBENGINE)
+    list(APPEND FITTRACK_QT_COMPONENTS WebChannel WebEngineQuick)
+endif()
 if(NOT ANDROID)
     list(APPEND FITTRACK_QT_COMPONENTS Multimedia)
 endif()
@@ -90,6 +104,14 @@ qt_add_executable(fittrack
     src/app/main.cpp
 )
 
+if(ANDROID AND FITTRACK_ENABLE_REACT_ANDROID_WEBVIEW)
+    target_sources(fittrack PRIVATE
+        src/app/androidreactbridge.cpp
+        src/app/androidreactbridge.h
+    )
+    target_compile_definitions(fittrack PRIVATE FITTRACK_REACT_ANDROID_WEBVIEW=1)
+endif()
+
 # Caching the root navigation graph makes the Qt 6.11.1 MinGW link step emit
 # a nested temporary response file that GNU ld cannot consume on Windows.
 # Keep the smaller pages cached and parse only Main.qml at runtime.
@@ -97,6 +119,8 @@ set_source_files_properties(qml/Main.qml PROPERTIES QT_QML_SKIP_CACHEGEN TRUE)
 set_source_files_properties(qml/theme/Theme.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
 set_source_files_properties(qml/theme/Spacing.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
 set_source_files_properties(qml/theme/Typography.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
+set_source_files_properties(qml/theme/Preferences.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
+set_source_files_properties(qml/theme/WorkoutTheme.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
 
 qt_add_qml_module(fittrack
     URI FitTrack
@@ -106,11 +130,17 @@ qt_add_qml_module(fittrack
         qml/theme/Theme.qml
         qml/theme/Spacing.qml
         qml/theme/Typography.qml
+        qml/theme/Preferences.qml
+        qml/theme/WorkoutTheme.qml
         qml/components/ActionPill.qml
         qml/components/AppButton.qml
+        qml/components/AppCheckBox.qml
+        qml/components/AppComboBox.qml
         qml/components/AppCard.qml
         qml/components/AppDialog.qml
+        qml/components/AppEmptyState.qml
         qml/components/AppPage.qml
+        qml/components/AppSwitch.qml
         qml/components/ConfirmDialog.qml
         qml/components/AppIcon.qml
         qml/components/IconButton.qml
@@ -126,6 +156,17 @@ qt_add_qml_module(fittrack
         qml/components/TrendChart.qml
         qml/components/WorkoutStartConflictDialog.qml
         qml/components/WorkoutRecoveryDialog.qml
+        qml/components/WorkoutTopBar.qml
+        qml/components/WorkoutSummaryBar.qml
+        qml/components/ExerciseCard.qml
+        qml/components/ExerciseHeader.qml
+        qml/components/ExerciseMetaRow.qml
+        qml/components/NextExercisePreview.qml
+        qml/components/RestTimerRow.qml
+        qml/components/SetTableHeader.qml
+        qml/components/WorkoutSetRow.qml
+        qml/components/AddSetButton.qml
+        qml/components/WorkoutCalendar.qml
         qml/components/ExerciseDetailSheet.qml
         qml/components/ExerciseParameterSheet.qml
         qml/components/ExercisePickerSheet.qml
@@ -134,6 +175,7 @@ qt_add_qml_module(fittrack
         qml/pages/HomePage.qml
         qml/pages/ExerciseLibraryPage.qml
         qml/pages/TrainingPage.qml
+        qml/pages/ReactTrainingPage.qml
         qml/pages/HistoryPage.qml
         qml/pages/AnalysisPage.qml
         qml/pages/PlanPage.qml
@@ -177,6 +219,29 @@ target_link_libraries(fittrack PRIVATE
     Qt6::Quick
     Qt6::QuickControls2
 )
+
+if(FITTRACK_ENABLE_REACT_WEBENGINE)
+    set(FITTRACK_REACT_DIST_DIR "${CMAKE_CURRENT_SOURCE_DIR}/frontend/dist")
+    if(NOT EXISTS "${FITTRACK_REACT_DIST_DIR}/index.html")
+        message(FATAL_ERROR
+            "React bundle missing. Run `npm install` and `npm run build` in fittrack/frontend first.")
+    endif()
+
+    file(GLOB_RECURSE FITTRACK_REACT_WEB_FILES CONFIGURE_DEPENDS
+        "${FITTRACK_REACT_DIST_DIR}/*")
+    qt_add_resources(fittrack "fittrack_react_web"
+        PREFIX "/web"
+        BASE "${FITTRACK_REACT_DIST_DIR}"
+        FILES ${FITTRACK_REACT_WEB_FILES}
+    )
+    qt_add_resources(fittrack "fittrack_react_surface"
+        PREFIX "/hybrid"
+        BASE "${CMAKE_CURRENT_SOURCE_DIR}/qml/hybrid"
+        FILES "${CMAKE_CURRENT_SOURCE_DIR}/qml/hybrid/ReactWebSurface.qml"
+    )
+    target_compile_definitions(fittrack PRIVATE FITTRACK_REACT_WEBENGINE=1)
+    target_link_libraries(fittrack PRIVATE Qt6::WebChannel Qt6::WebEngineQuick)
+endif()
 
 if(ANDROID)
     set(FITTRACK_ANDROID_VERSION_CODE "1" CACHE STRING
